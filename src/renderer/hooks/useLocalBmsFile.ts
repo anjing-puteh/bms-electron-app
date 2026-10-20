@@ -33,6 +33,17 @@ export interface LocalBmsChartInfo {
   bmsChart: BMSChart | null;
 }
 
+/**
+ * Whether a parsed note becomes an editable note. BGM notes always do; lane
+ * notes only when their channel maps to a column. Lane objects without a
+ * column (extension lanes 1A-2Z, channels outside the detected layout) are kept
+ * verbatim by `BMSWriter.fromBMSChart` (`extraObjects`) instead — as editable
+ * notes they would also be written back on the BGM channel (01).
+ */
+export function isEditableNote(note: Pick<BMSNote, 'noteType' | 'column'>): boolean {
+  return note.noteType === 'bgm' || !!note.column;
+}
+
 interface UseLocalBmsFileState {
   chart: LocalBmsChartInfo | null;
   isLoading: boolean;

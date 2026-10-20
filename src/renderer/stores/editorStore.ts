@@ -674,6 +674,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       bpmChanges: s.bpmChanges,
       stopEvents: s.stopEvents,
       bgaEvents: s.editableChart.bgaEvents,
+      // Channels the editor does not model (TEXT, JUDGE, extension lanes, ...)
+      extraObjects: s.editableChart.extraObjects,
     };
   },
 

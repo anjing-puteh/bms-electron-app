@@ -20,8 +20,8 @@
 | 7 | 중첩 `#RANDOM`/`#IF`가 부모 스킵 상태 무시, `#CASE` fallthrough 없음, `#DEF` 위치 의존, `#END IF` 미인식, 미선택 분기의 `#WAV`/`#BMP`가 덮어씀 | `controlFlow.ts`, `compiler/index.ts` | 🐞 |
 | 8 | `#BPM` 미지정 기본값 불일치: 런타임 60 / UI 130 / 저장 120 (스펙 130) | `timing/index.ts`, `headerWriter.ts`, `useLocalBmsFile.ts` | 🐞 |
 | 9 | 지뢰 데미지 `값/256` (스펙 `값/2` %), `ZZ` 즉사 미구현, `#WAV00` 폭발음 미재생 | `bms-core/.../notes/channels.ts`, `GaugeSystem.ts` | 🐞 |
-| 10 | 10K 레인 불일치 (파서 2P = 8~12열, player/editor 레인 6~10) → 노트 소실·잘못 저장 | `styleStrategy.ts`, player/editor `laneConfig.ts` | 🐞 |
-| 11 | EUC-KR 차트가 Shift_JIS로 오인될 가능성 (판별 순서) | `bms-core/.../reader/index.ts` | ⚠️(추정) |
+| 10 | 10K 레인 불일치 (파서 2P = 8~12열, player/editor 레인 6~10) → 노트 소실·잘못 저장 | `styleStrategy.ts`, player/editor `laneConfig.ts` | ✅ 2차 수정 |
+| 11 | EUC-KR 차트가 Shift_JIS/GBK로 오인 (판별 순서) | `bms-core/.../reader/index.ts` | ✅ 2차 수정 |
 
 ---
 
@@ -168,6 +168,9 @@
 | 2026-10-21 | 후속 난이도 추정 | 앱 `estimateDifficulty` — 투명 노트 제외 |
 | 2026-10-21 | 후속 공개 export | bms-core에서 `DEFAULT_BPM`, `LANDMINE_INSTANT_GAMEOVER`, `calculateLandmineDamage` export. 앱 파서 경로의 `130` 하드코딩을 `DEFAULT_BPM`으로 교체 |
 | 2026-10-21 | 테스트 | `keysoundPlayerAdapter.test.ts`를 `chokeGroup`/`catchUp` 옵션과 `#BASE 62` 대소문자 유지에 맞춰 갱신 |
+| 2026-10-21 | 2차 #10 10K 레인 | player `LANE_CONFIG_10K_2P`와 editor `10K` 레인을 파서와 같은 열(2P = `8`~`12`, `SC2`)로 변경. 2P 노트가 표시·판정되고, 저장 시 21~26 채널로 기록됨 |
+| 2026-10-21 | 2차 #11 EUC-KR | `reader` — UTF-8을 엄격하게 먼저 시도한 뒤, 레거시 인코딩 중 오류 없이 디코딩되는 것들의 "텍스트다움" 점수(자주 쓰는 한글 음절, 가나, 한자 등)를 비교해 가장 높은 쪽 선택. 동점이면 기존 순서(Shift-JIS 우선). 로컬 차트 15개에서 결과 동일 |
+| 2026-10-21 | 2차 저장 시 채널 유실 | `EditableBMSChart.extraObjects` 추가 — 에디터가 다루지 않는 채널(05, 0A~0E, 97/98, 99 TEXT, A0 JUDGE, A1~A6, 확장 레인 1A~2Z 등)을 원본 그대로 보관하고 저장 시 원래 해상도로 다시 기록. 열 매핑이 없는 레인 오브젝트는 더 이상 BGM(01)으로 저장되지 않음 |
 
 ### 1차 수정 후 후속 과제
 - ✅ (2026-10-21 처리) `JudgmentEngine` DEFEXRANK 판정창을 활성 스타일의 RANK 2 판정창 × `d/100`으로 변경하고, `Player.tsx`는 defexrank를 그대로 전달. `defexrankToRank` 근사 제거.
@@ -179,6 +182,13 @@
 - ✅ (2026-10-21) `estimateDifficulty` 투명 노트 제외.
 - ✅ (2026-10-21) `DEFAULT_BPM`, `LANDMINE_INSTANT_GAMEOVER` 공개 export.
 
-### 남은 범위 (다음 라운드)
-- #10 10K 레인 불일치, #11 EUC-KR 판별 순서, 에디터 저장 시 채널 유실(A0, 99, 08 EXBPM 등) — 1절/2~6절 표 참고.
-- 1차 수정은 위 표에 기록하고, 2~6절 표는 조사 시점(2026-10-20) 스냅숏으로 유지.
+### 2차 라운드 (2026-10-21)
+- ✅ #10 10K 레인 불일치 — player/editor 10K 2P 레인을 열 `8`~`12`로 통일.
+- ✅ #11 EUC-KR 판별 순서 — "처음 오류 없는 인코딩" 대신 점수 비교로 판별.
+- ✅ 에디터 저장 시 채널 유실 — `extraObjects`로 비편집 채널 원본 보존.
+- 확인 결과 `08` EXBPM 이벤트는 이미 보존되고 있었음 (`#BPMxx` 정의 + 08 채널로 기록). 2절 표의 "`#EXBPMxx`"는 `#EXBPM` 헤더 자체를 08 채널에서 참조하지 않는 파서 문제이며 별도 항목.
+
+### 남은 범위
+- `#EXBPMxx` 헤더를 08 채널에서 조회, `#LNTYPE 2`, 확장 레인(1A~2Z) 열 매핑, 풋 페달 레인, PMS 5버튼/BME-type, 저장 시 원본 인코딩 유지 — 2~6절 표 참고.
+- 확장 레인 오브젝트는 이제 저장 시 보존되지만, 에디터/플레이어에서 표시·편집되지는 않음.
+- 1·2차 수정은 위 표에 기록하고, 2~6절 표는 조사 시점(2026-10-20) 스냅숏으로 유지.

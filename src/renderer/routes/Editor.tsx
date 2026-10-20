@@ -24,7 +24,7 @@ import { AudioPreloader, WorkerAudioScheduler } from '@rhythm-archive/bms-player
 import type { FileMap, SchedulerNote } from '@rhythm-archive/bms-player';
 import AudioSchedulerWorkerConstructor from '../workers/audioScheduler.worker?worker';
 import type { CurrentFile, NavigationGuard } from '../App';
-import { useLocalBmsFile, parseVolWav } from '../hooks/useLocalBmsFile';
+import { useLocalBmsFile, parseVolWav, isEditableNote } from '../hooks/useLocalBmsFile';
 import { createLocalAudioWorker } from '../lib/LocalAudioWorker';
 import { Player } from './Player';
 import { useEditorStore } from '../stores/editorStore';
@@ -462,7 +462,10 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
 
       // Phase B: map notes with tick/beat calculations (O(N))
       const initConverter = createBeatConverter(ec.timeSignatures);
-      const editableNotes: EditableBMSNote[] = chart.notes.map((n, i) => {
+      // Lane objects without a column (extension lanes 1A-2Z, channels outside
+      // the detected layout) are kept verbatim in ec.extraObjects; as notes they
+      // would be written back on the BGM channel as well.
+      const editableNotes: EditableBMSNote[] = chart.notes.filter(isEditableNote).map((n, i) => {
         // Prefer the position as written in the file; the writer uses it to
         // put untouched notes back on the source line resolution exactly.
         const derived = initConverter.beatToMF(n.beat);
@@ -1624,6 +1627,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       bpmChanges,
       stopEvents,
       bgaEvents: editableChart.bgaEvents,
+      extraObjects: editableChart.extraObjects,
     };
   }, [editableChart, headers, notes, timeSignatures, bpmChanges, stopEvents]);
 

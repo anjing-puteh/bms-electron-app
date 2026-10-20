@@ -62,7 +62,7 @@ describe('generateLaneConfig', () => {
     },
     '10K': {
       laneCount: 12,
-      laneIds: ['SC', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'SC2'],
+      laneIds: ['SC', '1', '2', '3', '4', '5', '8', '9', '10', '11', '12', 'SC2'],
       scratchLanes: ['SC', 'SC2'],
       laneWidth: 18,
       scratchWidth: 28,
