@@ -92,14 +92,19 @@ jaTest.describe('Japanese locale smoke', () => {
       (window as unknown as { __DEV_NAVIGATE__: (route: string) => void })
         .__DEV_NAVIGATE__('editor');
     });
-    await window.waitForTimeout(800);
-
-    // Editor toolbar should expose ja tool labels (追加/選択/移動/etc) or panel headings (譜面情報/キーサウンド)
-    const hasEditorJa = await window.evaluate(() => {
-      const text = document.body.innerText;
-      return /追加|選択|移動|譜面情報|キーサウンド|小節|ノーツ/.test(text);
-    });
-    expect(hasEditorJa).toBe(true);
+    // The fixture path does not exist, so the editor route ends on its
+    // "file cannot be opened" screen; depending on timing the toolbar may show
+    // first. Either way the editor route must render in Japanese. Wait for it
+    // instead of sampling once after a fixed delay (flaky on CI).
+    await expect
+      .poll(
+        () => window.evaluate(() => {
+          const text = document.body.innerText;
+          return /追加|選択|移動|譜面情報|キーサウンド|小節|ノーツ|ファイルを開けません/.test(text);
+        }),
+        { timeout: 15000 },
+      )
+      .toBe(true);
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -64,13 +64,13 @@ test.describe('Editor GUI - Real BMS File', () => {
   test('editor shows right panel with stats and header info', async ({ window }) => {
     await openEditorWithRealFile(window);
 
-    // Stats section should show "통계" and note counts
-    const statsText = await window.locator('text=통계').count();
-    expect(statsText).toBeGreaterThan(0);
+    // Stats section should show "통계" and note counts. Auto-waiting assertions:
+    // the right panel mounts after the chart is parsed, which can exceed the
+    // fixed 2s wait on a busy CI runner.
+    await expect(window.locator('text=통계').first()).toBeVisible({ timeout: 15000 });
 
     // Chart info section
-    const chartInfo = await window.locator('text=차트 정보').count();
-    expect(chartInfo).toBeGreaterThan(0);
+    await expect(window.locator('text=차트 정보').first()).toBeVisible({ timeout: 15000 });
 
     await window.screenshot({ path: 'test-results/gui-right-panel.png' });
   });
