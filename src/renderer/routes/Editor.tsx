@@ -18,13 +18,13 @@ import {
 } from '@rhythm-archive/bms-editor';
 import type { BmsChartDiffInfo, NoteChartEditorProps, NoteConvertTarget, ZoomControl } from '@rhythm-archive/bms-editor';
 import type { EditableBMSNote, EditableBMSChart, TimingAction } from '@rhythm-archive/bms-core';
-import { BMSWriter, Timing } from '@rhythm-archive/bms-core';
+import { BMSWriter, Timing, allocateObjectIds, canonicalObjectId, isBase62Headers, keysoundKey } from '@rhythm-archive/bms-core';
 import { beatToTick } from '../lib/tickUtils';
 import { AudioPreloader, WorkerAudioScheduler } from '@rhythm-archive/bms-player';
 import type { FileMap, SchedulerNote } from '@rhythm-archive/bms-player';
 import AudioSchedulerWorkerConstructor from '../workers/audioScheduler.worker?worker';
 import type { CurrentFile, NavigationGuard } from '../App';
-import { useLocalBmsFile } from '../hooks/useLocalBmsFile';
+import { useLocalBmsFile, parseVolWav } from '../hooks/useLocalBmsFile';
 import { createLocalAudioWorker } from '../lib/LocalAudioWorker';
 import { Player } from './Player';
 import { useEditorStore } from '../stores/editorStore';
@@ -253,6 +253,9 @@ interface EditorProps {
 }
 
 
+/** Fixed mix headroom for editor playback (slider 100% → 50% of unity gain). */
+const EDITOR_MIX_HEADROOM = 0.5;
+
 /** BMS writer warning code → toast message key (routes.editor.toast.*). */
 const WRITER_WARNING_KEYS = {
   'slot-collision-rerouted': 'writerSlotRerouted',
@@ -473,8 +476,9 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           tick,
           column: n.column || '',
           noteType: (n.noteType as EditableBMSNote['noteType']) || 'playable',
-          // #WAV keys are stored upper-case; ids are case-insensitive (no #BASE 62).
-          keysound: (n.keysound || '00').toUpperCase(),
+          // Canonical id: upper-case for base36 (case-insensitive), as written
+          // for #BASE 62 (case-sensitive — folding merges different keysounds).
+          keysound: canonicalObjectId(n.keysound || '00', chart.base62),
           endBeat: n.endBeat,
           endTick,
           endMeasure: n.endMeasure,
@@ -546,8 +550,12 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     const map = new Map<string, string>();
     const source = headers?.wav.size ? headers.wav : (chart ? new Map(Object.entries(chart.keysounds)) : null);
     if (!source) return map;
+    const caseSensitive = headers ? isBase62Headers(headers) : (chart?.base62 ?? false);
     for (const [id, filename] of source.entries()) {
       map.set(id, filename);
+      // base36 alias for lookups in the other case; never for #BASE 62,
+      // where "KP" and "Kp" are different keysounds.
+      if (caseSensitive) continue;
       const upper = id.toUpperCase();
       if (upper !== id) map.set(upper, filename);
     }
@@ -562,6 +570,20 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     }
     return chart?.keysounds || {};
   }, [headers, chart]);
+
+  // #BASE 62: object ids are case-sensitive ("0a" != "0A"); base36 ids are not.
+  const base62 = headers ? isBase62Headers(headers) : (chart?.base62 ?? false);
+  const base62Ref = useRef(base62);
+  base62Ref.current = base62;
+  /** Canonical keysound id (base36 → upper-case, base62 → as is). */
+  const canonId = useCallback((id: string) => canonicalObjectId(id, base62Ref.current), []);
+  // Output gain: slider × mix headroom × #VOLWAV. Keysounds are mastered to be
+  // summed at unity, so dense passages need headroom (players default to ~50%).
+  const volWav = parseVolWav(headers?.custom.get('VOLWAV') ?? (chart?.volWav !== undefined ? String(chart.volWav) : undefined));
+  const masterGainRef = useRef((v: number) => v * EDITOR_MIX_HEADROOM * (volWav / 100));
+  masterGainRef.current = (v: number) => v * EDITOR_MIX_HEADROOM * (volWav / 100);
+  /** Audio preloader key (base36 → lower-case, base62 → as is). */
+  const audioKey = useCallback((id: string) => keysoundKey(id, base62Ref.current), []);
 
   // Minimap density data — precompute per-measure density + color for Minimap overlay
   const minimapDensityData = useMemo((): MinimapDensityEntry[] | undefined => {
@@ -589,27 +611,27 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   // Usage count per keysound (main keysound + additionalKeysounds included)
   const keysoundUsageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const id of Object.keys(keysoundRecord)) counts[id.toUpperCase()] = 0;
+    for (const id of Object.keys(keysoundRecord)) counts[canonId(id)] = 0;
     for (const n of notes) {
       if (n.keysound && n.keysound !== '00') {
-        const id = n.keysound.toUpperCase();
+        const id = canonId(n.keysound);
         counts[id] = (counts[id] || 0) + 1;
       }
       if (n.additionalKeysounds) {
         for (const ak of n.additionalKeysounds) {
-          const id = ak.keysound.toUpperCase();
+          const id = canonId(ak.keysound);
           counts[id] = (counts[id] || 0) + 1;
         }
       }
     }
     return counts;
-  }, [notes, keysoundRecord]);
+  }, [notes, keysoundRecord, canonId, base62]);
 
   // Keysound management callbacks
   const [replaceKeysoundTarget, setReplaceKeysoundTarget] = useState<string | null>(null);
 
   const handleFindNotes = useCallback((keysoundId: string) => {
-    const id = keysoundId.toUpperCase();
+    const id = canonId(keysoundId);
     store.selectByFilter({ keysounds: [id] });
     const first = notes.find((n) =>
       n.keysound === id ||
@@ -623,7 +645,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   }, [notes, store]);
 
   const handleSelectBgmNotesByKeysound = useCallback((keysoundId: string) => {
-    store.selectByFilter({ keysounds: [keysoundId.toUpperCase()], noteTypes: ['bgm'] });
+    store.selectByFilter({ keysounds: [canonId(keysoundId)], noteTypes: ['bgm'] });
   }, []);
 
   const handleReplaceKeysound = useCallback((keysoundId: string) => {
@@ -632,7 +654,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   }, []);
 
   const handleDeleteUnused = useCallback((keysoundId: string) => {
-    const count = keysoundUsageCounts[keysoundId.toUpperCase()] ?? 0;
+    const count = keysoundUsageCounts[canonId(keysoundId)] ?? 0;
     if (count > 0) {
       // Confirm: usages (notes and keysound layers) become silent (00)
       const ok = window.confirm(t('editor:routes.editor.deleteUnusedConfirm', { count }));
@@ -690,7 +712,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     if (lastPreviewTrackRef.current) {
       preloader.stopAudio(lastPreviewTrackRef.current);
     }
-    const trackId = preloader.playAudioSync(keysoundId.toLowerCase());
+    const trackId = preloader.playAudioSync(audioKey(keysoundId));
     lastPreviewTrackRef.current = trackId;
   }, []);
 
@@ -721,7 +743,9 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     lastHoverKeysoundRef.current = keysoundId;
     // Show keysound info overlay
     if (keysoundId && keysoundId !== '00') {
-      const filename = keysoundRecord[keysoundId] || keysoundRecord[keysoundId.toUpperCase()] || keysoundRecord[keysoundId.toLowerCase()] || '';
+      const filename = keysoundRecord[keysoundId]
+        || (base62Ref.current ? '' : keysoundRecord[keysoundId.toUpperCase()] || keysoundRecord[keysoundId.toLowerCase()])
+        || '';
       setHoverKeysoundInfo(`${keysoundId}: ${filename}`);
     } else {
       setHoverKeysoundInfo(null);
@@ -828,7 +852,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       noteType: isBgm ? 'bgm' : (snt === 'longNote' ? 'playable' : snt),
       // A drop on BGM2 must land on channel 2, not be stacked into channel 0.
       ...(bgmLane ? { bgmChannel: column === 'BGM' ? 0 : parseInt(column.slice(3), 10) || 0 } : {}),
-      keysound: keysoundId.toUpperCase(), measure, fraction, channel: '',
+      keysound: canonId(keysoundId), measure, fraction, channel: '',
     });
     if (audioPreloaderRef.current && keysoundId !== '00') {
       playPreview(keysoundId);
@@ -852,10 +876,10 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       if (imported.length === 0) return;
       // Ids referenced by notes count as used even without a #WAV line —
       // otherwise a new file would suddenly sound on those notes.
-      const usedIds = new Set(Object.keys(keysoundRecord).map((k) => k.toUpperCase()));
+      const usedIds = new Set(Object.keys(keysoundRecord).map(canonId));
       for (const n of useEditorStore.getState().notes) {
-        if (n.keysound) usedIds.add(n.keysound.toUpperCase());
-        n.additionalKeysounds?.forEach((l) => usedIds.add(l.keysound.toUpperCase()));
+        if (n.keysound) usedIds.add(canonId(n.keysound));
+        n.additionalKeysounds?.forEach((l) => usedIds.add(canonId(l.keysound)));
       }
       // A file that is already defined keeps its id (no duplicate definitions).
       const idByFile = new Map<string, string>();
@@ -863,20 +887,16 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         if (fname) idByFile.set(fname.toLowerCase(), id);
       }
       const newWavDefs: Record<string, string> = {};
-      let nextIdx = 1;
       let reused = 0;
       let skipped = 0;
-      for (const item of imported) {
-        if (idByFile.has(item.filename.toLowerCase())) { reused++; continue; }
-        let wavId = '';
-        for (; nextIdx <= 1295; nextIdx++) {
-          const candidate = nextIdx.toString(36).toUpperCase().padStart(2, '0');
-          if (!usedIds.has(candidate)) {
-            wavId = candidate;
-            usedIds.add(candidate);
-            break;
-          }
-        }
+      const toAdd = imported.filter((item) => {
+        if (idByFile.has(item.filename.toLowerCase())) { reused++; return false; }
+        return true;
+      });
+      // #BASE 62 charts get ids from the full 0-9A-Za-z range (3843 ids)
+      const freeIds = allocateObjectIds(usedIds, toAdd.length, base62Ref.current);
+      for (const [i, item] of toAdd.entries()) {
+        const wavId = freeIds[i];
         if (!wavId) { skipped++; continue; }
         newWavDefs[wavId] = item.filename;
         idByFile.set(item.filename.toLowerCase(), wavId);
@@ -892,7 +912,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       console.error('[Editor] Import keysounds failed:', err);
       showToast(t('editor:routes.editor.toast.keysoundImportFailed'), 'error');
     }
-  }, [file.path, keysoundRecord, showToast]);
+  }, [file.path, keysoundRecord, showToast, canonId]);
 
   // --- Save ---
   /** Surface what the writer had to adjust so nothing is lost silently. */
@@ -1192,7 +1212,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         ? storeWav.entries()
         : Object.entries(chart.keysounds);
       for (const [id, filename] of wavSource) {
-        if (filename) fileMap[id.toLowerCase()] = filename;
+        if (filename) fileMap[audioKey(id)] = filename;
       }
       const total = Object.keys(fileMap).length;
       if (total === 0) {
@@ -1214,7 +1234,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         } else if (type === 'ERROR') {
           failedKeys.push((payload as { key: string }).key);
         }
-      }, { useCache: false, useIndexedDBCache: false });
+      }, { useCache: false, useIndexedDBCache: false, releaseAfterUpload: true });
       inProgressPreloaderRef.current = preloader;
       await preloader.loadAll();
       // Bail-out: Editor unmounted or new file selected while loading
@@ -1231,7 +1251,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         return;
       }
       await preloader.initAudioWorklet();
-      preloader.setMasterVolume(useEditorStore.getState().volume);
+      preloader.setMasterVolume(masterGainRef.current(useEditorStore.getState().volume));
       // Upload samples to the worklet up front so the first hit of each
       // keysound doesn't copy it on the main thread mid-playback.
       void preloader.primeWorklet();
@@ -1251,7 +1271,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       }
       store.setAudioPhase('ready');
       if (failedKeys.length > 0) {
-        const ids = failedKeys.map((k) => k.toUpperCase());
+        const ids = failedKeys.map(canonId);
         console.warn('[Editor] Keysounds not loaded:', failedKeys.map((k) => `${k}=${fileMap[k]}`));
         showToast(t('editor:routes.editor.toast.keysoundsMissing', {
           count: ids.length,
@@ -1300,15 +1320,16 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     };
     const out: SchedulerNote[] = [];
     for (const n of es.notes) {
+      // Landmines and invisible notes are not heard in autoplay (as in BMS players).
       if (n.noteType === 'landmine') continue;
-      const audibleMain = n.keysound && n.keysound !== '00' && bgmAudible(n);
-      const bgmLayers = n.additionalKeysounds?.filter((l) => l.keysound && l.keysound !== '00');
+      const audibleMain = n.noteType !== 'invisible' && n.keysound && n.keysound !== '00' && bgmAudible(n);
+      const bgmLayers = n.additionalKeysounds?.filter((l) => l.type !== 'invisible' && l.keysound && l.keysound !== '00');
       if (!audibleMain && !bgmLayers?.length) continue;
       const sec = timing.beatToSeconds(n.beat);
       // Volume is applied once by the master volume (the slider), not per note.
-      if (audibleMain) out.push({ sec, keysound: n.keysound.toLowerCase(), offset: 0, volume: 1 });
+      if (audibleMain) out.push({ sec, keysound: audioKey(n.keysound), offset: 0, volume: 1 });
       if (bgmLayers) {
-        for (const l of bgmLayers) out.push({ sec, keysound: l.keysound.toLowerCase(), offset: 0, volume: 1 });
+        for (const l of bgmLayers) out.push({ sec, keysound: audioKey(l.keysound), offset: 0, volume: 1 });
       }
     }
     return out.sort((a, b) => a.sec - b.sec);
@@ -1497,8 +1518,8 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     }
   }, [playbackSpeed]);
   useEffect(() => {
-    audioPreloaderRef.current?.setMasterVolume(volume);
-  }, [volume]);
+    audioPreloaderRef.current?.setMasterVolume(masterGainRef.current(volume));
+  }, [volume, volWav]);
 
   // Cleanup
   useEffect(() => {
@@ -2784,7 +2805,8 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           open={activeOverlay === 'audioSlicer'}
           onClose={() => setActiveOverlay(null)}
           bmsFilePath={file.path}
-          usedWavIds={new Set(Object.keys(keysoundRecord).map((k) => k.toUpperCase()))}
+          usedWavIds={new Set(Object.keys(keysoundRecord).map(canonId))}
+          base62={base62}
           onError={(kind, message) => {
             showToast(t(kind === 'load' ? 'editor:routes.editor.toast.sliceLoadFailed' : 'editor:routes.editor.toast.sliceSaveFailed', { message }), 'error');
           }}

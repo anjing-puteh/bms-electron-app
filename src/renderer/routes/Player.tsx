@@ -5,6 +5,7 @@ import { Notechart, AudioPreloader, GamePlayer } from '@rhythm-archive/bms-playe
 import type { FileMap, ScoreState, NotechartInput } from '@rhythm-archive/bms-player';
 import type { CurrentFile, NavigationGuard } from '../App';
 import { useLocalBmsFile } from '../hooks/useLocalBmsFile';
+import type { LocalBmsChartInfo } from '../hooks/useLocalBmsFile';
 import { createLocalAudioWorker } from '../lib/LocalAudioWorker';
 import { createKeysoundPlayerAdapter } from '../lib/keysoundPlayerAdapter';
 import type { KeysoundPlayer } from '../lib/keysoundPlayerAdapter';
@@ -20,6 +21,58 @@ interface PlayerProps {
 }
 
 type PlayerPhase = 'loading-chart' | 'loading-audio' | 'ready' | 'error';
+
+type ChartNote = LocalBmsChartInfo['notes'][number];
+
+/**
+ * Splits chart notes into notechart input. Invisible objects (ch 31-4Z) are
+ * never displayed or judged — they only define keysounds — so they stay out
+ * of the playable list (otherwise they render, count toward the gauge and MISS).
+ */
+export function splitPlayerNotes(notes: ChartNote[]): { playable: ChartNote[]; landmines: ChartNote[] } {
+  const playable: ChartNote[] = [];
+  const landmines: ChartNote[] = [];
+  for (const n of notes) {
+    if (n.noteType === 'landmine') landmines.push(n);
+    else if (n.noteType !== 'invisible') playable.push(n);
+  }
+  return { playable, landmines };
+}
+
+/** Parses a numeric header value; non-numeric / non-finite → undefined. */
+function headerNumber(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const n = parseFloat(value.trim());
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * Judge/gauge options from chart headers. #DEFEXRANK (percent, 100 = NORMAL)
+ * is passed through and overrides #RANK 0-4 inside the engine; anything absent
+ * or invalid is left undefined so the engine applies its defaults
+ * (#RANK 2 NORMAL, #TOTAL 200).
+ *
+ * When both #RANK and #DEFEXRANK are valid, the one closer to EOF wins (spec).
+ * Without header order information #DEFEXRANK wins.
+ */
+export function chartJudgeOptions(
+  headers: { get(name: string): string | undefined; order?(name: string): number } | null | undefined,
+): { rank?: number; defexrank?: number; total?: number } {
+  if (!headers) return {};
+  const opts: { rank?: number; defexrank?: number; total?: number } = {};
+  const rank = headerNumber(headers.get('rank'));
+  const validRank = rank !== undefined && Number.isInteger(rank) && rank >= 0 && rank <= 4;
+  if (validRank) opts.rank = rank;
+  const defexrank = headerNumber(headers.get('defexrank'));
+  const validDefexrank = defexrank !== undefined && defexrank > 0;
+  const rankIsLater =
+    validRank && validDefexrank && headers.order !== undefined &&
+    headers.order('rank') > headers.order('defexrank');
+  if (validDefexrank && !rankIsLater) opts.defexrank = defexrank;
+  const total = headerNumber(headers.get('total'));
+  if (total !== undefined && total > 0) opts.total = total;
+  return opts;
+}
 
 export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGuard }: PlayerProps) {
   const { t } = useTranslation(['app', 'common']);
@@ -103,8 +156,8 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
           throw new Error('Chart data incomplete — missing timing/positioning/spacing/keysounds/songInfo');
         }
 
-        const playableNotes = chart.notes.filter(n => n.noteType !== 'landmine');
-        const landmineNotes = chart.notes.filter(n => n.noteType === 'landmine');
+        // Invisible notes are dropped here; their WAVs still preload via chart.keysounds.
+        const { playable: playableNotes, landmines: landmineNotes } = splitPlayerNotes(chart.notes);
 
         const notechartInput: NotechartInput = {
           notes: playableNotes,
@@ -143,7 +196,8 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
               setAudioProgress({ loaded: p.loadedCount, total: p.total });
             }
           },
-          { progressiveDecode: true, useCache: false, useIndexedDBCache: false },
+          // releaseAfterUpload: PCM lives once (in the worklet), not twice
+          { progressiveDecode: true, useCache: false, useIndexedDBCache: false, releaseAfterUpload: true },
         );
 
         if (cancelled) return;
@@ -156,11 +210,15 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
 
         await audioPreloader.initAudioWorklet();
         if (cancelled) { audioPreloader.releaseAllResources(); return; }
+        // Global #VOLWAV scales every keysound (worklet default master is 0.5).
+        audioPreloader.setMasterVolume(0.5 * (chart.volWav / 100));
+        void audioPreloader.primeWorklet();
 
         audioPreloaderRef.current?.releaseAllResources();
         audioPreloaderRef.current = audioPreloader;
 
-        setKeysoundPlayer(createKeysoundPlayerAdapter(audioPreloader));
+        // fileMap keys follow chart.keysounds (lower-case base36 / case-preserved #BASE 62)
+        setKeysoundPlayer(createKeysoundPlayerAdapter(audioPreloader, chart.base62));
         setAudioProgress({ loaded: total, total });
         setPhase('ready');
       } catch (err) {
@@ -282,6 +340,9 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
     );
   }
 
+  // #RANK / #DEFEXRANK / #TOTAL → engine judge windows and gauge rate
+  const judgeOptions = chartJudgeOptions(chart?.bmsChart?.headers);
+
   // Ready / Playing / Result — GamePlayer handles all game UI including ready screen and result screen
   return (
     <div className="h-full flex flex-col bg-black">
@@ -314,7 +375,7 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
           height={containerSize.height}
           onComplete={handleComplete}
           onExit={handleExit}
-          options={{ autoplay, worker: gameWorkerRef.current ?? undefined }}
+          options={{ ...judgeOptions, autoplay, worker: gameWorkerRef.current ?? undefined }}
         />
       </div>
     </div>

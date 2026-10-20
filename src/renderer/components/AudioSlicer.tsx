@@ -1,3 +1,4 @@
+import { allocateObjectIds, canonicalObjectId } from '@rhythm-archive/bms-core';
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { X, Upload, Scissors, Play, Square, ZoomIn, ZoomOut, Wand2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,8 @@ interface AudioSlicerProps {
   onClose: () => void;
   bmsFilePath: string;
   usedWavIds: Set<string>;
+  /** `#BASE 62` chart: ids are case-sensitive and may use a-z (3843 ids). */
+  base62?: boolean;
   onSlicesCreated: (wavDefs: Record<string, string>) => void;
   /** Decode / write failures — the host shows them (the slicer has no toast of its own). */
   onError?: (kind: 'load' | 'save', message: string) => void;
@@ -96,7 +99,7 @@ function downsampleWaveform(channelData: Float32Array, targetPoints: number): { 
   return { min, max };
 }
 
-export function AudioSlicer({ open, onClose, bmsFilePath, usedWavIds, onSlicesCreated, onError }: AudioSlicerProps) {
+export function AudioSlicer({ open, onClose, bmsFilePath, usedWavIds, base62 = false, onSlicesCreated, onError }: AudioSlicerProps) {
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [fileName, setFileName] = useState('');
   /** Safe file-name stem used to prefix generated slice files. */
@@ -519,16 +522,12 @@ export function AudioSlicer({ open, onClose, bmsFilePath, usedWavIds, onSlicesCr
       const uniqueBounds = [...new Set(boundaries)].sort((a, b) => a - b);
 
       // Find next available WAV IDs
-      const allUsed = new Set(Array.from(usedWavIds).map((id) => id.toUpperCase()));
+      const allUsed = new Set(Array.from(usedWavIds).map((id) => canonicalObjectId(id, base62)));
       const getNextWavId = (): string => {
-        for (let i = 1; i <= 1295; i++) {
-          const id = i.toString(36).toUpperCase().padStart(2, '0');
-          if (!allUsed.has(id)) {
-            allUsed.add(id);
-            return id;
-          }
-        }
-        return '';
+        const [id] = allocateObjectIds(allUsed, 1, base62);
+        if (!id) return '';
+        allUsed.add(id);
+        return id;
       };
 
       const slices: Array<{ filename: string; pcmData: Float32Array; sampleRate: number; channels: number }> = [];
@@ -576,7 +575,7 @@ export function AudioSlicer({ open, onClose, bmsFilePath, usedWavIds, onSlicesCr
     } finally {
       setSlicing(false);
     }
-  }, [audioBuffer, markers, bmsFilePath, usedWavIds, onSlicesCreated, onError, sliceBaseName]);
+  }, [audioBuffer, markers, bmsFilePath, usedWavIds, base62, onSlicesCreated, onError, sliceBaseName]);
 
   // Reset playing state when dialog closes
   useEffect(() => {

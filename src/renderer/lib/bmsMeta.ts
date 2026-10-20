@@ -86,7 +86,7 @@ export function notePositionKeys(notes: readonly PositionKeyNote[]): string[] {
   const seen = new Map<string, number>();
   return notes.map((n) => {
     const tick = n.tick ?? Math.round((n.beat ?? 0) * 960);
-    const base = `${tick}:${n.noteType ?? 'playable'}:${n.column ?? ''}:${(n.keysound ?? '00').toUpperCase()}`;
+    const base = `${tick}:${n.noteType ?? 'playable'}:${n.column ?? ''}:${n.keysound ?? '00'}`; // ids are already canonical (#BASE 62 is case-sensitive)
     const k = seen.get(base) ?? 0;
     seen.set(base, k + 1);
     return `${base}:${k}`;

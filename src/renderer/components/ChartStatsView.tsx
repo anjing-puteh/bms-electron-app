@@ -45,7 +45,8 @@ export function ChartStatsView({ notes, bpm, totalBeats }: ChartStatsViewProps) 
 /** Estimate chart difficulty (1-12 scale) based on note density, BPM, LN ratio */
 export function estimateDifficulty(notes: EditableBMSNote[], bpm: number, totalBeats: number): number {
   if (notes.length === 0 || totalBeats <= 0) return 0;
-  const playableNotes = notes.filter((n) => n.noteType === 'playable' || n.noteType === 'invisible');
+  // Invisible objects (ch 31-4Z) are never hit by the player — keysound only.
+  const playableNotes = notes.filter((n) => n.noteType === 'playable');
   const totalPlayable = playableNotes.length;
   if (totalPlayable === 0) return 0;
 

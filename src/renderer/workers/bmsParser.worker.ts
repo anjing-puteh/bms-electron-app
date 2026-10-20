@@ -11,7 +11,7 @@
  *   PARSE_ERROR  {requestId, error: string}
  */
 
-import { BMSParser } from '@rhythm-archive/bms-core';
+import { BMSParser, KeySounds, DEFAULT_BPM } from '@rhythm-archive/bms-core';
 import { detectKeyMode } from '@rhythm-archive/bms-editor';
 
 interface ParsePhase1Message {
@@ -49,7 +49,7 @@ self.onmessage = async (event: MessageEvent<WorkerInMessage>) => {
       : null;
 
     const bpmHeader = chart.headers.get('bpm');
-    const initialBpm = bpmHeader ? parseFloat(bpmHeader) : 130;
+    const initialBpm = bpmHeader ? parseFloat(bpmHeader) : DEFAULT_BPM;
     const lnTypeHeader = chart.headers.get('lntype');
     const lnType = lnTypeHeader ? parseInt(lnTypeHeader) : 1;
 
@@ -126,13 +126,9 @@ self.onmessage = async (event: MessageEvent<WorkerInMessage>) => {
       }
     }
 
-    const keysounds: Record<string, string> = {};
-    chart.headers.each((key: string, value: string) => {
-      const match = key.match(/^wav(\S\S)$/i);
-      if (match) {
-        keysounds[match[1].toLowerCase()] = value;
-      }
-    });
+    // Base-aware keysound map (#BASE 62 ids are case-sensitive)
+    const keysoundsObj = KeySounds.fromBMSChart(chart);
+    const keysounds: Record<string, string> = { ...keysoundsObj.all() };
 
     let total = 0, scratch = 0, longNotes = 0, landmines = 0, invisible = 0;
     let maxMeasure = 0;
@@ -171,6 +167,7 @@ self.onmessage = async (event: MessageEvent<WorkerInMessage>) => {
       stops,
       scrollChanges,
       keysounds,
+      base62: keysoundsObj.base62,
       barLines,
       totalBeats: Math.ceil(maxBeat) + 4,
     });

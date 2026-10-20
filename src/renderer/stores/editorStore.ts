@@ -8,7 +8,7 @@ import type {
   EditableBMSChart,
   NoteType,
 } from '@rhythm-archive/bms-core';
-import { styleForKeyMode } from '@rhythm-archive/bms-core';
+import { styleForKeyMode, canonicalObjectId, isBase62Headers } from '@rhythm-archive/bms-core';
 import type { EditorTool, SelectedNoteType, GridSnap, KeyMode } from '@rhythm-archive/bms-editor';
 import { getLaneIds } from '@rhythm-archive/bms-editor';
 import type { PatternTemplate, PatternNote } from '../lib/patternTemplates';
@@ -227,6 +227,15 @@ function recalcMeasureFractions(
 /** Key for playable note deduplication index: "${beat}:${column}" */
 function noteIndexKey(beat: number, column: string | undefined): string {
   return `${beat}:${column ?? ''}`;
+}
+
+/**
+ * Canonical object id for the chart's base: base36 ids are case-insensitive
+ * (upper-cased), `#BASE 62` ids are case-sensitive (kept as written).
+ */
+function idCanon(headers: BMSHeaderData | null): (id: string) => string {
+  const base62 = isBase62Headers(headers);
+  return (id: string) => canonicalObjectId(id, base62);
 }
 
 /** References of the chart data at the last load/save. */
@@ -1020,8 +1029,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectByFilter: (filter) => {
     const s = get();
     const converter = getConverter(get);
+    const canon = idCanon(s.headers);
     const wantedKeysounds = filter.keysounds && filter.keysounds.length > 0
-      ? new Set(filter.keysounds.map((k) => k.toUpperCase()))
+      ? new Set(filter.keysounds.map(canon))
       : null;
     const matching = s.notes.filter((n) => {
       const layer = s.layerConfig[noteLayer(n)];
@@ -1041,8 +1051,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       }
       // Keysound filter (includes additionalKeysounds)
       if (wantedKeysounds) {
-        const hasMatch = wantedKeysounds.has(n.keysound.toUpperCase()) ||
-          n.additionalKeysounds?.some((ak: { keysound: string }) => wantedKeysounds.has(ak.keysound.toUpperCase()));
+        const hasMatch = wantedKeysounds.has(canon(n.keysound)) ||
+          n.additionalKeysounds?.some((ak: { keysound: string }) => wantedKeysounds.has(canon(ak.keysound)));
         if (!hasMatch) return false;
       }
       return true;
@@ -1337,7 +1347,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       notes: s.notes.map((n) => {
         if (n.id !== noteId || isNoteLocked(s.layerConfig, n)) return n;
         const layers = n.additionalKeysounds ? [...n.additionalKeysounds] : [];
-        layers.push({ keysound: keysoundId.toUpperCase(), type: layerType });
+        layers.push({ keysound: idCanon(s.headers)(keysoundId), type: layerType });
         return { ...n, additionalKeysounds: layers };
       }),
       hasUnsavedChanges: true,
@@ -1702,7 +1712,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (!s.headers) return;
     s.pushUndo('Change WAV definition');
     const newWav = new Map(s.headers.wav);
-    newWav.set(key.toUpperCase(), value);
+    newWav.set(idCanon(s.headers)(key), value);
     set({ headers: { ...s.headers, wav: newWav }, hasUnsavedChanges: true });
   },
 
@@ -1720,7 +1730,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (!s.headers) return;
     s.pushUndo('Change BMP definition');
     const newBmp = new Map(s.headers.bmp);
-    newBmp.set(key.toUpperCase(), value);
+    newBmp.set(idCanon(s.headers)(key), value);
     set({ headers: { ...s.headers, bmp: newBmp }, hasUnsavedChanges: true });
   },
 
@@ -1927,23 +1937,24 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setHighlightKeysound: (keysound) => set({ highlightKeysound: keysound }),
 
   replaceKeysound: (rawFrom, rawTo) => {
-    // Keysound ids are case-insensitive (base36)
-    const fromId = rawFrom.toUpperCase();
-    const toId = rawTo.toUpperCase();
-    if (fromId === toId) return;
     const s = get();
+    // base36 ids are case-insensitive; #BASE 62 ids are case-sensitive
+    const canon = idCanon(s.headers);
+    const fromId = canon(rawFrom);
+    const toId = canon(rawTo);
+    if (fromId === toId) return;
     s.pushUndo(i18next.t('editor:store.replaceKeysound'));
     const updated = s.notes.map((n) => {
       let changed = false;
       let keysound = n.keysound;
       let additionalKeysounds = n.additionalKeysounds;
-      if (n.keysound.toUpperCase() === fromId) {
+      if (canon(n.keysound) === fromId) {
         keysound = toId;
         changed = true;
       }
-      if (n.additionalKeysounds?.some((ak) => ak.keysound.toUpperCase() === fromId)) {
+      if (n.additionalKeysounds?.some((ak) => canon(ak.keysound) === fromId)) {
         additionalKeysounds = n.additionalKeysounds.map((ak) =>
-          ak.keysound.toUpperCase() === fromId ? { ...ak, keysound: toId } : ak
+          canon(ak.keysound) === fromId ? { ...ak, keysound: toId } : ak
         );
         changed = true;
       }
@@ -1956,16 +1967,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const s = get();
     if (!s.headers) return;
     s.pushUndo(i18next.t('editor:store.removeUnusedKeysounds'));
-    const removed = new Set(keysoundIds.map((id) => id.toUpperCase()));
+    const canon = idCanon(s.headers);
+    const removed = new Set(keysoundIds.map(canon));
     const newWav = new Map(s.headers.wav);
     for (const key of s.headers.wav.keys()) {
-      if (removed.has(key.toUpperCase())) newWav.delete(key);
+      if (removed.has(canon(key))) newWav.delete(key);
     }
     // Notes and keysound layers that used a removed definition become silent
     // in the same undo step (no dangling references to an undefined #WAV).
     const notes = s.notes.map((n) => {
-      const mainHit = removed.has(n.keysound.toUpperCase());
-      const layers = n.additionalKeysounds?.filter((l) => !removed.has(l.keysound.toUpperCase()));
+      const mainHit = removed.has(canon(n.keysound));
+      const layers = n.additionalKeysounds?.filter((l) => !removed.has(canon(l.keysound)));
       const layersChanged = n.additionalKeysounds !== undefined && layers!.length !== n.additionalKeysounds.length;
       if (!mainHit && !layersChanged) return n;
       return {

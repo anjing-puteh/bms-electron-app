@@ -235,3 +235,36 @@ describe('undo back to the saved state is clean', () => {
     expect(act().hasUnsavedChanges).toBe(false);
   });
 });
+
+describe('#BASE 62 keysound ids are case-sensitive', () => {
+  const base62Headers = (wav: Map<string, string>) => ({
+    wav, bmp: new Map(), bpmDef: new Map(), stopDef: new Map(), custom: new Map([['BASE', '62']]),
+  }) as never;
+
+  it('removing "0a" leaves "0A" and its notes alone', () => {
+    const a = note({ tick: 0, keysound: '0a', noteType: 'bgm', column: undefined });
+    const b = note({ tick: 0, keysound: '0A', noteType: 'bgm', column: undefined, bgmChannel: 1 });
+    useEditorStore.setState({ notes: [a, b], headers: base62Headers(new Map([['0a', 'x.wav'], ['0A', 'y.wav']])) });
+    act().removeWavDefinitions(['0a']);
+    expect([...act().headers!.wav.keys()]).toEqual(['0A']);
+    expect(act().notes.map((n) => n.keysound)).toEqual(['00', '0A']);
+  });
+
+  it('filter and replace distinguish ids that differ only by case', () => {
+    const a = note({ tick: 0, keysound: 'Kp' });
+    const b = note({ tick: 960, keysound: 'KP', column: '2' });
+    useEditorStore.setState({ notes: [a, b], headers: base62Headers(new Map([['Kp', 'p.wav'], ['KP', 'q.wav']])) });
+    act().selectByFilter({ keysounds: ['Kp'] });
+    expect([...act().selectedNotes]).toEqual([a.id]);
+    act().replaceKeysound('Kp', 'zz');
+    expect(act().notes.map((n) => n.keysound)).toEqual(['zz', 'KP']);
+  });
+
+  it('base36 charts still treat ids case-insensitively', () => {
+    const a = note({ tick: 0, keysound: '0A' });
+    useEditorStore.setState({ notes: [a], headers: base62Headers(new Map([['0A', 'x.wav']])) });
+    useEditorStore.setState({ headers: { ...act().headers!, custom: new Map() } });
+    act().selectByFilter({ keysounds: ['0a'] });
+    expect([...act().selectedNotes]).toEqual([a.id]);
+  });
+});

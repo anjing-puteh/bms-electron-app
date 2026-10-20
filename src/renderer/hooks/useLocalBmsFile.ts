@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import i18next from 'i18next';
-import { BMSParser, Timing, Positioning, Spacing, SongInfo, KeySounds, Notes } from '@rhythm-archive/bms-core';
+import { BMSParser, Timing, Positioning, Spacing, SongInfo, KeySounds, Notes, DEFAULT_BPM } from '@rhythm-archive/bms-core';
 import type { BMSChart, BMSNote, ISongInfoData } from '@rhythm-archive/bms-core';
 import { detectKeyMode } from '@rhythm-archive/bms-editor';
 import type { KeyMode, BpmChange, StopEvent, ScrollSpeedChange } from '@rhythm-archive/bms-editor';
@@ -16,7 +16,12 @@ export interface LocalBmsChartInfo {
   stats: { total: number; scratch: number; longNotes: number; landmines: number; invisible: number };
   stops: StopEvent[];
   scrollChanges: ScrollSpeedChange[];
+  /** WAV id → file. Keys: lower-case (base36) or case-preserved (`#BASE 62`), see `keysoundKey`. */
   keysounds: Record<string, string>;
+  /** `#BASE 62`: object IDs are case-sensitive ("0a" != "0A"). */
+  base62: boolean;
+  /** Global `#VOLWAV` (percent, default 100). */
+  volWav: number;
   positioning: Positioning | null;
   timing: Timing | null;
   // Full bms-core objects for Player (avoids re-parsing)
@@ -74,7 +79,7 @@ export function useLocalBmsFile() {
 
       // Extract BPM info
       const bpmHeader = chart.headers.get('bpm');
-      const initialBpm = bpmHeader ? parseFloat(bpmHeader) : 130;
+      const initialBpm = bpmHeader ? parseFloat(bpmHeader) : DEFAULT_BPM;
       let minBpm = initialBpm;
       let maxBpm = initialBpm;
 
@@ -129,20 +134,16 @@ export function useLocalBmsFile() {
       const lnTypeHeader = chart.headers.get('lntype');
       const lnType = lnTypeHeader ? parseInt(lnTypeHeader) : 1;
 
-      // Keysound map
-      const keysounds: Record<string, string> = {};
-      chart.headers.each((key: string, value: string) => {
-        const match = key.match(/^wav(\S\S)$/i);
-        if (match) {
-          keysounds[match[1].toLowerCase()] = value;
-        }
-      });
-
       // Build all bms-core objects (avoids re-parsing in Player)
       const timing = Timing.fromBMSChart(chart);
       const positioning = Positioning.fromBMSChart(chart, timing);
       const spacing = Spacing.fromBMSChart(chart);
       const keysoundsObj = KeySounds.fromBMSChart(chart);
+      // Keysound map — base-aware: #BASE 62 ids are case-sensitive (folding
+      // them merged different keysounds into one).
+      const keysounds: Record<string, string> = { ...keysoundsObj.all() };
+      const base62 = keysoundsObj.base62;
+      const volWav = parseVolWav(chart.headers.get('volwav'));
       const songInfoObj = SongInfo.fromBMSChart(chart);
 
       // Build bar lines (BUG-P3: compute measure boundaries accounting for time signature changes)
@@ -205,6 +206,8 @@ export function useLocalBmsFile() {
           stops,
           scrollChanges,
           keysounds,
+          base62,
+          volWav,
           positioning,
           timing,
           spacing,
@@ -244,4 +247,10 @@ export function useLocalBmsFile() {
   }, []);
 
   return { ...state, load, reset };
+}
+
+/** Global `#VOLWAV n` — percent of the keysound volume (default 100). */
+export function parseVolWav(value: string | undefined): number {
+  const v = value === undefined ? NaN : parseFloat(value);
+  return Number.isFinite(v) && v >= 0 ? Math.min(v, 1000) : 100;
 }
