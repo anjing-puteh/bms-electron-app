@@ -76,6 +76,8 @@ export interface UndoEntry {
   headers: BMSHeaderData | null;
   bgaEvents: EditableBMSChart['bgaEvents'] | undefined;
   description: string;
+  /** Measure-numbered editor data; only captured by measure insert/delete. */
+  measureData?: { bookmarks: EditorState['bookmarks']; gridSnapOverrides: Map<number, number> };
 }
 
 /** Cap on undo/redo history depth (entries beyond this are dropped oldest-first). */
@@ -227,6 +229,82 @@ function noteIndexKey(beat: number, column: string | undefined): string {
   return `${beat}:${column ?? ''}`;
 }
 
+/** References of the chart data at the last load/save. */
+interface SavedPoint {
+  notes: EditableBMSNote[];
+  bpmChanges: BMSBpmChange[];
+  stopEvents: BMSStopEvent[];
+  timeSignatures: Map<number, number>;
+  headers: BMSHeaderData | null;
+}
+
+function savedPointOf(s: SavedPoint): SavedPoint {
+  return {
+    notes: s.notes, bpmChanges: s.bpmChanges, stopEvents: s.stopEvents,
+    timeSignatures: s.timeSignatures, headers: s.headers,
+  };
+}
+
+/** True unless `entry` is exactly the saved chart (state is immutable, so references suffice). */
+function differsFromSaved(entry: SavedPoint, saved: SavedPoint | null): boolean {
+  return !saved
+    || entry.notes !== saved.notes
+    || entry.bpmChanges !== saved.bpmChanges
+    || entry.stopEvents !== saved.stopEvents
+    || entry.timeSignatures !== saved.timeSignatures
+    || entry.headers !== saved.headers;
+}
+
+/** Undo/redo snapshot of the chart data (references; state is updated immutably). */
+function snapshotOf(
+  s: Pick<EditorState, 'notes' | 'bpmChanges' | 'stopEvents' | 'timeSignatures' | 'headers' | 'editableChart' | 'bookmarks' | 'gridSnapOverrides'>,
+  description: string,
+  withMeasureData = false,
+): UndoEntry {
+  return {
+    notes: s.notes,
+    bpmChanges: s.bpmChanges,
+    stopEvents: s.stopEvents,
+    timeSignatures: s.timeSignatures,
+    headers: s.headers,
+    bgaEvents: s.editableChart?.bgaEvents,
+    description,
+    ...(withMeasureData ? { measureData: { bookmarks: s.bookmarks, gridSnapOverrides: s.gridSnapOverrides } } : {}),
+  };
+}
+
+/** Shift measure-keyed editor data after inserting (+1) or deleting (-1) `atMeasure`. */
+function shiftMeasureData(
+  bookmarks: EditorState['bookmarks'],
+  overrides: Map<number, number>,
+  atMeasure: number,
+  dir: 1 | -1,
+): { bookmarks: EditorState['bookmarks']; gridSnapOverrides: Map<number, number> } {
+  const move = (m: number) => (m >= atMeasure ? m + dir : m);
+  const nextBookmarks = bookmarks
+    .filter((b) => !(dir === -1 && b.measure === atMeasure))
+    .map((b) => (b.measure > atMeasure || (dir === 1 && b.measure === atMeasure) ? { ...b, measure: move(b.measure) } : b));
+  const nextOverrides = new Map<number, number>();
+  for (const [m, snap] of overrides) {
+    if (dir === -1 && m === atMeasure) continue;
+    nextOverrides.set(m > atMeasure || (dir === 1 && m === atMeasure) ? move(m) : m, snap);
+  }
+  return { bookmarks: nextBookmarks, gridSnapOverrides: nextOverrides };
+}
+
+/** pushUndo variant that also records bookmarks / per-measure grid overrides. */
+function pushMeasureUndo(
+  get: () => EditorState,
+  set: (fn: (prev: EditorState) => Partial<EditorState>) => void,
+  description: string,
+): void {
+  const entry = snapshotOf(get(), description, true);
+  set((prev) => ({
+    undoStack: [...prev.undoStack.slice(-(MAX_UNDO_HISTORY - 1)), entry],
+    redoStack: [],
+  }));
+}
+
 /** Build index from notes array (playable notes only) */
 function buildNoteIndex(notes: EditableBMSNote[]): Map<string, string> {
   const index = new Map<string, string>();
@@ -254,6 +332,8 @@ interface EditorState {
 
   // Note deduplication index (playable notes only): "${beat}:${column}" → noteId
   _noteIndex: Map<string, string>;
+  /** Chart data references at the last load/save: undo back to them is "clean". */
+  _savedPoint: SavedPoint | null;
 
   // Tool / Selection
   activeTool: EditorTool;
@@ -384,6 +464,16 @@ interface EditorState {
 
   // Keysound layers
   addKeysoundLayer: (noteId: string, keysoundId: string, layerType: 'invisible' | 'bgm') => void;
+  /**
+   * Converts notes between key lanes and BGM lanes in one undo step: distinct
+   * BGM channels per tick (from `target.channel`), or the relative lane layout
+   * kept from `target.column`.
+   */
+  convertNotes: (
+    noteIds: string[],
+    target: { kind: 'bgm'; channel: number } | { kind: 'playable'; column: string },
+    laneIds: string[],
+  ) => void;
   removeKeysoundLayer: (noteId: string, layerIndex: number) => void;
 
   // Clipboard
@@ -555,6 +645,7 @@ const initialState = {
   showBackConfirm: false,
   _beatConverter: null as BeatConverter | null,
   _noteIndex: new Map<string, string>(),
+  _savedPoint: null as SavedPoint | null,
 };
 
 export const useEditorStore = create<EditorState>((set, get) => ({
@@ -591,6 +682,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     bgmMutedChannels: new Set<number>(),
     _beatConverter: null,
     _noteIndex: new Map<string, string>(),
+    _savedPoint: null,
   }),
 
   initFromChart: (chart, rawNotes, nextId, keyMode) => {
@@ -609,6 +701,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       selectedNotes: new Set(),
       _beatConverter: converter,
       _noteIndex: buildNoteIndex(rawNotes),
+      _savedPoint: savedPointOf({
+        notes: rawNotes, bpmChanges: chart.bpmChanges, stopEvents: chart.stopEvents,
+        timeSignatures: chart.timeSignatures, headers: chart.headers,
+      }),
       ...(keyMode ? { keyMode } : {}),
     });
   },
@@ -617,15 +713,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   pushUndo: (description) => {
     const s = get();
     try {
-      const entry: UndoEntry = structuredClone({
-        notes: s.notes,
-        bpmChanges: s.bpmChanges,
-        stopEvents: s.stopEvents,
-        timeSignatures: s.timeSignatures,
-        headers: s.headers,
-        bgaEvents: s.editableChart?.bgaEvents,
-        description,
-      });
+      // Snapshots hold references: every action replaces notes / headers /
+      // events / maps immutably, so a deep clone (O(chart) per edit) is unneeded.
+      const entry: UndoEntry = snapshotOf(s, description);
       set((prev) => ({
         undoStack: [...prev.undoStack.slice(-(MAX_UNDO_HISTORY - 1)), entry],
         redoStack: [],
@@ -640,11 +730,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (s.undoStack.length === 0) return;
     const entry = s.undoStack[s.undoStack.length - 1];
     try {
-      const redoEntry: UndoEntry = structuredClone({
-        notes: s.notes, bpmChanges: s.bpmChanges, stopEvents: s.stopEvents,
-        timeSignatures: s.timeSignatures, headers: s.headers,
-        bgaEvents: s.editableChart?.bgaEvents, description: entry.description,
-      });
+      const redoEntry: UndoEntry = snapshotOf(s, entry.description, entry.measureData !== undefined);
       const newConverter = createBeatConverter(entry.timeSignatures);
       set({
         redoStack: [...s.redoStack.slice(-(MAX_UNDO_HISTORY - 1)), redoEntry],
@@ -656,8 +742,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         editableChart: s.editableChart ? { ...s.editableChart, bgaEvents: entry.bgaEvents ?? s.editableChart.bgaEvents } : null,
         _beatConverter: newConverter,
         _noteIndex: buildNoteIndex(entry.notes),
+        ...(entry.measureData ?? {}),
         undoStack: s.undoStack.slice(0, -1),
-        hasUnsavedChanges: true,
+        hasUnsavedChanges: differsFromSaved(entry, s._savedPoint),
       });
     } catch (err) {
       console.error('[EditorStore] undo failed:', err);
@@ -669,11 +756,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (s.redoStack.length === 0) return;
     const entry = s.redoStack[s.redoStack.length - 1];
     try {
-      const undoEntry: UndoEntry = structuredClone({
-        notes: s.notes, bpmChanges: s.bpmChanges, stopEvents: s.stopEvents,
-        timeSignatures: s.timeSignatures, headers: s.headers,
-        bgaEvents: s.editableChart?.bgaEvents, description: entry.description,
-      });
+      const undoEntry: UndoEntry = snapshotOf(s, entry.description, entry.measureData !== undefined);
       const newConverter = createBeatConverter(entry.timeSignatures);
       set({
         undoStack: [...s.undoStack, undoEntry],
@@ -685,8 +768,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         editableChart: s.editableChart ? { ...s.editableChart, bgaEvents: entry.bgaEvents ?? s.editableChart.bgaEvents } : null,
         _beatConverter: newConverter,
         _noteIndex: buildNoteIndex(entry.notes),
+        ...(entry.measureData ?? {}),
         redoStack: s.redoStack.slice(0, -1),
-        hasUnsavedChanges: true,
+        hasUnsavedChanges: differsFromSaved(entry, s._savedPoint),
       });
     } catch (err) {
       console.error('[EditorStore] redo failed:', err);
@@ -708,7 +792,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     // Duplicate check for playable notes: auto-replace existing note at same beat+column
     if (isPlayable) {
       const key = noteIndexKey(newNote.beat, newNote.column);
-      const existingId = s._noteIndex.get(key);
+      const indexedId = s._noteIndex.get(key);
+      // Guard against a stale index entry (e.g. the note became BGM / moved):
+      // only replace a playable note that really sits at this beat+column.
+      const existing = indexedId ? s.notes.find((n) => n.id === indexedId) : undefined;
+      const existingId = existing && existing.noteType === 'playable'
+        && existing.column === newNote.column && existing.beat === newNote.beat
+        ? existing.id : undefined;
       if (existingId) {
         // Replace mode: remove old note, add new one
         s.pushUndo('Replace note');
@@ -774,7 +864,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const idsSet = new Set(s.notes.filter((n) => requested.has(n.id) && !isNoteLocked(s.layerConfig, n)).map((n) => n.id));
     if (idsSet.size === 0) return;
     s.pushUndo('Move notes');
-    const gridStep = 4 / s.gridSnap;
     const converter = getConverter(get);
     const newIndex = new Map(s._noteIndex);
     // Remove old positions of moved playable notes
@@ -784,18 +873,22 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         if (newIndex.get(key) === n.id) newIndex.delete(key);
       }
     }
-    const gridTicks = Math.round(TICKS_PER_BEAT * 4 / s.gridSnap);
+    // The delta is already snapped by the caller; re-snapping each note's
+    // absolute position would merge off-grid notes (1/192, triplets...) together.
     const deltaTicks = delta.beat ? beatToTick(delta.beat) : 0;
     const movedNotes = s.notes.map((n) => {
       if (!idsSet.has(n.id)) return n;
       const curTick = n.tick ?? beatToTick(n.beat);
-      const rawTick = Math.max(0, curTick + deltaTicks);
-      const newTick = Math.round(rawTick / gridTicks) * gridTicks;
+      const newTick = Math.max(0, curTick + deltaTicks);
       const curEndTick = n.endTick ?? (n.endBeat !== undefined ? beatToTick(n.endBeat) : undefined);
       const lnLength = curEndTick !== undefined ? curEndTick - curTick : undefined;
       const newEndTick = lnLength !== undefined ? newTick + lnLength : undefined;
       let newColumn = n.column;
-      if (delta.columnDelta && laneIds.length > 0 && n.column !== undefined) {
+      let newBgmChannel = n.bgmChannel;
+      if (delta.columnDelta && n.noteType === 'bgm') {
+        // BGM lanes are channels, not key-mode columns.
+        newBgmChannel = Math.max(0, (n.bgmChannel ?? 0) + delta.columnDelta);
+      } else if (delta.columnDelta && laneIds.length > 0 && n.column !== undefined) {
         const currentIndex = laneIds.indexOf(n.column);
         if (currentIndex >= 0) {
           const idx = Math.max(0, Math.min(laneIds.length - 1, currentIndex + delta.columnDelta));
@@ -804,7 +897,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       }
       const synced = syncFromTick(newTick, converter);
       const newEndBeat = newEndTick !== undefined ? tickToBeat(newEndTick) : undefined;
-      return { ...n, ...synced, endTick: newEndTick, endBeat: newEndBeat, column: newColumn };
+      return { ...n, ...synced, endTick: newEndTick, endBeat: newEndBeat, column: newColumn, bgmChannel: newBgmChannel };
     });
     // Add new positions
     for (const n of movedNotes) {
@@ -847,11 +940,71 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         if (updates.endBeat !== undefined) {
           updated.endTick = beatToTick(updates.endBeat);
           updated.endBeat = tickToBeat(updated.endTick);
+        } else if ('endBeat' in updates) {
+          updated.endTick = undefined;
         }
         return updated;
       }),
       hasUnsavedChanges: true,
     });
+    set((prev) => ({ _noteIndex: buildNoteIndex(prev.notes) }));
+  },
+
+  convertNotes: (noteIds, target, laneIds) => {
+    const s = get();
+    const requested = new Set(noteIds);
+    const targets = s.notes.filter((n) => requested.has(n.id) && !isNoteLocked(s.layerConfig, n));
+    if (targets.length === 0) return;
+    s.pushUndo(target.kind === 'bgm' ? 'Move notes to BGM' : 'Move notes to lanes');
+    const updates = new Map<string, Partial<EditableBMSNote>>();
+
+    if (target.kind === 'bgm') {
+      // One channel per note within a tick, starting at the drop lane and
+      // skipping channels already taken by other BGM notes on that tick.
+      const taken = new Map<number, Set<number>>();
+      const takenAt = (tick: number) => {
+        let t = taken.get(tick);
+        if (!t) { t = new Set(); taken.set(tick, t); }
+        return t;
+      };
+      for (const n of s.notes) {
+        if (n.noteType !== 'bgm' || requested.has(n.id)) continue;
+        takenAt(n.tick).add(n.bgmChannel ?? 0);
+      }
+      const ordered = [...targets].sort((a, b) => a.tick - b.tick
+        || laneIds.indexOf(a.column ?? '') - laneIds.indexOf(b.column ?? ''));
+      for (const n of ordered) {
+        const used = takenAt(n.tick);
+        let ch = Math.max(0, target.channel);
+        while (used.has(ch)) ch++;
+        used.add(ch);
+        updates.set(n.id, {
+          noteType: 'bgm', column: undefined, bgmChannel: ch,
+          endBeat: undefined, endTick: undefined, endMeasure: undefined, endFraction: undefined,
+        });
+      }
+    } else {
+      // Keep the notes' relative lane layout: the lowest channel / leftmost
+      // column lands on the drop lane.
+      const playable = laneIds.filter((id) => id !== 'SC' && id !== 'FZ' && id !== 'FZ2');
+      const lanes = playable.length > 0 ? playable : laneIds;
+      if (lanes.length === 0) return;
+      const startIdx = Math.max(0, lanes.indexOf(target.column));
+      const rel = (n: EditableBMSNote) => (n.noteType === 'bgm'
+        ? (n.bgmChannel ?? 0)
+        : Math.max(0, lanes.indexOf(n.column ?? '')));
+      const base = targets.reduce((m, n) => Math.min(m, rel(n)), Infinity);
+      for (const n of targets) {
+        const idx = Math.min(lanes.length - 1, startIdx + rel(n) - base);
+        updates.set(n.id, { noteType: 'playable', column: lanes[idx], bgmChannel: undefined });
+      }
+    }
+
+    const notes = s.notes.map((n) => {
+      const u = updates.get(n.id);
+      return u ? { ...n, ...u } : n;
+    });
+    set({ notes, _noteIndex: buildNoteIndex(notes), hasUnsavedChanges: true });
   },
 
   // Select everything that can actually be edited: hidden and locked layers are skipped.
@@ -867,7 +1020,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectByFilter: (filter) => {
     const s = get();
     const converter = getConverter(get);
+    const wantedKeysounds = filter.keysounds && filter.keysounds.length > 0
+      ? new Set(filter.keysounds.map((k) => k.toUpperCase()))
+      : null;
     const matching = s.notes.filter((n) => {
+      const layer = s.layerConfig[noteLayer(n)];
+      if (layer && (!layer.visible || layer.locked)) return false;
       // Layer filter
       if (filter.noteTypes && filter.noteTypes.length > 0) {
         const nt = (n.noteType || 'playable') as typeof filter.noteTypes[number];
@@ -882,9 +1040,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         if (!n.column || !filter.columns.includes(n.column)) return false;
       }
       // Keysound filter (includes additionalKeysounds)
-      if (filter.keysounds && filter.keysounds.length > 0) {
-        const hasMatch = filter.keysounds.includes(n.keysound) ||
-          n.additionalKeysounds?.some((ak: { keysound: string }) => filter.keysounds!.includes(ak.keysound));
+      if (wantedKeysounds) {
+        const hasMatch = wantedKeysounds.has(n.keysound.toUpperCase()) ||
+          n.additionalKeysounds?.some((ak: { keysound: string }) => wantedKeysounds.has(ak.keysound.toUpperCase()));
         if (!hasMatch) return false;
       }
       return true;
@@ -921,6 +1079,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       notes: s.notes.map((n) => {
         if (!s.selectedNotes.has(n.id) || isNoteLocked(s.layerConfig, n)) return n;
         const updated = { ...n, noteType: newType };
+        if (newType !== 'playable') {
+          // Only playable notes can be long notes.
+          updated.endBeat = undefined;
+          updated.endTick = undefined;
+          updated.endMeasure = undefined;
+          updated.endFraction = undefined;
+        }
         if (newType === 'bgm') {
           updated.column = undefined;
           // Assign bgmChannel
@@ -936,12 +1101,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       }),
       hasUnsavedChanges: true,
     });
+    set((prev) => ({ _noteIndex: buildNoteIndex(prev.notes) }));
   },
 
   // --- Measure management ---
   insertMeasure: (atMeasure) => {
     const s = get();
-    s.pushUndo('Insert measure');
+    pushMeasureUndo(get, set, 'Insert measure');
     // Use timeSignatures-aware beat calculation
     const shiftBeat = storeMfToBeat(get, atMeasure, 0);
     // New measure uses default 4/4 size (4 beats)
@@ -987,6 +1153,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       }),
       timeSignatures: newTS,
       _beatConverter: newConverter,
+      ...shiftMeasureData(s.bookmarks, s.gridSnapOverrides, atMeasure, 1),
       hasUnsavedChanges: true,
     });
     // Rebuild index after beat shift
@@ -995,7 +1162,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   deleteMeasure: (atMeasure) => {
     const s = get();
-    s.pushUndo('Delete measure');
+    pushMeasureUndo(get, set, 'Delete measure');
     const startBeat = storeMfToBeat(get, atMeasure, 0);
     const measureBeats = s._beatConverter?.getBeatsInMeasure(atMeasure) ?? 4;
     const endBeat = startBeat + measureBeats;
@@ -1060,6 +1227,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         }),
       timeSignatures: newTS,
       _beatConverter: newConverter,
+      ...shiftMeasureData(s.bookmarks, s.gridSnapOverrides, atMeasure, -1),
       hasUnsavedChanges: true,
     });
     // Rebuild index after beat shift
@@ -1073,7 +1241,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     s.pushUndo('Mirror notes');
     set({
       notes: s.notes.map((n) => {
-        if (!s.selectedNotes.has(n.id) || n.column === undefined) return n;
+        if (!s.selectedNotes.has(n.id) || n.column === undefined || isNoteLocked(s.layerConfig, n)) return n;
         const idx = laneIds.indexOf(n.column);
         if (idx < 0) return n;
         return { ...n, column: laneIds[laneIds.length - 1 - idx] };
@@ -1086,15 +1254,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   flipNotes: () => {
     const s = get();
     if (s.selectedNotes.size === 0) return;
-    const selected = s.notes.filter((n) => s.selectedNotes.has(n.id));
+    const selected = s.notes.filter((n) => s.selectedNotes.has(n.id) && !isNoteLocked(s.layerConfig, n));
     if (selected.length < 2) return;
-    const minBeat = Math.min(...selected.map((n) => n.beat));
-    const maxBeat = Math.max(...selected.map((n) => n.endBeat ?? n.beat));
+    // reduce, not Math.min(...spread): spreading 100k+ values overflows the stack
+    const minBeat = selected.reduce((m, n) => Math.min(m, n.beat), Infinity);
+    const maxBeat = selected.reduce((m, n) => Math.max(m, n.endBeat ?? n.beat), -Infinity);
+    const flipIds = new Set(selected.map((n) => n.id));
     s.pushUndo('Flip notes');
     const converter = getConverter(get);
     set({
       notes: s.notes.map((n) => {
-        if (!s.selectedNotes.has(n.id)) return n;
+        if (!flipIds.has(n.id)) return n;
         const flippedBeat = maxBeat - (n.beat - minBeat);
         const flippedEnd = n.endBeat !== undefined ? maxBeat - (n.endBeat - minBeat) : undefined;
         const newBeat = flippedEnd !== undefined ? Math.min(flippedBeat, flippedEnd) : flippedBeat;
@@ -1122,7 +1292,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     laneIds.forEach((id, i) => mapping.set(id, shuffled[i]));
     set({
       notes: s.notes.map((n) => {
-        if (!s.selectedNotes.has(n.id) || n.column === undefined) return n;
+        if (!s.selectedNotes.has(n.id) || n.column === undefined || isNoteLocked(s.layerConfig, n)) return n;
         const newCol = mapping.get(n.column);
         return newCol ? { ...n, column: newCol } : n;
       }),
@@ -1139,7 +1309,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const converter = getConverter(get);
     set({
       notes: s.notes.map((n) => {
-        if (!s.selectedNotes.has(n.id)) return n;
+        if (!s.selectedNotes.has(n.id) || isNoteLocked(s.layerConfig, n)) return n;
         const curTick = n.tick ?? beatToTick(n.beat);
         const newTick = Math.round(curTick / gridTicks) * gridTicks;
         let newEndTick = n.endTick !== undefined
@@ -1165,9 +1335,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     s.pushUndo('Add keysound layer');
     set({
       notes: s.notes.map((n) => {
-        if (n.id !== noteId) return n;
+        if (n.id !== noteId || isNoteLocked(s.layerConfig, n)) return n;
         const layers = n.additionalKeysounds ? [...n.additionalKeysounds] : [];
-        layers.push({ keysound: keysoundId, type: layerType });
+        layers.push({ keysound: keysoundId.toUpperCase(), type: layerType });
         return { ...n, additionalKeysounds: layers };
       }),
       hasUnsavedChanges: true,
@@ -1203,7 +1373,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   cut: () => {
     const s = get();
     s.copy();
-    const ids = Array.from(s.selectedNotes);
+    const ids = s.notes
+      .filter((n) => s.selectedNotes.has(n.id) && !isNoteLocked(s.layerConfig, n))
+      .map((n) => n.id);
     if (ids.length === 0) return;
     s.pushUndo('Cut notes');
     const idsSet = new Set(ids);
@@ -1646,7 +1818,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
     }
   },
-  setHasUnsavedChanges: (value) => set({ hasUnsavedChanges: value }),
+  setHasUnsavedChanges: (value) => set((s) => (value
+    ? { hasUnsavedChanges: true }
+    : { hasUnsavedChanges: false, _savedPoint: savedPointOf(s) })),
   setInputDialog: (dialog) => set({ inputDialog: dialog }),
   toggleLeftPanel: () => set((s) => ({ showLeftPanel: !s.showLeftPanel })),
   toggleRightPanel: () => set((s) => ({ showRightPanel: !s.showRightPanel })),
@@ -1752,7 +1926,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   // --- Keysound management ---
   setHighlightKeysound: (keysound) => set({ highlightKeysound: keysound }),
 
-  replaceKeysound: (fromId, toId) => {
+  replaceKeysound: (rawFrom, rawTo) => {
+    // Keysound ids are case-insensitive (base36)
+    const fromId = rawFrom.toUpperCase();
+    const toId = rawTo.toUpperCase();
     if (fromId === toId) return;
     const s = get();
     s.pushUndo(i18next.t('editor:store.replaceKeysound'));
@@ -1760,13 +1937,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       let changed = false;
       let keysound = n.keysound;
       let additionalKeysounds = n.additionalKeysounds;
-      if (n.keysound === fromId) {
+      if (n.keysound.toUpperCase() === fromId) {
         keysound = toId;
         changed = true;
       }
-      if (n.additionalKeysounds?.some((ak) => ak.keysound === fromId)) {
+      if (n.additionalKeysounds?.some((ak) => ak.keysound.toUpperCase() === fromId)) {
         additionalKeysounds = n.additionalKeysounds.map((ak) =>
-          ak.keysound === fromId ? { ...ak, keysound: toId } : ak
+          ak.keysound.toUpperCase() === fromId ? { ...ak, keysound: toId } : ak
         );
         changed = true;
       }
@@ -1779,9 +1956,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const s = get();
     if (!s.headers) return;
     s.pushUndo(i18next.t('editor:store.removeUnusedKeysounds'));
+    const removed = new Set(keysoundIds.map((id) => id.toUpperCase()));
     const newWav = new Map(s.headers.wav);
-    for (const id of keysoundIds) newWav.delete(id);
-    set({ headers: { ...s.headers, wav: newWav }, hasUnsavedChanges: true });
+    for (const key of s.headers.wav.keys()) {
+      if (removed.has(key.toUpperCase())) newWav.delete(key);
+    }
+    // Notes and keysound layers that used a removed definition become silent
+    // in the same undo step (no dangling references to an undefined #WAV).
+    const notes = s.notes.map((n) => {
+      const mainHit = removed.has(n.keysound.toUpperCase());
+      const layers = n.additionalKeysounds?.filter((l) => !removed.has(l.keysound.toUpperCase()));
+      const layersChanged = n.additionalKeysounds !== undefined && layers!.length !== n.additionalKeysounds.length;
+      if (!mainHit && !layersChanged) return n;
+      return {
+        ...n,
+        ...(mainHit ? { keysound: '00' } : {}),
+        ...(layersChanged ? { additionalKeysounds: layers!.length > 0 ? layers : undefined } : {}),
+      };
+    });
+    set({ headers: { ...s.headers, wav: newWav }, notes, hasUnsavedChanges: true });
   },
 
   // --- Patterns ---

@@ -194,7 +194,10 @@
         "keysoundDeleted": "键音 {{id}} 已删除（Ctrl+Z 可撤销）",
         "keysoundImportFailed": "键音导入失败",
         "keysoundReplaced_other": "已在 {{count}} 个音符上将键音 {{from}} → {{to}} 替换（Ctrl+Z 可撤销）",
+        "keysoundsAlreadyDefined_other": "{{count}} 个文件已定义，沿用现有 ID",
         "keysoundsImported_other": "已导入 {{count}} 个键音",
+        "keysoundsMissing_other": "{{count}} 个键音文件无法加载，将保持静音：{{ids}}",
+        "keysoundsNoFreeId_other": "{{count}} 个文件未添加：1295 个键音 ID 已全部占用",
         "notesGenerated_other": "已生成 {{count}} 个音符",
         "pasteConflicts_other": "已替换 {{count}} 个冲突音符",
         "pasteDropped_other": "已排除 {{count}} 个超出键位模式范围的音符",
@@ -206,7 +209,13 @@
         "sliceSaveFailed": "切片保存失败：{{message}}",
         "slicesSaved_other": "已保存 {{count}} 个切片",
         "undefinedWavWarning_other": "警告：{{count}} 个未定义的 WAV 引用（{{ids}}）",
-        "undoAction": "撤销：{{description}}"
+        "undoAction": "撤销：{{description}}",
+        "writerDefsExhausted_other": "{{count}} 个 BPM/STOP 值无法分配定义 ID（已全部占用）",
+        "writerInvalidValue_other": "已跳过 {{count}} 个无效的 BPM/STOP 值",
+        "writerLnShortened_other": "{{count}} 个长音符结尾与下一个音符相接，已缩短 1/192 小节后保存",
+        "writerOutOfRange_other": "超过第 999 小节的 {{count}} 个对象未保存",
+        "writerSlotDropped_other": "{{count}} 个重叠的地雷音符无法保存",
+        "writerSlotRerouted_other": "{{count}} 个对象与同一轨道同一位置的音符重叠，其键音已保存到 BGM 通道"
       }
     }
   },

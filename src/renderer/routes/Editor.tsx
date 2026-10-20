@@ -16,7 +16,7 @@ import {
   BmsChartDiff,
   getLaneIds,
 } from '@rhythm-archive/bms-editor';
-import type { BmsChartDiffInfo, NoteChartEditorProps, ZoomControl } from '@rhythm-archive/bms-editor';
+import type { BmsChartDiffInfo, NoteChartEditorProps, NoteConvertTarget, ZoomControl } from '@rhythm-archive/bms-editor';
 import type { EditableBMSNote, EditableBMSChart, TimingAction } from '@rhythm-archive/bms-core';
 import { BMSWriter, Timing } from '@rhythm-archive/bms-core';
 import { beatToTick } from '../lib/tickUtils';
@@ -29,7 +29,7 @@ import { createLocalAudioWorker } from '../lib/LocalAudioWorker';
 import { Player } from './Player';
 import { useEditorStore } from '../stores/editorStore';
 import type { AudioPhase, PasteAnalysis, LayerConfig } from '../stores/editorStore';
-import { deserializeMeta, serializeMeta, buildMetaFromState, applyMetaToState } from '../lib/bmsMeta';
+import { deserializeMeta, serializeMeta, buildMetaFromState, applyMetaToState, restoreMetaNoteRefs } from '../lib/bmsMeta';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { PatternLibraryPanel } from '../components/PatternLibraryPanel';
 import { KeyBindingsDialog } from '../components/KeyBindingsDialog';
@@ -253,6 +253,17 @@ interface EditorProps {
 }
 
 
+/** BMS writer warning code → toast message key (routes.editor.toast.*). */
+const WRITER_WARNING_KEYS = {
+  'slot-collision-rerouted': 'writerSlotRerouted',
+  'slot-collision-dropped': 'writerSlotDropped',
+  'ln-end-shortened': 'writerLnShortened',
+  'out-of-range': 'writerOutOfRange',
+  'definition-keys-exhausted': 'writerDefsExhausted',
+  'invalid-value': 'writerInvalidValue',
+} as const;
+type WriterWarningKey = typeof WRITER_WARNING_KEYS[keyof typeof WRITER_WARNING_KEYS];
+
 export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard }: EditorProps) {
   const { t } = useTranslation(['editor', 'app', 'common']);
   const { chart, isLoading, error, load } = useLocalBmsFile();
@@ -408,7 +419,6 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   const isPlayingRef = useRef(false);
   const playbackOffsetRef = useRef(0);
   const speedRef = useRef(1);
-  const volumeRef = useRef(0.8);
   const playbackBeatRef = useRef(0);
   const editedTimingRef = useRef<Timing | null>(null);
   const zoomControlRef = useRef<ZoomControl | null>(null);
@@ -463,7 +473,8 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           tick,
           column: n.column || '',
           noteType: (n.noteType as EditableBMSNote['noteType']) || 'playable',
-          keysound: n.keysound || '00',
+          // #WAV keys are stored upper-case; ids are case-insensitive (no #BASE 62).
+          keysound: (n.keysound || '00').toUpperCase(),
           endBeat: n.endBeat,
           endTick,
           endMeasure: n.endMeasure,
@@ -499,19 +510,15 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         if (metaJson && !useEditorStore.getState().hasUnsavedChanges) {
           const meta = deserializeMeta(metaJson);
           const stateUpdate = applyMetaToState(meta);
-          // Restore bgmChannel assignments from meta
-          if (meta.bgmChannels) {
-            const s = useEditorStore.getState();
-            const updatedNotes = s.notes.map((n) => {
-              if (n.noteType === 'bgm' && meta.bgmChannels![n.id] !== undefined) {
-                return { ...n, bgmChannel: meta.bgmChannels![n.id] };
-              }
-              return n;
-            });
-            useEditorStore.setState({ ...stateUpdate, notes: updatedNotes });
-          } else {
-            useEditorStore.setState(stateUpdate);
-          }
+          // Re-attach BGM channels / note groups by note position (ids are per-session)
+          const restored = restoreMetaNoteRefs(meta, useEditorStore.getState().notes);
+          useEditorStore.setState({
+            ...stateUpdate,
+            notes: restored.notes,
+            ...(restored.noteGroups ? { noteGroups: restored.noteGroups } : {}),
+          });
+          // The restored channels are the file's own state: keep it "clean".
+          store.setHasUnsavedChanges(false);
         }
       }).catch(() => {});
       // Save original chart info for diff
@@ -531,6 +538,8 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   // Auto-load audio when chart is loaded (placed after loadAudio definition via ref)
   const autoLoadedRef = useRef(false);
   const loadAudioRef = useRef<(() => Promise<void>) | null>(null);
+  const reloadAudioRef = useRef<(() => void) | null>(null);
+  const handlePlaybackStopRef = useRef<(() => void) | null>(null);
 
   // WAV definitions — prefer store headers.wav (reflects uploads/edits) over original chart.keysounds
   const wavDefinitions = useMemo(() => {
@@ -580,14 +589,16 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   // Usage count per keysound (main keysound + additionalKeysounds included)
   const keysoundUsageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const id of Object.keys(keysoundRecord)) counts[id] = 0;
+    for (const id of Object.keys(keysoundRecord)) counts[id.toUpperCase()] = 0;
     for (const n of notes) {
       if (n.keysound && n.keysound !== '00') {
-        counts[n.keysound] = (counts[n.keysound] || 0) + 1;
+        const id = n.keysound.toUpperCase();
+        counts[id] = (counts[id] || 0) + 1;
       }
       if (n.additionalKeysounds) {
         for (const ak of n.additionalKeysounds) {
-          counts[ak.keysound] = (counts[ak.keysound] || 0) + 1;
+          const id = ak.keysound.toUpperCase();
+          counts[id] = (counts[id] || 0) + 1;
         }
       }
     }
@@ -598,10 +609,11 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   const [replaceKeysoundTarget, setReplaceKeysoundTarget] = useState<string | null>(null);
 
   const handleFindNotes = useCallback((keysoundId: string) => {
-    store.selectByFilter({ keysounds: [keysoundId] });
+    const id = keysoundId.toUpperCase();
+    store.selectByFilter({ keysounds: [id] });
     const first = notes.find((n) =>
-      n.keysound === keysoundId ||
-      n.additionalKeysounds?.some((ak: { keysound: string }) => ak.keysound === keysoundId)
+      n.keysound === id ||
+      n.additionalKeysounds?.some((ak: { keysound: string }) => ak.keysound === id)
     );
     if (first) {
       store.setCurrentBeat(first.beat);
@@ -610,24 +622,21 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     }
   }, [notes, store]);
 
+  const handleSelectBgmNotesByKeysound = useCallback((keysoundId: string) => {
+    store.selectByFilter({ keysounds: [keysoundId.toUpperCase()], noteTypes: ['bgm'] });
+  }, []);
+
   const handleReplaceKeysound = useCallback((keysoundId: string) => {
     setReplaceKeysoundTarget(keysoundId);
     setActiveModal('replaceKeysound');
   }, []);
 
   const handleDeleteUnused = useCallback((keysoundId: string) => {
-    const count = keysoundUsageCounts[keysoundId] ?? 0;
+    const count = keysoundUsageCounts[keysoundId.toUpperCase()] ?? 0;
     if (count > 0) {
-      // Confirm: replace all usages with silent (00) then delete
+      // Confirm: usages (notes and keysound layers) become silent (00)
       const ok = window.confirm(t('editor:routes.editor.deleteUnusedConfirm', { count }));
       if (!ok) return;
-      // Replace all notes using this keysound with 00
-      const s = useEditorStore.getState();
-      s.pushUndo('Delete keysound (replace with silent)');
-      const updatedNotes = s.notes.map((n) =>
-        n.keysound === keysoundId ? { ...n, keysound: '00' } : n
-      );
-      useEditorStore.setState({ notes: updatedNotes });
     }
     store.removeWavDefinitions([keysoundId]);
     showToast(t('editor:routes.editor.toast.keysoundDeleted', { id: keysoundId }), 'success');
@@ -712,7 +721,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     lastHoverKeysoundRef.current = keysoundId;
     // Show keysound info overlay
     if (keysoundId && keysoundId !== '00') {
-      const filename = keysoundRecord[keysoundId] || keysoundRecord[keysoundId.toLowerCase()] || '';
+      const filename = keysoundRecord[keysoundId] || keysoundRecord[keysoundId.toUpperCase()] || keysoundRecord[keysoundId.toLowerCase()] || '';
       setHoverKeysoundInfo(`${keysoundId}: ${filename}`);
     } else {
       setHoverKeysoundInfo(null);
@@ -808,19 +817,28 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   useEffect(() => () => disconnectMidiInput(), []);
 
   const handleDropKeysound = useCallback((keysoundId: string, beat: number, column: string) => {
+    if (!Number.isFinite(beat) || beat < 0) return;
     const { selectedNoteType: snt } = useEditorStore.getState();
     const { measure, fraction } = store.beatToMF(beat);
-    const isBgm = column === 'BGM' || snt === 'bgm';
+    const bgmLane = /^BGM\d*$/.test(column);
+    const isBgm = bgmLane || snt === 'bgm';
     store.addNote({
       beat,
       column: isBgm ? undefined : column,
       noteType: isBgm ? 'bgm' : (snt === 'longNote' ? 'playable' : snt),
-      keysound: keysoundId, measure, fraction, channel: '',
+      // A drop on BGM2 must land on channel 2, not be stacked into channel 0.
+      ...(bgmLane ? { bgmChannel: column === 'BGM' ? 0 : parseInt(column.slice(3), 10) || 0 } : {}),
+      keysound: keysoundId.toUpperCase(), measure, fraction, channel: '',
     });
     if (audioPreloaderRef.current && keysoundId !== '00') {
       playPreview(keysoundId);
     }
   }, [playPreview]);
+
+  // Key lane <-> BGM lane drag: one undo step, distinct channels / lanes per note
+  const handleNotesConvert = useCallback((noteIds: string[], target: NoteConvertTarget) => {
+    store.convertNotes(noteIds, target, laneIds);
+  }, [laneIds]);
 
   // --- Note move (needs laneIds) ---
   const handleNoteMove = useCallback((noteIds: string[], delta: { beat?: number; columnDelta?: number }) => {
@@ -832,23 +850,44 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     try {
       const imported = await window.api.file.importKeysounds(file.path);
       if (imported.length === 0) return;
+      // Ids referenced by notes count as used even without a #WAV line —
+      // otherwise a new file would suddenly sound on those notes.
       const usedIds = new Set(Object.keys(keysoundRecord).map((k) => k.toUpperCase()));
+      for (const n of useEditorStore.getState().notes) {
+        if (n.keysound) usedIds.add(n.keysound.toUpperCase());
+        n.additionalKeysounds?.forEach((l) => usedIds.add(l.keysound.toUpperCase()));
+      }
+      // A file that is already defined keeps its id (no duplicate definitions).
+      const idByFile = new Map<string, string>();
+      for (const [id, fname] of Object.entries(keysoundRecord)) {
+        if (fname) idByFile.set(fname.toLowerCase(), id);
+      }
       const newWavDefs: Record<string, string> = {};
+      let nextIdx = 1;
+      let reused = 0;
+      let skipped = 0;
       for (const item of imported) {
+        if (idByFile.has(item.filename.toLowerCase())) { reused++; continue; }
         let wavId = '';
-        for (let i = 1; i <= 1295; i++) {
-          const candidate = i.toString(36).toUpperCase().padStart(2, '0');
+        for (; nextIdx <= 1295; nextIdx++) {
+          const candidate = nextIdx.toString(36).toUpperCase().padStart(2, '0');
           if (!usedIds.has(candidate)) {
             wavId = candidate;
             usedIds.add(candidate);
             break;
           }
         }
-        if (!wavId) break;
+        if (!wavId) { skipped++; continue; }
         newWavDefs[wavId] = item.filename;
+        idByFile.set(item.filename.toLowerCase(), wavId);
       }
-      store.updateHeadersWithWavDefs(newWavDefs);
-      showToast(t('editor:routes.editor.toast.keysoundsImported', { count: Object.keys(newWavDefs).length }), 'success');
+      const added = Object.keys(newWavDefs).length;
+      if (added > 0) store.updateHeadersWithWavDefs(newWavDefs);
+      showToast(t('editor:routes.editor.toast.keysoundsImported', { count: added }), 'success');
+      if (reused > 0) showToast(t('editor:routes.editor.toast.keysoundsAlreadyDefined', { count: reused }), 'info');
+      if (skipped > 0) showToast(t('editor:routes.editor.toast.keysoundsNoFreeId', { count: skipped }), 'warning');
+      // New files must be decoded before they can sound (preview / playback).
+      if (added > 0) reloadAudioRef.current?.();
     } catch (err) {
       console.error('[Editor] Import keysounds failed:', err);
       showToast(t('editor:routes.editor.toast.keysoundImportFailed'), 'error');
@@ -856,6 +895,15 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   }, [file.path, keysoundRecord, showToast]);
 
   // --- Save ---
+  /** Surface what the writer had to adjust so nothing is lost silently. */
+  const reportWriterWarnings = useCallback((warnings: ReturnType<BMSWriter['getWarnings']>) => {
+    for (const w of warnings) {
+      console.warn('[Editor] Writer:', w.code, w.count, w.message);
+      const key = (WRITER_WARNING_KEYS as Record<string, WriterWarningKey | undefined>)[w.code];
+      if (key) showToast(t(`editor:routes.editor.toast.${key}` as const, { count: w.count }), 'warning');
+    }
+  }, [showToast, t]);
+
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!chart || savingRef.current) return false;
     const chartToSave = store.savableChart();
@@ -878,15 +926,16 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         showToast(t('editor:routes.editor.toast.undefinedWavWarning', { count: undefinedKeys.size, ids: [...undefinedKeys].slice(0, 3).join(', ') + (undefinedKeys.size > 3 ? '...' : '') }), 'warning');
       }
       // Check for notes at positions finer than standard BMS resolution (192)
-      const highResNotes = chartToSave.notes.filter((n: { tick?: number }) => {
-        if (n.tick === undefined) return false;
-        const tickInMeasure = n.tick % 3840; // ticks per 4/4 measure
-        return tickInMeasure % 20 !== 0; // 20 ticks = 1/192 of measure
+      const highResNotes = chartToSave.notes.filter((n: { fraction?: number }) => {
+        if (typeof n.fraction !== 'number') return false;
+        const slots = n.fraction * 192; // 1/192 of the measure, whatever its length
+        return Math.abs(slots - Math.round(slots)) > 1e-6;
       });
       if (highResNotes.length > 0) {
         showToast(t('editor:routes.editor.toast.highResWarning', { count: highResNotes.length }), 'warning');
       }
       const bmsContent = writer.write(chartToSave);
+      reportWriterWarnings(writer.getWarnings());
       await window.api.file.saveBms(file.path, bmsContent);
       // Save .bms.meta sidecar alongside BMS file
       const s = useEditorStore.getState();
@@ -917,7 +966,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     } finally {
       savingRef.current = false;
     }
-  }, [chart, file.path, showToast]);
+  }, [chart, file.path, showToast, reportWriterWarnings]);
 
   // Clean up autosave on explicit save
   const originalHandleSave = handleSave;
@@ -940,6 +989,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       const lnMode = origLnObj ? 'lnobj' as const : 'channel' as const;
       const writer = new BMSWriter({ lnMode, lnObjValue: origLnObj || undefined });
       const bmsContent = writer.write(chartToSave);
+      reportWriterWarnings(writer.getWarnings());
       const newPath = await window.api.file.saveAs(bmsContent, file.name);
       if (newPath) {
         // Carry the sidecar (bookmarks, colors, groups...) to the new file.
@@ -965,7 +1015,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       console.error('[Editor] Save As failed:', err);
       showToast(t('editor:routes.editor.toast.saveFailed', { message: err instanceof Error ? err.message : String(err) }), 'error');
     }
-  }, [chart, file.name, file.path, onOpenFile, showToast, t]);
+  }, [chart, file.name, file.path, onOpenFile, showToast, t, reportWriterWarnings]);
 
   // --- Keyboard shortcuts (refs to avoid TDZ with callbacks defined later) ---
   const handleSaveRef = useRef(handleSaveWithCleanup);
@@ -1154,12 +1204,17 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         return;
       }
       const worker = createLocalAudioWorker(file.path);
+      const failedKeys: string[] = [];
+      // No shared in-memory / IndexedDB caches: their keys are a bare WAV id and
+      // file name, so a different chart's (or an edited) "kick.wav" would play.
       preloader = new AudioPreloader('', fileMap, worker, (type: string, payload: unknown) => {
         if (type === 'PROGRESS') {
           const p = payload as { loadedCount: number; total: number };
           store.setAudioLoadProgress({ loaded: p.loadedCount, total: p.total });
+        } else if (type === 'ERROR') {
+          failedKeys.push((payload as { key: string }).key);
         }
-      });
+      }, { useCache: false, useIndexedDBCache: false });
       inProgressPreloaderRef.current = preloader;
       await preloader.loadAll();
       // Bail-out: Editor unmounted or new file selected while loading
@@ -1176,6 +1231,10 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         return;
       }
       await preloader.initAudioWorklet();
+      preloader.setMasterVolume(useEditorStore.getState().volume);
+      // Upload samples to the worklet up front so the first hit of each
+      // keysound doesn't copy it on the main thread mid-playback.
+      void preloader.primeWorklet();
       inProgressPreloaderRef.current = null;
       audioSchedulerRef.current?.dispose();
       audioSchedulerRef.current = null;
@@ -1191,6 +1250,14 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         store.setPlaybackDuration(timingForDuration.beatToSeconds(maxBeat) + 2);
       }
       store.setAudioPhase('ready');
+      if (failedKeys.length > 0) {
+        const ids = failedKeys.map((k) => k.toUpperCase());
+        console.warn('[Editor] Keysounds not loaded:', failedKeys.map((k) => `${k}=${fileMap[k]}`));
+        showToast(t('editor:routes.editor.toast.keysoundsMissing', {
+          count: ids.length,
+          ids: ids.slice(0, 3).join(', ') + (ids.length > 3 ? '...' : ''),
+        }), 'warning');
+      }
     } catch (err) {
       console.error('[Editor] Audio load failed:', err);
       preloader?.releaseAllResources();
@@ -1202,6 +1269,10 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
 
   // Auto-load audio effect (must be after loadAudio definition)
   loadAudioRef.current = loadAudio;
+  reloadAudioRef.current = () => {
+    if (isPlayingRef.current) handlePlaybackStopRef.current?.();
+    void loadAudioRef.current?.();
+  };
   useEffect(() => {
     if (!chart || autoLoadedRef.current) return undefined;
     if (Object.keys(chart.keysounds).length > 0) {
@@ -1227,15 +1298,20 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       if (solo !== null) return ch === solo;
       return !muted.has(ch);
     };
-    return [...es.notes]
-      .filter((n) => n.noteType !== 'landmine' && n.keysound && n.keysound !== '00' && bgmAudible(n))
-      .sort((a, b) => a.beat - b.beat)
-      .map((n) => ({
-        sec: timing.beatToSeconds(n.beat),
-        keysound: n.keysound.toLowerCase(),
-        offset: 0,
-        volume: volumeRef.current,
-      }));
+    const out: SchedulerNote[] = [];
+    for (const n of es.notes) {
+      if (n.noteType === 'landmine') continue;
+      const audibleMain = n.keysound && n.keysound !== '00' && bgmAudible(n);
+      const bgmLayers = n.additionalKeysounds?.filter((l) => l.keysound && l.keysound !== '00');
+      if (!audibleMain && !bgmLayers?.length) continue;
+      const sec = timing.beatToSeconds(n.beat);
+      // Volume is applied once by the master volume (the slider), not per note.
+      if (audibleMain) out.push({ sec, keysound: n.keysound.toLowerCase(), offset: 0, volume: 1 });
+      if (bgmLayers) {
+        for (const l of bgmLayers) out.push({ sec, keysound: l.keysound.toLowerCase(), offset: 0, volume: 1 });
+      }
+    }
+    return out.sort((a, b) => a.sec - b.sec);
   }, []);
 
   /** Create or recreate the audio scheduler worker */
@@ -1254,6 +1330,10 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       preloader,
       notes,
     });
+    // Let a long final sample (outro, BGM tail) ring out instead of cutting it.
+    if (scheduler.endSec !== undefined && scheduler.endSec > useEditorStore.getState().playbackDuration) {
+      store.setPlaybackDuration(scheduler.endSec);
+    }
 
     // UI updates from worker tick (~50ms)
     // Throttle store updates to ~10fps to reduce re-renders during playback
@@ -1351,6 +1431,8 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     );
   }, []);
 
+  handlePlaybackStopRef.current = handlePlaybackStop;
+
   const handlePlaybackToggle = useCallback(() => {
     if (audioPhase === 'playing') handlePlaybackPause();
     else handlePlaybackPlay();
@@ -1410,12 +1492,13 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     // Set audio playback rate (pitch+speed of keysounds)
     audioPreloaderRef.current?.setPlaybackRate(playbackSpeed);
     if (audioSchedulerRef.current && isPlayingRef.current) {
-      // Clear already-scheduled sounds before changing speed
-      audioPreloaderRef.current?.stopAllAudio();
+      // The scheduler re-anchors and re-places already-queued voices itself.
       audioSchedulerRef.current.setSpeed(playbackSpeed);
     }
   }, [playbackSpeed]);
-  useEffect(() => { volumeRef.current = volume; }, [volume]);
+  useEffect(() => {
+    audioPreloaderRef.current?.setMasterVolume(volume);
+  }, [volume]);
 
   // Cleanup
   useEffect(() => {
@@ -1440,7 +1523,8 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       const chartToSave = store.savableChart();
       if (!useEditorStore.getState().hasUnsavedChanges || !chartToSave) return;
       try {
-        const writer = new BMSWriter();
+        const origLnObj = chartToSave.headers.lnobj;
+        const writer = new BMSWriter({ lnMode: origLnObj ? 'lnobj' : 'channel', lnObjValue: origLnObj || undefined });
         const content = writer.write(chartToSave);
         await window.api.file.writeAutoSave(file.path, content);
       } catch (err) {
@@ -1743,7 +1827,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
                 onDeleteUnused={handleDeleteUnused}
                 highlightKeysound={highlightKeysound}
                 onHighlightKeysound={store.setHighlightKeysound}
-                onSelectBgmNotes={(keysoundId: string) => store.selectByFilter({ keysounds: [keysoundId], noteTypes: ['bgm'] })}
+                onSelectBgmNotes={handleSelectBgmNotesByKeysound}
               />
             ) : (
               <PatternLibraryPanel
@@ -1881,7 +1965,6 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
                   onChange={(e) => {
                     const v = parseFloat(e.target.value);
                     store.setVolume(v);
-                    audioPreloaderRef.current?.setMasterVolume?.(v);
                   }}
                   className="w-16 h-1 accent-blue-500 cursor-pointer"
                   title={t('editor:routes.editor.playback.volumeTitle', { percent: Math.round(volume * 100) })}
@@ -1972,6 +2055,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
                   onNoteMove={handleNoteMove}
                   onNoteSelect={handleNoteSelect}
                   onNoteUpdate={store.updateNote}
+                  onNotesConvert={handleNotesConvert}
                   bpmChanges={bpmChanges}
                   stopEvents={stopEvents}
                   baseBpm={editedBaseBpm}

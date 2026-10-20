@@ -1,6 +1,6 @@
 import { dialog, BrowserWindow } from 'electron';
 import { readFile, writeFile, readdir, stat, copyFile, rename, unlink } from 'fs/promises';
-import { join, extname, basename, dirname } from 'path';
+import { join, extname, basename, dirname, resolve } from 'path';
 import { handle } from './handle';
 import type { BmsFileInfo } from '../../shared/ipc-contract';
 import { t as tMenu } from '../i18n/menu';
@@ -23,6 +23,27 @@ function refocusWindow(win: BrowserWindow): void {
 
 // Guard against concurrent dialog calls (Windows queues multiple native dialogs)
 let dialogOpen = false;
+
+/** Same file system path (case-insensitive where the OS file system is). */
+function samePath(a: string, b: string): boolean {
+  const ra = resolve(a);
+  const rb = resolve(b);
+  return process.platform === 'win32' || process.platform === 'darwin'
+    ? ra.toLowerCase() === rb.toLowerCase()
+    : ra === rb;
+}
+
+/** True when both files have identical bytes (cheap size check first). */
+async function sameContent(a: string, b: string): Promise<boolean> {
+  try {
+    const [sa, sb] = await Promise.all([stat(a), stat(b)]);
+    if (sa.size !== sb.size) return false;
+    const [ba, bb] = await Promise.all([readFile(a), readFile(b)]);
+    return ba.equals(bb);
+  } catch {
+    return false;
+  }
+}
 
 export function registerFileIpc(): void {
   // Open BMS file dialog
@@ -173,13 +194,46 @@ export function registerFileIpc(): void {
 
       const bmsDir = dirname(bmsFilePath);
       const imported: Array<{ filename: string; destPath: string }> = [];
+      // Keysounds are resolved by base name (kick.wav ≈ kick.ogg), so a new
+      // file must not take a base name another audio file already uses.
+      let dirEntries: string[] = [];
+      try {
+        dirEntries = (await readdir(bmsDir)) ?? [];
+      } catch {
+        // Unreadable folder: nothing to collide with.
+      }
+      const takenBases = new Map<string, string>(); // lower base → actual file name
+      for (const f of dirEntries) {
+        if (AUDIO_EXTENSIONS.has(extname(f).toLowerCase())) {
+          takenBases.set(basename(f, extname(f)).toLowerCase(), f);
+        }
+      }
 
       for (const srcPath of result.filePaths) {
-        const filename = basename(srcPath);
+        const original = basename(srcPath);
+        const ext = extname(original);
+        const base = basename(original, ext);
+        const samePlace = (p: string) => samePath(p, srcPath);
+
+        let filename = original;
+        const existing = takenBases.get(base.toLowerCase());
+        if (existing !== undefined) {
+          const existingPath = join(bmsDir, existing);
+          if (samePlace(existingPath) || await sameContent(srcPath, existingPath)) {
+            // Already in the chart folder (or an identical copy): reuse it.
+            imported.push({ filename: existing, destPath: existingPath });
+            continue;
+          }
+          // Different audio under the same name: never overwrite — pick a free name.
+          let n = 2;
+          while (takenBases.has(`${base}_${n}`.toLowerCase())) n++;
+          filename = `${base}_${n}${ext}`;
+        }
         const destPath = join(bmsDir, filename);
-        if (srcPath !== destPath) {
+        if (!samePlace(destPath)) {
           await copyFile(srcPath, destPath);
         }
+        takenBases.set(basename(filename, ext).toLowerCase(), filename);
         imported.push({ filename, destPath });
       }
 

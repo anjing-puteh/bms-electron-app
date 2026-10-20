@@ -44,24 +44,35 @@ export function BeatKeysoundPanel({
 }: BeatKeysoundPanelProps) {
   const { t } = useTranslation('editor');
   const BEAT_RANGE = 0.125;
+  // Sorted once per edit; the per-beat window below is a binary search, so
+  // playback (currentBeat ~10 Hz) no longer scans every note.
+  const sortedNotes = useMemo(
+    () => notes.filter((n) => n.keysound !== '00').sort((a, b) => a.beat - b.beat),
+    [notes],
+  );
   const nearbyNotes = useMemo(() => {
-    const grouped = new Map<string, { beat: number; playable: EditableBMSNote[]; bgm: EditableBMSNote[] }>();
-    for (const n of notes) {
-      if (n.keysound === '00') continue;
-      if (Math.abs(n.beat - currentBeat) > 8) continue;
+    const from = currentBeat - 2;
+    const to = currentBeat + 8;
+    let lo = 0, hi = sortedNotes.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (sortedNotes[mid].beat < from) lo = mid + 1;
+      else hi = mid;
+    }
+    const grouped = new Map<string, { beat: number; measure: number; fraction: number; playable: EditableBMSNote[]; bgm: EditableBMSNote[] }>();
+    for (let i = lo; i < sortedNotes.length && sortedNotes[i].beat <= to; i++) {
+      const n = sortedNotes[i];
       const beatKey = n.beat.toFixed(4);
       let entry = grouped.get(beatKey);
       if (!entry) {
-        entry = { beat: n.beat, playable: [], bgm: [] };
+        entry = { beat: n.beat, measure: n.measure, fraction: n.fraction, playable: [], bgm: [] };
         grouped.set(beatKey, entry);
       }
       if (n.noteType === 'bgm') entry.bgm.push(n);
       else entry.playable.push(n);
     }
-    return Array.from(grouped.values())
-      .sort((a, b) => a.beat - b.beat)
-      .filter((g) => g.beat >= currentBeat - 2 && g.beat <= currentBeat + 8);
-  }, [notes, currentBeat]);
+    return Array.from(grouped.values());
+  }, [sortedNotes, currentBeat]);
 
   if (nearbyNotes.length === 0) {
     return (
@@ -84,8 +95,9 @@ export function BeatKeysoundPanel({
       <div className="space-y-1">
         {nearbyNotes.map((group) => {
           const isCurrent = Math.abs(group.beat - currentBeat) < BEAT_RANGE;
-          const measure = Math.floor(group.beat / 4);
-          const frac = ((group.beat % 4) / 4).toFixed(2);
+          // Note's own measure/fraction: correct for non-4/4 measures too.
+          const measure = group.measure;
+          const frac = group.fraction.toFixed(2);
           return (
             <div
               key={group.beat.toFixed(4)}

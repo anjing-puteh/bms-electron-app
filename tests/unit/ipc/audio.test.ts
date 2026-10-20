@@ -200,3 +200,51 @@ describe('audio:readBatch', () => {
     expect(result.errors['06']).toContain('Not found');
   });
 });
+
+describe('audio:readBatch — keysound path resolution', () => {
+  const bmsPath = '/songs/pack/chart.bms';
+  const norm = (p: unknown) => String(p).replace(/\\/g, '/');
+
+  it('finds keysounds in subfolders (#WAV01 sounds\\kick.wav)', async () => {
+    mockReaddir.mockImplementation(async (d) => (norm(d).endsWith('/sounds')
+      ? ['Kick.ogg']
+      : ['chart.bms']) as any);
+    mockReadFile.mockResolvedValue(Buffer.from([0x01]) as any);
+
+    const result = await getHandler('audio:readBatch')(fakeEvent, bmsPath, { '01': 'sounds\\kick.wav' });
+
+    expect(result.errors).toEqual({});
+    expect(norm(mockReadFile.mock.calls[0][0])).toMatch(/\/sounds\/Kick\.ogg$/);
+  });
+
+  it('prefers the exact file name over another extension with the same base name', async () => {
+    mockReaddir.mockResolvedValue(['kick.ogg', 'kick.wav'] as any);
+    mockReadFile.mockResolvedValue(Buffer.from([0x01]) as any);
+
+    await getHandler('audio:readBatch')(fakeEvent, bmsPath, { '01': 'kick.wav' });
+
+    expect(norm(mockReadFile.mock.calls[0][0])).toMatch(/\/kick\.wav$/);
+  });
+
+  it('rejects paths escaping the chart folder (falls back to the root base name)', async () => {
+    mockReaddir.mockResolvedValue(['secret.wav'] as any);
+    mockReadFile.mockResolvedValue(Buffer.from([0x01]) as any);
+
+    await getHandler('audio:readBatch')(fakeEvent, bmsPath, { '01': '../../other/secret.wav' });
+
+    // Only ever resolved inside /songs/pack
+    for (const [p] of mockReadFile.mock.calls) expect(norm(p)).toMatch(/\/songs\/pack\/secret\.wav$/);
+    for (const [d] of mockReaddir.mock.calls) expect(norm(d)).toMatch(/\/songs\/pack$/);
+  });
+
+  it('gives ids sharing one file separate buffers (each is decoded/detached on its own)', async () => {
+    mockReaddir.mockResolvedValue(['kick.wav'] as any);
+    mockReadFile.mockResolvedValue(Buffer.from([0x01, 0x02]) as any);
+
+    const result = await getHandler('audio:readBatch')(fakeEvent, bmsPath, { '01': 'kick.wav', '02': 'KICK.WAV' });
+
+    expect(mockReadFile).toHaveBeenCalledTimes(1);
+    expect(result.results['01']).not.toBe(result.results['02']);
+    expect(new Uint8Array(result.results['02'])).toEqual(new Uint8Array([1, 2]));
+  });
+});

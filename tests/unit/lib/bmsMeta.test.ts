@@ -8,6 +8,8 @@ import {
   recordToGridSnapOverrides,
   buildMetaFromState,
   applyMetaToState,
+  notePositionKeys,
+  restoreMetaNoteRefs,
 } from '../../../src/renderer/lib/bmsMeta';
 
 describe('getMetaPath', () => {
@@ -18,9 +20,9 @@ describe('getMetaPath', () => {
 });
 
 describe('createDefaultMeta', () => {
-  it('returns object with version 1', () => {
+  it('returns object with the current version (2)', () => {
     const meta = createDefaultMeta();
-    expect(meta.version).toBe(1);
+    expect(meta.version).toBe(2);
     expect(meta.bookmarks).toBeUndefined();
     expect(meta.gridSnapOverrides).toBeUndefined();
   });
@@ -31,7 +33,7 @@ describe('serialize / deserialize', () => {
     const meta = createDefaultMeta();
     const json = serializeMeta(meta);
     const result = deserializeMeta(json);
-    expect(result.version).toBe(1);
+    expect(result.version).toBe(2);
   });
 
   it('round-trips meta with all fields', () => {
@@ -53,10 +55,10 @@ describe('serialize / deserialize', () => {
   });
 
   it('handles invalid JSON gracefully', () => {
-    expect(deserializeMeta('')).toEqual({ version: 1 });
-    expect(deserializeMeta('not json')).toEqual({ version: 1 });
-    expect(deserializeMeta('null')).toEqual({ version: 1 });
-    expect(deserializeMeta('42')).toEqual({ version: 1 });
+    expect(deserializeMeta('')).toEqual({ version: 2 });
+    expect(deserializeMeta('not json')).toEqual({ version: 2 });
+    expect(deserializeMeta('null')).toEqual({ version: 2 });
+    expect(deserializeMeta('42')).toEqual({ version: 2 });
   });
 });
 
@@ -89,7 +91,7 @@ describe('buildMetaFromState', () => {
       gridSnapOverrides: new Map(),
       minLnLength: 0.25,
     });
-    expect(meta.version).toBe(1);
+    expect(meta.version).toBe(2);
     expect(meta.gridSnapOverrides).toBeUndefined();
     expect(meta.minLnLength).toBeUndefined(); // 0.25 is default, omitted
   });
@@ -121,5 +123,59 @@ describe('applyMetaToState', () => {
     const state = applyMetaToState({ version: 1 });
     expect(state.gridSnapOverrides.size).toBe(0);
     expect(state.minLnLength).toBeUndefined();
+  });
+});
+
+describe('note references survive a reload (position keys)', () => {
+  const bgm = (id: string, tick: number, keysound: string, bgmChannel?: number) =>
+    ({ id, tick, noteType: 'bgm', keysound, bgmChannel });
+
+  it('keys notes by position + occurrence, not by session id', () => {
+    const keys = notePositionKeys([bgm('a', 0, '01'), bgm('b', 0, '01'), bgm('c', 0, '02')]);
+    expect(keys).toEqual(['0:bgm::01:0', '0:bgm::01:1', '0:bgm::02:0']);
+  });
+
+  it('restores BGM channels onto the right notes after ids were reassigned', () => {
+    // Saved session: a note was deleted, so ids no longer match parse order.
+    const saved = buildMetaFromState({
+      gridSnapOverrides: new Map(),
+      minLnLength: 0.25,
+      notes: [bgm('note-7', 960, '0A', 3), bgm('note-2', 960, '0B', 0)],
+    });
+    const meta = deserializeMeta(serializeMeta(saved));
+    // Reload: parse order differs and ids are note-0, note-1
+    const loaded = [bgm('note-0', 960, '0B', 0), bgm('note-1', 960, '0A', 1)];
+    const { notes } = restoreMetaNoteRefs(meta, loaded);
+    expect(notes.find((n) => n.keysound === '0A')!.bgmChannel).toBe(3);
+    expect(notes.find((n) => n.keysound === '0B')!.bgmChannel).toBe(0);
+  });
+
+  it('keeps default channels for a tick whose restored channels would collide', () => {
+    const meta = { version: 2, bgmChannels: { '0:bgm::01:0': 1 } };
+    const loaded = [bgm('n0', 0, '01', 0), bgm('n1', 0, '02', 1)];
+    const { notes } = restoreMetaNoteRefs(meta, loaded);
+    expect(notes.map((n) => n.bgmChannel)).toEqual([0, 1]);
+  });
+
+  it('drops v1 id-keyed BGM channels (they point at the wrong notes)', () => {
+    const meta = deserializeMeta(JSON.stringify({ version: 1, bgmChannels: { 'note-1': 5 } }));
+    expect(meta.bgmChannels).toBeUndefined();
+  });
+
+  it('re-attaches note groups by position key', () => {
+    const notes = [
+      { id: 'note-5', tick: 0, noteType: 'playable', column: '1', keysound: '01' },
+      { id: 'note-9', tick: 480, noteType: 'playable', column: '2', keysound: '02' },
+    ];
+    const saved = buildMetaFromState({
+      gridSnapOverrides: new Map(), minLnLength: 0.25, notes,
+      noteGroups: [{ id: 'g', name: 'G', noteIds: ['note-9'] }],
+    });
+    const reloaded = [
+      { id: 'note-0', tick: 0, noteType: 'playable', column: '1', keysound: '01' },
+      { id: 'note-1', tick: 480, noteType: 'playable', column: '2', keysound: '02' },
+    ];
+    const { noteGroups } = restoreMetaNoteRefs(deserializeMeta(serializeMeta(saved)), reloaded);
+    expect(noteGroups![0].noteIds).toEqual(['note-1']);
   });
 });

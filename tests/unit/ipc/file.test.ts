@@ -532,6 +532,7 @@ describe('file:importKeysounds', () => {
       filePaths: ['/downloads/kick.wav', '/downloads/snare.wav'],
     });
     mockCopyFile.mockResolvedValue(undefined);
+    vi.mocked(readdir).mockResolvedValueOnce(['chart.bms'] as never);
 
     const result = await getHandler('file:importKeysounds')(fakeEvent, '/songs/chart.bms');
 
@@ -544,6 +545,8 @@ describe('file:importKeysounds', () => {
   it('skips copy when source equals destination', async () => {
     const { copyFile } = await import('fs/promises');
     const mockCopyFile = vi.mocked(copyFile);
+    mockCopyFile.mockClear();
+    vi.mocked(readdir).mockResolvedValueOnce(['chart.bms', 'kick.wav'] as never);
 
     mockDialog.showOpenDialog.mockResolvedValue({
       canceled: false,
@@ -554,8 +557,48 @@ describe('file:importKeysounds', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].filename).toBe('kick.wav');
-    // copyFile should NOT be called because src path matches dest path
-    // (depends on path.join resolving the same)
+    expect(mockCopyFile).not.toHaveBeenCalled();
+  });
+
+  it('never overwrites a different file with the same base name', async () => {
+    const { copyFile } = await import('fs/promises');
+    const mockCopyFile = vi.mocked(copyFile);
+    mockCopyFile.mockClear();
+    mockCopyFile.mockResolvedValue(undefined);
+    // kick.ogg already in the chart folder; kick_2.wav also taken
+    vi.mocked(readdir).mockResolvedValueOnce(['chart.bms', 'kick.ogg', 'kick_2.wav'] as never);
+    vi.mocked(stat).mockImplementation(async (p) => ({ size: String(p).includes('downloads') ? 10 : 20 }) as never);
+
+    mockDialog.showOpenDialog.mockResolvedValue({
+      canceled: false,
+      filePaths: ['/downloads/kick.wav'],
+    });
+
+    const result = await getHandler('file:importKeysounds')(fakeEvent, '/songs/chart.bms');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].filename).toBe('kick_3.wav');
+    expect(mockCopyFile).toHaveBeenCalledTimes(1);
+    expect(String(mockCopyFile.mock.calls[0][1])).toMatch(/kick_3\.wav$/);
+  });
+
+  it('reuses an identical file already in the chart folder', async () => {
+    const { copyFile } = await import('fs/promises');
+    const mockCopyFile = vi.mocked(copyFile);
+    mockCopyFile.mockClear();
+    vi.mocked(readdir).mockResolvedValueOnce(['chart.bms', 'Kick.wav'] as never);
+    vi.mocked(stat).mockResolvedValue({ size: 4 } as never);
+    vi.mocked(readFile).mockResolvedValue(Buffer.from([1, 2, 3, 4]) as never);
+
+    mockDialog.showOpenDialog.mockResolvedValue({
+      canceled: false,
+      filePaths: ['/downloads/kick.wav'],
+    });
+
+    const result = await getHandler('file:importKeysounds')(fakeEvent, '/songs/chart.bms');
+
+    expect(result).toEqual([expect.objectContaining({ filename: 'Kick.wav' })]);
+    expect(mockCopyFile).not.toHaveBeenCalled();
   });
 
   it('returns empty array when win is null', async () => {
