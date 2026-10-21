@@ -147,7 +147,7 @@
         "returnToEditor": "返回编辑器 (Esc)"
       },
       "playback": {
-        "audioErrorTitle": "音频加载失败 — 点击重试",
+        "audioErrorTitle": "音频加载失败，点击重试",
         "bpmTapTitle": "BPM 点击检测",
         "clearLoopTitle": "清除循环 (\\)",
         "diffTitle": "切换差异视图 (Ctrl+D)",
@@ -166,7 +166,7 @@
       },
       "replaceKeysound": {
         "cancel": "取消",
-        "noteCount_other": "— {{count}} 个音符",
+        "noteCount_other": "{{count}} 个音符",
         "sourceLabel": "来源：",
         "targetPrompt": "选择目标键音："
       },

@@ -437,7 +437,7 @@
         "returnToEditor": "Return to editor (Esc)"
       },
       "playback": {
-        "audioErrorTitle": "Audio failed to load — click to retry",
+        "audioErrorTitle": "Audio failed to load, click to retry",
         "bpmTapTitle": "BPM tap",
         "clearLoopTitle": "Clear loop (\\)",
         "diffTitle": "Toggle diff view (Ctrl+D)",
@@ -456,9 +456,9 @@
       },
       "replaceKeysound": {
         "cancel": "Cancel",
-        "noteCount": "— {{count}} notes",
-        "noteCount_one": "— {{count}} notes",
-        "noteCount_other": "— {{count}} notes",
+        "noteCount": "{{count}} notes",
+        "noteCount_one": "{{count}} notes",
+        "noteCount_other": "{{count}} notes",
         "sourceLabel": "Source:",
         "targetPrompt": "Select target keysound:"
       },
@@ -483,9 +483,9 @@
         "audioLoadFailed": "Failed to load audio: {{message}}",
         "autoChartSkipped": "Skipped {{count}} generated notes overlapping existing ones",
         "encodingFallback": "Some characters cannot be written in the original encoding ({{encoding}}); saved as UTF-8 with BOM",
-        "highResWarning": "{{count}} note(s) outside standard resolution (192) — may cause compatibility issues",
-        "highResWarning_one": "{{count}} note(s) outside standard resolution (192) — may cause compatibility issues",
-        "highResWarning_other": "{{count}} note(s) outside standard resolution (192) — may cause compatibility issues",
+        "highResWarning": "{{count}} note(s) outside standard resolution (192), may cause compatibility issues",
+        "highResWarning_one": "{{count}} note(s) outside standard resolution (192), may cause compatibility issues",
+        "highResWarning_other": "{{count}} note(s) outside standard resolution (192), may cause compatibility issues",
         "keysoundDeleted": "Keysound {{id}} deleted (Ctrl+Z to undo)",
         "keysoundImportFailed": "Keysound import failed",
         "keysoundReplaced": "Replaced keysound {{from}} → {{to}} on {{count}} notes (Ctrl+Z to undo)",

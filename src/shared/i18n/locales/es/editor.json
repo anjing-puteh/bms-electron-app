@@ -153,7 +153,7 @@
         "returnToEditor": "Volver al editor (Esc)"
       },
       "playback": {
-        "audioErrorTitle": "No se pudo cargar el audio — clic para reintentar",
+        "audioErrorTitle": "No se pudo cargar el audio, clic para reintentar",
         "bpmTapTitle": "Golpear BPM",
         "clearLoopTitle": "Borrar bucle (\\)",
         "diffTitle": "Activar vista de diferencias (Ctrl+D)",
@@ -172,9 +172,9 @@
       },
       "replaceKeysound": {
         "cancel": "Cancelar",
-        "noteCount_many": "— {{count}} notas",
-        "noteCount_one": "— {{count}} nota",
-        "noteCount_other": "— {{count}} notas",
+        "noteCount_many": "{{count}} notas",
+        "noteCount_one": "{{count}} nota",
+        "noteCount_other": "{{count}} notas",
         "sourceLabel": "Origen:",
         "targetPrompt": "Selecciona el sonido de tecla de destino:"
       },
@@ -199,9 +199,9 @@
         "audioLoadFailed": "No se pudo cargar el audio: {{message}}",
         "autoChartSkipped": "Se omitieron {{count}} notas generadas que se superponen a las existentes",
         "encodingFallback": "Algunos caracteres no caben en la codificación original ({{encoding}}); se guardó como UTF-8 con BOM",
-        "highResWarning_many": "{{count}} notas fuera de la resolución estándar (192) — puede causar problemas de compatibilidad",
-        "highResWarning_one": "{{count}} nota fuera de la resolución estándar (192) — puede causar problemas de compatibilidad",
-        "highResWarning_other": "{{count}} notas fuera de la resolución estándar (192) — puede causar problemas de compatibilidad",
+        "highResWarning_many": "{{count}} notas fuera de la resolución estándar (192), puede causar problemas de compatibilidad",
+        "highResWarning_one": "{{count}} nota fuera de la resolución estándar (192), puede causar problemas de compatibilidad",
+        "highResWarning_other": "{{count}} notas fuera de la resolución estándar (192), puede causar problemas de compatibilidad",
         "keysoundDeleted": "Sonido de tecla {{id}} eliminado (Ctrl+Z para deshacer)",
         "keysoundImportFailed": "Error al importar el sonido de tecla",
         "keysoundReplaced_many": "Sonido de tecla {{from}} → {{to}} reemplazado en {{count}} notas (Ctrl+Z para deshacer)",

@@ -184,7 +184,7 @@
     "recentFiles": "Недавние файлы",
     "removeFromList": "Убрать из списка",
     "selectPrompt": "Выберите BMS-файл для просмотра сведений",
-    "shortcutsHint": "Ctrl+N — создать, Ctrl+O — открыть",
+    "shortcutsHint": "Ctrl+N: создать, Ctrl+O: открыть",
     "stats": {
       "bpm": "BPM",
       "invisible": "Невидимые",

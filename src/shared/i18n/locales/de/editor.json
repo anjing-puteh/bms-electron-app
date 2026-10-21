@@ -150,7 +150,7 @@
         "returnToEditor": "Zurück zum Editor (Esc)"
       },
       "playback": {
-        "audioErrorTitle": "Audio konnte nicht geladen werden — klicken zum Wiederholen",
+        "audioErrorTitle": "Audio konnte nicht geladen werden, klicken zum Wiederholen",
         "bpmTapTitle": "BPM-Tipp",
         "clearLoopTitle": "Loop löschen (\\)",
         "diffTitle": "Diff-Ansicht umschalten (Ctrl+D)",
@@ -169,8 +169,8 @@
       },
       "replaceKeysound": {
         "cancel": "Abbrechen",
-        "noteCount_one": "— {{count}} Note",
-        "noteCount_other": "— {{count}} Noten",
+        "noteCount_one": "{{count}} Note",
+        "noteCount_other": "{{count}} Noten",
         "sourceLabel": "Quelle:",
         "targetPrompt": "Ziel-Schlüsselklang auswählen:"
       },
@@ -195,8 +195,8 @@
         "audioLoadFailed": "Audio konnte nicht geladen werden: {{message}}",
         "autoChartSkipped": "{{count}} erzeugte Noten übersprungen (überlappen vorhandene)",
         "encodingFallback": "Einige Zeichen passen nicht in die ursprüngliche Kodierung ({{encoding}}); als UTF-8 mit BOM gespeichert",
-        "highResWarning_one": "{{count}} Note außerhalb der Standardauflösung (192) — kann Kompatibilitätsprobleme verursachen",
-        "highResWarning_other": "{{count}} Noten außerhalb der Standardauflösung (192) — kann Kompatibilitätsprobleme verursachen",
+        "highResWarning_one": "{{count}} Note außerhalb der Standardauflösung (192), kann Kompatibilitätsprobleme verursachen",
+        "highResWarning_other": "{{count}} Noten außerhalb der Standardauflösung (192), kann Kompatibilitätsprobleme verursachen",
         "keysoundDeleted": "Schlüsselklang {{id}} gelöscht (Ctrl+Z zum Rückgängigmachen)",
         "keysoundImportFailed": "Import des Schlüsselklangs fehlgeschlagen",
         "keysoundReplaced_one": "Schlüsselklang {{from}} → {{to}} auf {{count}} Note ersetzt (Ctrl+Z zum Rückgängigmachen)",

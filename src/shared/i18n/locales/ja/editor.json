@@ -433,7 +433,7 @@
         "returnToEditor": "編集に戻る (Esc)"
       },
       "playback": {
-        "audioErrorTitle": "オーディオの読み込みに失敗しました — クリックして再試行",
+        "audioErrorTitle": "オーディオの読み込みに失敗しました。クリックして再試行",
         "bpmTapTitle": "BPMタップ",
         "clearLoopTitle": "ループ解除 (\\)",
         "diffTitle": "変更比較 (Ctrl+D)",
@@ -452,8 +452,8 @@
       },
       "replaceKeysound": {
         "cancel": "キャンセル",
-        "noteCount": "— {{count}}ノーツ",
-        "noteCount_other": "— {{count}}ノーツ",
+        "noteCount": "{{count}}ノーツ",
+        "noteCount_other": "{{count}}ノーツ",
         "sourceLabel": "元:",
         "targetPrompt": "対象キーサウンドを選択してください:"
       },
@@ -478,8 +478,8 @@
         "audioLoadFailed": "オーディオの読み込みに失敗: {{message}}",
         "autoChartSkipped": "既存ノートと重なる {{count}}件をスキップ",
         "encodingFallback": "元のエンコーディング({{encoding}})で表せない文字があるため、UTF-8(BOM付き)で保存しました",
-        "highResWarning": "{{count}}ノーツが標準解像度(192)範囲外 — 一部プレイヤーで互換性問題の可能性",
-        "highResWarning_other": "{{count}}ノーツが標準解像度(192)範囲外 — 一部プレイヤーで互換性問題の可能性",
+        "highResWarning": "{{count}}ノーツが標準解像度(192)範囲外。一部プレイヤーで互換性問題の可能性",
+        "highResWarning_other": "{{count}}ノーツが標準解像度(192)範囲外。一部プレイヤーで互換性問題の可能性",
         "keysoundDeleted": "キーサウンド {{id}} を削除しました (Ctrl+Zで復元可能)",
         "keysoundImportFailed": "キーサウンドインポート失敗",
         "keysoundReplaced": "{{count}}ノーツのキーサウンドを {{from}} → {{to}} に置換 (Ctrl+Zで復元可能)",
