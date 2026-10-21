@@ -40,8 +40,8 @@ key-decisions:
   - "Zoom group placed between H: slider and Keys: selector in toolbar for spatial proximity to canvas"
 
 patterns-established:
-  - "pendingBeatScaleRef: set in event/imperative handler, read+clear in useFrame — zero-latency rAF debounce"
-  - "zoomControlRef: populate in useEffect, clear on cleanup — standard imperative escape hatch"
+  - "pendingBeatScaleRef: set in event/imperative handler, read+clear in useFrame, zero-latency rAF debounce"
+  - "zoomControlRef: populate in useEffect, clear on cleanup, standard imperative escape hatch"
 
 requirements-completed: []
 
@@ -71,20 +71,20 @@ completed: 2026-04-06
 
 ## Task Commits
 
-1. **Task 1: types.ts — ZoomControl interface + zoom props** - `c91ecb0` (feat)
-2. **Task 2: NoteChartEditor.tsx — cursor-anchored zoom + zoomControlRef** - `18a9ef9` (feat)
-3. **Task 3: EditorToolbar.tsx — zoom button group UI** - `62edd1c` (feat)
-4. **Task 4: Editor.tsx — zoomControlRef + currentBeatScale wiring** - `4cd423b` (feat)
+1. **Task 1: types.ts, ZoomControl interface + zoom props** - `c91ecb0` (feat)
+2. **Task 2: NoteChartEditor.tsx, cursor-anchored zoom + zoomControlRef** - `18a9ef9` (feat)
+3. **Task 3: EditorToolbar.tsx, zoom button group UI** - `62edd1c` (feat)
+4. **Task 4: Editor.tsx, zoomControlRef + currentBeatScale wiring** - `4cd423b` (feat)
 
 ## Files Created/Modified
-- `c:/SourceCode/bms-editor/src/chart/editor/types.ts` — ZoomControl interface, NoteChartEditorProps zoom props, EditorToolbarProps zoom props
-- `c:/SourceCode/bms-editor/src/chart/NoteChartEditor.tsx` — defaultBeatScaleForKeyMode, cursor-anchored wheel handler, pendingBeatScaleRef, zoomControlRef useEffect, onBeatScaleChange in useFrame, ZoomControl re-export
-- `c:/SourceCode/bms-editor/src/chart/editor/EditorToolbar.tsx` — ZoomIn/ZoomOut/Maximize2 icons, showZoomPreset state, zoom group UI with preset dropdown
-- `c:/SourceCode/bms-electron-app/src/renderer/routes/Editor.tsx` — ZoomControl import, zoomControlRef ref, currentBeatScale state, props wired to NoteChartEditorBridge and EditorToolbar
+- `c:/SourceCode/bms-editor/src/chart/editor/types.ts`: ZoomControl interface, NoteChartEditorProps zoom props, EditorToolbarProps zoom props
+- `c:/SourceCode/bms-editor/src/chart/NoteChartEditor.tsx`: defaultBeatScaleForKeyMode, cursor-anchored wheel handler, pendingBeatScaleRef, zoomControlRef useEffect, onBeatScaleChange in useFrame, ZoomControl re-export
+- `c:/SourceCode/bms-editor/src/chart/editor/EditorToolbar.tsx`: ZoomIn/ZoomOut/Maximize2 icons, showZoomPreset state, zoom group UI with preset dropdown
+- `c:/SourceCode/bms-electron-app/src/renderer/routes/Editor.tsx`: ZoomControl import, zoomControlRef ref, currentBeatScale state, props wired to NoteChartEditorBridge and EditorToolbar
 
 ## Decisions Made
 - Multiplicative factor (x1.15) chosen over linear (+2) for perceptually consistent zoom feel across the full 2~200 range
-- `pendingBeatScaleRef` + `useFrame` pattern used for rAF debounce — set in event handler, read once per frame in useFrame, cleared immediately — avoids double-setState overhead
+- `pendingBeatScaleRef` + `useFrame` pattern used for rAF debounce. Set in event handler, read once per frame in useFrame, cleared immediately. Avoids double-setState overhead
 - `sizeRef` and `totalBeatsZoomRef` refs hold current-frame values so `fitToChart` closure inside `useEffect` always reads fresh size/beats without stale capture
 - Zoom group placed between "H:" slider and "Keys:" selector (not at far end) to stay near canvas controls
 

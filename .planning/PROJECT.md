@@ -18,24 +18,24 @@ Electron 기반 BMS 차트 에디터 앱. 리듬 게임용 .bms/.bme/.bml 파일
 - 파일 IPC 인프라 (read/save/autosave/meta)
 - 홈 화면 파일 브라우저 (폴더 스캔 + 최근 파일)
 - AudioPreloader (IndexedDB 캐시, progressive decode, EQ/컴프레서)
-- **PERF-01**: Worker 기반 BMS 파싱 — v1.0
-- **PERF-02**: requestId 취소 가드 — v1.0
-- **PERF-03**: Editor abort + graceful shutdown — v1.0
-- **PERF-04**: 병렬 scanDir (batchSize=20) — v1.0
-- **TEST-01~05**: 회귀 테스트 33개 — v1.0
-- **MINI-01**: 수직 사이드바 미니맵 컴포넌트 — v1.1
-- **MINI-02**: 미니맵 클릭 이동 — v1.1
-- **MINI-03**: 뷰포트 팟 표시 — v1.1
-- **MINI-04**: 노트 밀도 히트맵 — v1.1
-- **BK-01/02**: 타임라인 북마크 마커 + 클릭 이동 — v1.1
-- **BK-03**: Ctrl+B 북마크 추가/삭제 — v1.1
-- **LAYER-01**: 레이어 가시성 토글 — v1.1
-- **LAYER-02**: 레이어 잠금 토글 — v1.1
-- **LAYER-03**: 레이어 불투명도 슬라이더 — v1.1
+- **PERF-01**: Worker 기반 BMS 파싱, v1.0
+- **PERF-02**: requestId 취소 가드, v1.0
+- **PERF-03**: Editor abort + graceful shutdown, v1.0
+- **PERF-04**: 병렬 scanDir (batchSize=20), v1.0
+- **TEST-01~05**: 회귀 테스트 33개, v1.0
+- **MINI-01**: 수직 사이드바 미니맵 컴포넌트, v1.1
+- **MINI-02**: 미니맵 클릭 이동, v1.1
+- **MINI-03**: 뷰포트 팟 표시, v1.1
+- **MINI-04**: 노트 밀도 히트맵, v1.1
+- **BK-01/02**: 타임라인 북마크 마커 + 클릭 이동, v1.1
+- **BK-03**: Ctrl+B 북마크 추가/삭제, v1.1
+- **LAYER-01**: 레이어 가시성 토글, v1.1
+- **LAYER-02**: 레이어 잠금 토글, v1.1
+- **LAYER-03**: 레이어 불투명도 슬라이더, v1.1
 
 ### Active
 
-(Next milestone requirements — defined when /gsd:new-milestone is run)
+(Next milestone requirements, defined when /gsd:new-milestone is run)
 
 ### Out of Scope
 
@@ -84,4 +84,4 @@ Electron 기반 BMS 차트 에디터 앱. 리듬 게임용 .bms/.bme/.bml 파일
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-04-06 — v1.1 milestone shipped*
+*Last updated: 2026-04-06, v1.1 milestone shipped*

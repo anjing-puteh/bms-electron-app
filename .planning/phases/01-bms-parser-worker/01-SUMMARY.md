@@ -33,7 +33,7 @@ key-files:
 
 key-decisions:
   - "Home/Editor hook split: useHomeBmsFile (serializable data for Home) vs useLocalBmsFile (full BMSChart for Editor)"
-  - "Worker per-request pattern: terminate() is cancellation — simpler than singleton + abort signal"
+  - "Worker per-request pattern: terminate() is cancellation, simpler than singleton + abort signal"
   - "PARSE_PHASE1 -> auto-sequential Phase2 in same Worker: no extra message round-trip"
   - "requestId guard: prevents stale PHASE2_DONE from overwriting a newer file's Phase1 state"
 
@@ -64,26 +64,26 @@ completed: "2026-04-06"
 ## Accomplishments
 - `bmsParser.worker.ts`: BMS parsing runs entirely off the main thread with two-phase protocol (PHASE1_DONE for headers/BPM/keyMode, PHASE2_DONE for notes/stats/keysounds). Transferable ArrayBuffer ensures zero-copy transfer. Error handling covers both try/catch and self.onerror paths.
 - `useHomeBmsFile.ts`: Per-request Worker hook with requestId guard eliminates race conditions when user rapidly clicks between files. Phase1 data is cached in a ref so Phase2 can merge headers with note data.
-- `Home.tsx`: Two-phase UI — title/artist/BPM/keyMode render immediately on PHASE1_DONE; stats cards show `"..."` with `animate-pulse` until PHASE2_DONE.
+- `Home.tsx`: Two-phase UI. title/artist/BPM/keyMode render immediately on PHASE1_DONE; stats cards show `"..."` with `animate-pulse` until PHASE2_DONE.
 
 ## Task Commits
 
 Each task was committed atomically:
 
-1. **Task 1: bmsParser.worker.ts** — `2c49ec1` (feat) — two-phase Worker with requestId guard
-2. **Task 2: useHomeBmsFile.ts** — `2c49ec1` (feat) — per-request Worker hook
-3. **Task 3: Home.tsx update** — `2c49ec1` (feat) — phase-aware loading UI
+1. **Task 1: bmsParser.worker.ts**, `2c49ec1` (feat), two-phase Worker with requestId guard
+2. **Task 2: useHomeBmsFile.ts**, `2c49ec1` (feat), per-request Worker hook
+3. **Task 3: Home.tsx update**, `2c49ec1` (feat), phase-aware loading UI
 
 _Note: All three tasks were implemented and committed together in a single atomic commit from the prior session._
 
 ## Files Created/Modified
-- `src/renderer/workers/bmsParser.worker.ts` — BMS parsing Web Worker (Phase1: headers, Phase2: notes/stats)
+- `src/renderer/workers/bmsParser.worker.ts`: BMS parsing Web Worker (Phase1: headers, Phase2: notes/stats)
 - `src/renderer/hooks/useHomeBmsFile.ts`: Home-specific hook with Worker lifecycle management and requestId guard
 - `src/renderer/routes/Home.tsx`: Updated to use useHomeBmsFile; stats cards show "..." during phase1
 
 ## Decisions Made
 - Home and Editor use separate hooks: useHomeBmsFile returns serializable plain data (suitable for postMessage), while useLocalBmsFile returns full BMSChart objects (required by Editor/Player, not serializable)
-- Worker per-request (not singleton): each file load terminates the previous Worker — cancel is just `terminate()`, no abort signals needed
+- Worker per-request (not singleton): each file load terminates the previous Worker. Cancel is just `terminate()`, no abort signals needed
 - Phase1 auto-advances to Phase2 within the same Worker: eliminates a message round-trip and removes per-phase state from the Worker
 
 ## Deviations from Plan
@@ -107,7 +107,7 @@ None - no external service configuration required.
 - FOUND: src/renderer/hooks/useHomeBmsFile.ts
 - FOUND: src/renderer/routes/Home.tsx (modified)
 - FOUND: .planning/phases/01-bms-parser-worker/01-SUMMARY.md
-- FOUND: commit 2c49ec1 (feat: Phase 1 — BMS Parser Worker + useHomeBmsFile)
+- FOUND: commit 2c49ec1 (feat: Phase 1, BMS Parser Worker + useHomeBmsFile)
 
 ---
 *Phase: 01-bms-parser-worker*

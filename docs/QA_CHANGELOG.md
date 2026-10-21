@@ -28,7 +28,7 @@ QA_TEST_STRATEGY.md 설계 문서를 기반으로 테스트 인프라를 구축�
 
 ## 2. 발견 및 수정된 앱 버그 (2건)
 
-### BUG-001: `audio.ts` — `entries` 미정의 참조 (이전 세션에서 수정)
+### BUG-001: `audio.ts`, `entries` 미정의 참조 (이전 세션에서 수정)
 
 - **파일**: `src/main/ipc/audio.ts:28`
 - **심각도**: Critical
@@ -36,9 +36,9 @@ QA_TEST_STRATEGY.md 설계 문서를 기반으로 테스트 인프라를 구축�
 - **원인**: `const entries = Object.entries(keysoundMap)`가 line 38에 선언되었으나,
   line 28의 catch 블록에서 먼저 사용
 - **수정**: `entries` 선언을 `readdir` 호출 전(line 24)으로 이동
-- **회귀 테스트**: `tests/unit/ipc/audio.test.ts` — "directory not found" 케이스
+- **회귀 테스트**: `tests/unit/ipc/audio.test.ts`, "directory not found" 케이스
 
-### BUG-002: `Editor.tsx` — Temporal Dead Zone 에러
+### BUG-002: `Editor.tsx`, Temporal Dead Zone 에러
 
 - **파일**: `src/renderer/routes/Editor.tsx`
 - **심각도**: Critical (에디터 진입 불가)
@@ -56,7 +56,7 @@ QA_TEST_STRATEGY.md 설계 문서를 기반으로 테스트 인프라를 구축�
      - 키보드 핸들러에서 `ref.current?.()` 호출
      - 각 콜백 정의 직후 ref 갱신
   3. `useEffect` 의존성 배열에서 3개 콜백 제거 (ref 사용으로 불필요)
-- **회귀 테스트**: E2E `tests/e2e/editor.spec.ts` — "editor renders without crash"
+- **회귀 테스트**: E2E `tests/e2e/editor.spec.ts`, "editor renders without crash"
 - **변경된 코드** (diff 요약):
   ```
   src/renderer/routes/Editor.tsx | 31 insertions, 12 deletions
@@ -141,11 +141,11 @@ QA_TEST_STRATEGY.md 설계 문서를 기반으로 테스트 인프라를 구축�
 
 - **추가된 테스트**: 16개 (총 30 → 46)
 - **새로 커버된 핸들러**:
-  - `file:readBms` — 버퍼 반환
-  - `file:saveAs` — 취소, 성공, rename 실패 폴백, null 윈도우
-  - `file:importKeysounds` — 취소, 복사 성공, 동일 경로 스킵, null 윈도우
-  - `dialog:openAudioFile` — 취소, 성공, null 윈도우
-  - `file:saveWavSlices` — 다중 슬라이스, RIFF/WAVE 헤더, 빈 배열, float→int16 변환
+  - `file:readBms`: 버퍼 반환
+  - `file:saveAs`: 취소, 성공, rename 실패 폴백, null 윈도우
+  - `file:importKeysounds`: 취소, 복사 성공, 동일 경로 스킵, null 윈도우
+  - `dialog:openAudioFile`: 취소, 성공, null 윈도우
+  - `file:saveWavSlices`: 다중 슬라이스, RIFF/WAVE 헤더, 빈 배열, float→int16 변환
 
 ---
 
