@@ -31,7 +31,11 @@ jobs:
           npm run build --workspace=@rhythm-archive/bms-player
           npm run build --workspace=@rhythm-archive/bms-editor
 
-      - name: i18n parser check (fail on missing/added keys)
+      # NON-BLOCKING: same as ci.yml. `--fail-on-update` reports false positives
+      # on Windows + CRLF (byte-identical files counted as updated). The locale
+      # parity unit tests are the real safety net.
+      - name: i18n parser check (locale JSON parity) [non-blocking]
+        continue-on-error: true
         run: npm run i18n:check
 
       - name: ESLint hardcoded-Korean rule
