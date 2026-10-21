@@ -1,12 +1,12 @@
 /**
- * LocaleService — orchestrates language changes from the renderer side.
+ * LocaleService orchestrates language changes from the renderer side.
  *
  * Responsibilities:
  *   - Boot i18next with the locale supplied by main.
  *   - Apply user-initiated language changes with three guards:
- *       1. requestId — only the most recent change wins (rapid clicks).
- *       2. composition — IME composition is in progress: defer until end.
- *       3. lazy load failure — abort and revert; surface a toast via caller.
+ *       1. requestId: only the most recent change wins (rapid clicks).
+ *       2. composition: IME composition is in progress, so defer until end.
+ *       3. lazy load failure: abort and revert; surface a toast via caller.
  *   - Reflect main-side broadcasts (`locale:changed`) so a change made in one
  *     window propagates to others.
  *

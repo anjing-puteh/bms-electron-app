@@ -139,7 +139,7 @@ export function App() {
   }, [route]);
 
   // Expose dev helpers for automated testing (Playwright / Puppeteer)
-  // Using refs to avoid stale closures — the functions always use current setters
+  // Using refs to avoid stale closures. The functions always use current setters
   useEffect(() => {
     const w = window as unknown as Record<string, unknown>;
     w.__DEV_OPEN_FILE__ = (path: string, name: string, folderPath: string) => {
@@ -159,7 +159,7 @@ export function App() {
     w.__DEV_WAIT_LOCALE_READY__ = () => localeService.waitReady();
     // Returns the current active locale code (for E2E diagnostics).
     w.__DEV_GET_LOCALE__ = () => localeService.getCurrent();
-    // Don't clean up — these should persist for the lifetime of the app
+    // Don't clean up. These should persist for the lifetime of the app
   }, []);
 
   // Listen for Electron menu IPC events

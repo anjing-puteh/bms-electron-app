@@ -1,5 +1,5 @@
 /**
- * Tick Utilities — integer-based time representation at 960 ticks/beat
+ * Tick Utilities: integer-based time representation at 960 ticks/beat
  *
  * All timing operations in the BMS editor use integer ticks,
  * eliminating floating-point drift entirely.

@@ -120,7 +120,7 @@ export function LanguageSwitcher({ variant = 'compact' }: LanguageSwitcherProps)
     );
   }
 
-  // Full variant — used inside the (future) Preferences modal.
+  // Full variant. Used inside the (future) Preferences modal.
   return (
     <div ref={containerRef} className="relative">
       <label className="block text-xs text-zinc-400 mb-1">{t('language.label')}</label>

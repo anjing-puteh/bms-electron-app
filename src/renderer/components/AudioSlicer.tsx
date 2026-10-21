@@ -17,7 +17,7 @@ interface AudioSlicerProps {
   /** `#BASE 62` chart: ids are case-sensitive and may use a-z (3843 ids). */
   base62?: boolean;
   onSlicesCreated: (wavDefs: Record<string, string>) => void;
-  /** Decode / write failures — the host shows them (the slicer has no toast of its own). */
+  /** Decode and write failures. The host shows them, since the slicer has no toast of its own. */
   onError?: (kind: 'load' | 'save', message: string) => void;
 }
 
@@ -127,7 +127,7 @@ export function AudioSlicer({ open, onClose, bmsFilePath, usedWavIds, base62 = f
     setMarkers(last);
     return true;
   }, []);
-  // isDragging removed — use isDraggingRef only to avoid toolbar re-render flicker
+  // isDragging removed. Use isDraggingRef only to avoid toolbar re-render flicker
   const [autoSliceMsgType, setAutoSliceMsgType] = useState<'warning' | 'success' | null>(null);
   const [autoSliceCount, setAutoSliceCount] = useState(0);
   const draggingMarkerRef = useRef<number | null>(null);
@@ -363,7 +363,7 @@ export function AudioSlicer({ open, onClose, bmsFilePath, usedWavIds, base62 = f
       return;
     }
     setSelStart(t);
-    setSelEnd(null); // Don't set selEnd yet — only on drag
+    setSelEnd(null); // Don't set selEnd yet. Only on drag
     isDraggingRef.current = true;
   }, [getTimeFromX, markers, viewDuration, viewStart]);
 

@@ -1,5 +1,5 @@
 /**
- * Note Density Map — per-measure note density calculation
+ * Note Density Map: per-measure note density calculation
  *
  * Utility for rendering a heatmap alongside the minimap/scrollbar.
  * Recomputes only when notes change via useMemo caching.

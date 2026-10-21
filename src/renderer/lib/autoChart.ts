@@ -15,7 +15,7 @@ export interface AutoChartOptions {
   gridSnap: number;
   /** Base BPM for density calculation */
   bpm: number;
-  /** Seed for the pseudo-random generator — same seed + same input = same chart. */
+  /** Seed for the pseudo-random generator. The same seed and input always produce the same chart. */
   seed?: number;
   /** Indices (into the lane list) that may receive key notes. Defaults to every column. */
   keyColumnIndices?: number[];

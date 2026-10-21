@@ -66,7 +66,7 @@ export function createBeatConverter(timeSignatures: Map<number, number>) {
 
   /**
    * Clears the internal caches.
-   * Normally not needed manually — when timeSignatures change, create a new converter instead.
+   * Normally not needed manually. When timeSignatures change, create a new converter instead.
    */
   function clearCache() {
     beatToMFCache.clear();
