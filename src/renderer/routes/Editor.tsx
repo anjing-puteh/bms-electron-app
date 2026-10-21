@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useCallback, useRef, useSta
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { ArrowLeft, Save, RefreshCw, Play, Pause, Square, Volume2, VolumeX, Loader2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, GitCompare, Timer, PlayCircle, Wand2, Scissors, Piano, Keyboard, ChevronDown, Settings2, GripVertical, Undo2, Redo2, Eye, EyeOff, Lock, Unlock, Bookmark, Map as LucideMap, Maximize2, X as XIcon } from 'lucide-react';
-// Removed react-resizable-panels — using custom resize handles instead
+// Removed react-resizable-panels. Using custom resize handles instead
 import {
   NoteChartEditor,
   EditorToolbar,
@@ -58,12 +58,12 @@ import type { GeneratedNote } from '../lib/autoChart';
 import { createBeatConverter } from '../lib/beatConverter';
 import { computeDensityMap, densityToColor } from '../lib/densityMap';
 import type { MinimapDensityEntry, MinimapBookmark } from '@rhythm-archive/bms-editor';
-// WaveformOverlay removed — requires NoteChartEditor internal coordinate sync to work correctly
+// WaveformOverlay removed. It requires NoteChartEditor internal coordinate sync to work correctly
 
 type ModalType = 'noteSearch' | 'bpmTap' | 'measureInsert' | 'measureDelete' | 'keyBindings' | 'autoChart' | 'midi' | 'autoSaveRecovery' | 'replaceKeysound' | 'addBookmark' | 'clipboardHistory' | 'noteColor' | null;
 type OverlayType = 'diff' | 'audioSlicer' | 'playTest' | null;
 
-/** Isolated playback time display — subscribes only to playbackTime/playbackDuration to avoid re-rendering the entire Editor */
+/** Isolated playback time display. Subscribes only to playbackTime/playbackDuration to avoid re-rendering the entire Editor */
 function PlaybackTimeDisplay() {
   const playbackTime = useEditorStore((s) => s.playbackTime);
   const playbackDuration = useEditorStore((s) => s.playbackDuration);
@@ -74,7 +74,7 @@ function PlaybackTimeDisplay() {
   );
 }
 
-/** Isolated seekbar — subscribes only to playbackTime/playbackDuration */
+/** Isolated seekbar. Subscribes only to playbackTime/playbackDuration */
 function PlaybackSeekbar({ onSeek }: { onSeek: (sec: number) => void }) {
   const playbackTime = useEditorStore((s) => s.playbackTime);
   const playbackDuration = useEditorStore((s) => s.playbackDuration);
@@ -271,7 +271,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   const { t } = useTranslation(['editor', 'app', 'common']);
   const { chart, isLoading, error, load } = useLocalBmsFile();
 
-  // --- Zustand store (selective subscription — excludes high-frequency playbackTime/audioLoadProgress) ---
+  // --- Zustand store (selective subscription, excludes high-frequency playbackTime/audioLoadProgress) ---
   const {
     notes, bpmChanges, stopEvents, headers, timeSignatures, editableChart, keyMode,
     hasUnsavedChanges, activeTool, gridSnap, gridSnapOverrides, snapEnabled, layerConfig, selectedNotes, selectedNoteType,
@@ -308,7 +308,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     return max + 1;  // 0-based → count
   }, [notes]);
 
-  // Local dialog state — 2-layer enum (modal + overlay)
+  // Local dialog state: 2-layer enum (modal + overlay)
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [activeOverlay, setActiveOverlay] = useState<OverlayType>(null);
   const [leftPanelTab, setLeftPanelTab] = useState<'keysound' | 'pattern'>('keysound');
@@ -326,7 +326,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   const [pendingBookmarkMeasure, setPendingBookmarkMeasure] = useState(0);
   const [bookmarkEditMode, setBookmarkEditMode] = useState<'add' | 'rename'>('add');
   const bookmarkNameRef = useRef<HTMLInputElement>(null);
-  // showWaveform removed — WaveformOverlay needs NoteChartEditor coordinate integration
+  // showWaveform removed. WaveformOverlay needs NoteChartEditor coordinate integration
   const [leftPanelWidth, setLeftPanelWidth] = useState(() => readStoredWidth('editor-left-w', 208, 150, 400));
   const [rightPanelWidth, setRightPanelWidth] = useState(() => readStoredWidth('editor-right-w', 224, 180, 400));
   const panelWidthsRef = useRef({ left: leftPanelWidth, right: rightPanelWidth });
@@ -402,7 +402,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     return () => document.removeEventListener('mousedown', handler);
   }, [showToolMenu]);
 
-  // For measure dialog default value — captures currentBeat at open time (using getState without subscription)
+  // For measure dialog default value. Captures currentBeat at open time (using getState without subscription)
   const modalBeatRef = useRef(0);
   // Open modal (auto-closes any other modal)
   const openModal = useCallback((modal: ModalType) => {
@@ -480,7 +480,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           column: n.column || '',
           noteType: (n.noteType as EditableBMSNote['noteType']) || 'playable',
           // Canonical id: upper-case for base36 (case-insensitive), as written
-          // for #BASE 62 (case-sensitive — folding merges different keysounds).
+          // for #BASE 62 (case-sensitive: folding merges different keysounds).
           keysound: canonicalObjectId(n.keysound || '00', chart.base62),
           endBeat: n.endBeat,
           endTick,
@@ -548,7 +548,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   const reloadAudioRef = useRef<(() => void) | null>(null);
   const handlePlaybackStopRef = useRef<(() => void) | null>(null);
 
-  // WAV definitions — prefer store headers.wav (reflects uploads/edits) over original chart.keysounds
+  // WAV definitions. Prefer store headers.wav (reflects uploads/edits) over original chart.keysounds
   const wavDefinitions = useMemo(() => {
     const map = new Map<string, string>();
     const source = headers?.wav.size ? headers.wav : (chart ? new Map(Object.entries(chart.keysounds)) : null);
@@ -588,7 +588,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   /** Audio preloader key (base36 → lower-case, base62 → as is). */
   const audioKey = useCallback((id: string) => keysoundKey(id, base62Ref.current), []);
 
-  // Minimap density data — precompute per-measure density + color for Minimap overlay
+  // Minimap density data. Precompute per-measure density + color for Minimap overlay
   const minimapDensityData = useMemo((): MinimapDensityEntry[] | undefined => {
     if (!chart?.barLines || chart.barLines.length < 2 || notes.length === 0) return undefined;
     const totalMeasures = chart.barLines.length - 1;
@@ -601,7 +601,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     }));
   }, [notes, chart]);
 
-  // Minimap bookmarks — convert measure → beat
+  // Minimap bookmarks. Convert measure → beat
   const minimapBookmarks = useMemo((): MinimapBookmark[] => {
     if (!chart || bookmarks.length === 0) return [];
     return bookmarks.map((bm) => ({

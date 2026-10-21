@@ -92,7 +92,7 @@ export function App() {
     onSave?: () => Promise<boolean | void>;
   } | null>(null);
 
-  /** Complete a confirmed navigation — either switch route or let the window close. */
+  /** Complete a confirmed navigation: either switch route or let the window close. */
   const completeNavigation = useCallback((target: AppRoute | 'quit') => {
     if (target === 'quit') {
       void window.api.app.confirmClose();
