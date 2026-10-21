@@ -35,23 +35,23 @@ BMS Desktop은 Electron 33 + React 19 + Three.js 기반의 리듬게임 차트 �
 
 ## 3. 발견 및 수정된 버그
 
-### BUG-001: `audio.ts` — `entries` 미정의 참조
+### BUG-001: `audio.ts`, `entries` 미정의 참조
 
 - **파일**: `src/main/ipc/audio.ts:28`
 - **심각도**: Critical
 - **증상**: `readdir` 실패 시 `entries` 변수가 아직 정의되지 않은 상태에서 참조되어 앱 크래시
 - **원인**: `const entries = Object.entries(keysoundMap)`가 line 38에 선언되었으나, line 28의 catch 블록에서 먼저 사용
 - **수정**: `entries` 선언을 `readdir` 호출 전으로 이동
-- **회귀 테스트**: `tests/unit/ipc/audio.test.ts` — "directory not found" 테스트 케이스
+- **회귀 테스트**: `tests/unit/ipc/audio.test.ts`, "directory not found" 테스트 케이스
 
-### BUG-002: `Editor.tsx` — Temporal Dead Zone 에러
+### BUG-002: `Editor.tsx`, Temporal Dead Zone 에러
 
 - **파일**: `src/renderer/routes/Editor.tsx`
 - **심각도**: Critical
 - **증상**: 에디터 화면 진입 시 "Cannot access 'handleSaveWithCleanup' before initialization" 크래시
 - **원인**: `useEffect` 키보드 핸들러 내에서 `handleSaveWithCleanup`, `handlePlayTest`, `handlePlaybackToggle` 콜백을 참조하나, 이들이 `const`/`useCallback`으로 해당 `useEffect` 이후에 선언됨 (TDZ)
-- **수정**: `useRef` 패턴으로 전환 — 콜백을 ref에 저장하고 키보드 핸들러에서 ref를 통해 접근
-- **회귀 테스트**: E2E `tests/e2e/editor.spec.ts` — "editor renders without crash"
+- **수정**: `useRef` 패턴으로 전환. 콜백을 ref에 저장하고 키보드 핸들러에서 ref를 통해 접근
+- **회귀 테스트**: E2E `tests/e2e/editor.spec.ts`, "editor renders without crash"
 
 ---
 

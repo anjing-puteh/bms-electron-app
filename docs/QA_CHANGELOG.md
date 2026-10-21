@@ -80,8 +80,8 @@ QA_TEST_STRATEGY.md 설계 문서를 기반으로 테스트 인프라를 구축�
   - `tests/integration/chart-roundtrip.test.ts`
   - `tests/integration/editor-workflow.test.ts`
 - **증상**: 두 가지 에러가 혼재
-  - `Error: Vitest failed to find the runner` — `// @vitest-environment node` + 명시적 import 조합
-  - `TypeError: Cannot read properties of undefined (reading 'config')` — jsdom 환경에서 명시적 import
+  - `Error: Vitest failed to find the runner`: `// @vitest-environment node` + 명시적 import 조합
+  - `TypeError: Cannot read properties of undefined (reading 'config')`: jsdom 환경에서 명시적 import
 - **원인**: `vitest.config.ts`에 `globals: true`가 설정되어 `describe`, `it`, `expect`,
   `vi`, `beforeEach` 등이 전역 사용 가능한데, 테스트 파일에서 `import { ... } from 'vitest'`를
   명시적으로 호출하면 Vitest 러너 초기화 타이밍과 충돌

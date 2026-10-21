@@ -10,7 +10,7 @@
 
 **APPROVE for v1.0.0 once these blockers are resolved:**
 
-1. ~~Tier 5–7 i18n migration completes~~ — ✅ resolved 2026-05-24 (fire 12+13: user-facing 265+ migrated, parser pipeline stable, 5-locale skeleton in place)
+1. ~~Tier 5–7 i18n migration completes~~: ✅ resolved 2026-05-24 (fire 12+13: user-facing 265+ migrated, parser pipeline stable, 5-locale skeleton in place)
 2. Submodule pointers refreshed to latest sibling masters
 3. v0.1.2 GitHub release moved from Draft → Published
 
@@ -46,7 +46,7 @@
 
 ### `ci.yml` ✅ Working
 - Runs on push/PR to `ship/v1.0-complete` / `main` / `master`
-- Steps: typecheck (non-blocking baseline), i18n parser check (non-blocking — parser false-positive), ESLint hardcoded-Korean (non-blocking), unit/integration/compatibility tests, build
+- Steps: typecheck (non-blocking baseline), i18n parser check (non-blocking, parser false-positive), ESLint hardcoded-Korean (non-blocking), unit/integration/compatibility tests, build
 - Median runtime: ~3 minutes
 
 ### `nightly.yml` ✅ Working
@@ -94,7 +94,7 @@ Per `I18N-EXTRACTION-PLAYBOOK` and `I18N-PROGRESS.md`:
 **user-facing 누적 변환: 265+ literals** across renderer + bms-editor + main process.
 ESLint `local/no-hardcoded-korean` 0 errors in `src/**`. i18next-parser `i18n:check` exit 0 (stable). locale-parity vitest covers ko/en + skeleton de/es/ja/ru/zh.
 
-**Status (2026-05-24):** Blocker resolved — ko/en production-ready, 5 gated locales have synchronized key skeletons awaiting native-speaker fill.
+**Status (2026-05-24):** Blocker resolved. ko/en are production-ready, and 5 gated locales have synchronized key skeletons awaiting native-speaker fill.
 
 ## 6. Known Issues / Tech Debt
 

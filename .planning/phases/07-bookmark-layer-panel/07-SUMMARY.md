@@ -2,7 +2,7 @@
 
 **Status**: COMPLETE
 **Completed**: 2026-04-06
-**Commit**: 00ee25b (feat(v1.1): Phase 7 — 북마크 추가/삭제 UI + 레이어 패널)
+**Commit**: 00ee25b (feat(v1.1): Phase 7, 북마크 추가/삭제 UI + 레이어 패널)
 
 ## What Was Built
 
@@ -10,7 +10,7 @@
 - `LAYER_KEYS` constant array: `['playable', 'invisible', 'landmine', 'bgm']`
 - `LAYER_LABELS` map: Korean display names per layer
 - `LayerPanel` React component with props:
-  - `layerConfig: LayerConfig` — current layer state
+  - `layerConfig: LayerConfig`: current layer state
   - `onVisibleToggle`, `onLockToggle`, `onOpacityChange` callbacks
 - Per-layer row rendering:
   - Eye/EyeOff (Lucide): visibility toggle, `data-testid="layer-visible-{layer}"`

@@ -24,7 +24,7 @@
 - **D-02**: 헤더바에 별도 토글 버튼 추가 (현재 PanelRightOpen/Close는 NoteInfo 패널용 그대로 유지)
   - 미니맵 strip 전용 `showMinimap` 상태 (editorStore 또는 로컬 useState)
   - 기본값: 표시 (showMinimap = true)
-- **D-03**: 커스텀 resize handle 패턴 사용 (react-resizable-panels 아님) — 기존 좌/우 패널과 동일한 방식
+- **D-03**: 커스텀 resize handle 패턴 사용 (react-resizable-panels 아님). 기존 좌/우 패널과 동일한 방식
 
 ### 밀도 히트맵 시각화
 - **D-04**: 미니맵 캔버스 왼쪽에 별도 ~8px density bar 추가
@@ -55,7 +55,7 @@
 **Downstream agents MUST read these before planning or implementing.**
 
 ### 기존 미니맵 구현
-- `c:/SourceCode/bms-editor/src/chart/panels/Minimap.tsx` — 현재 Minimap 컴포넌트 (Canvas 2D, 뷰포트 팟, 클릭 이동 모두 구현됨)
+- `c:/SourceCode/bms-editor/src/chart/panels/Minimap.tsx`: 현재 Minimap 컴포넌트 (Canvas 2D, 뷰포트 팟, 클릭 이동 모두 구현됨)
 
 ### 밀도 히트맵 유틸리티
 - `src/renderer/lib/densityMap.ts`: computeDensityMap(), densityToColor() 구현체

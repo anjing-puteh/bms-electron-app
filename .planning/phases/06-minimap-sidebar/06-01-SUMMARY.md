@@ -103,9 +103,9 @@ None: density data wiring (`minimapDensityData`) and bookmark wiring (`minimapBo
 
 ## Self-Check
 
-- [x] `c:/SourceCode/bms-editor/src/chart/panels/Minimap.tsx` — modified (bms-editor commit c6e456b)
-- [x] `c:/SourceCode/bms-electron-app/src/renderer/stores/editorStore.ts` — modified (d15827c)
-- [x] `c:/SourceCode/bms-electron-app/src/renderer/routes/Editor.tsx` — modified (a50dd8c)
+- [x] `c:/SourceCode/bms-editor/src/chart/panels/Minimap.tsx`: modified (bms-editor commit c6e456b)
+- [x] `c:/SourceCode/bms-electron-app/src/renderer/stores/editorStore.ts`: modified (d15827c)
+- [x] `c:/SourceCode/bms-electron-app/src/renderer/routes/Editor.tsx`: modified (a50dd8c)
 - [x] Minimap strip is BEFORE `{showRightPanel}` block in Editor.tsx
 - [x] `!minimapPopout` guard on inline strip
 - [x] Maximize2 button triggers `setMinimapPopout(true)`

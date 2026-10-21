@@ -7,11 +7,11 @@
 ## What Was Built
 
 ### Minimap Canvas 2D Component (bms-editor)
-- `bms-editor/src/chart/panels/Minimap.tsx` — added `densityData` and `bookmarks` props
+- `bms-editor/src/chart/panels/Minimap.tsx`: added `densityData` and `bookmarks` props
   - Density heatmap layer rendered as semi-transparent filled rects per measure (behind lane backgrounds)
   - Bookmark markers rendered as horizontal colored lines + left triangle indicators
   - Updated `useEffect` deps to include `densityData, bookmarks`
-- `bms-editor/src/index.ts` — exported new types `MinimapDensityEntry`, `MinimapBookmark`
+- `bms-editor/src/index.ts`: exported new types `MinimapDensityEntry`, `MinimapBookmark`
 
 ### Editor Integration (bms-electron-app)
 - `src/renderer/routes/Editor.tsx`:
@@ -19,7 +19,7 @@
   - Imported `MinimapDensityEntry`, `MinimapBookmark` types from `@rhythm-archive/bms-editor`
   - Added `bookmarks` to `useShallow` selector
   - Added `minimapDensityData` useMemo: pre-computes density per measure with color strings
-  - Added `minimapBookmarks` useMemo — converts bookmark store entries (measure) to beat space via `store.mfToBeat`
+  - Added `minimapBookmarks` useMemo. It converts bookmark store entries (measure) to beat space via `store.mfToBeat`
   - Updated `MinimapBridge` to accept and pass `densityData` + `bookmarks` props
   - Removed minimap from inside `showRightPanel` conditional block
   - Added always-visible `w-16` minimap sidebar (renders when chart is loaded), `data-testid="minimap-sidebar"`

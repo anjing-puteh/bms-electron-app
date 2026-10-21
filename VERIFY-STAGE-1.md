@@ -34,7 +34,7 @@ REFACTOR-PLAN.md L387–393 Phase 1 명세와 본 PR 산출물 매핑.
 
 **부수적 변경**:
 - `tsconfig.web.json`/`tsconfig.node.json` 모두 `src/shared/**`을 include에 추가. 두 프로젝트가 같은 파일을 양쪽에서 컴파일하므로 composite 측면 미세 충돌 가능성은 있으나 `composite: true`로도 빌드/타입체크 정상.
-- `main/menu.ts`가 `webContents.send('menu:*')` 직접 호출에서 `sendToRenderer(webContents, 'menu:*')` 헬퍼 경유로 변경 — Plan에 명시되지 않았지만 SSOT 일관성 측면 보너스.
+- `main/menu.ts`가 `webContents.send('menu:*')` 직접 호출에서 `sendToRenderer(webContents, 'menu:*')` 헬퍼 경유로 변경. Plan에 명시되지 않았지만 SSOT 일관성 측면 보너스.
 
 **Plan 정합성 점수**: 6/6 항목 성취, 1건은 부분(폐기 대신 thin re-export), 0건 미달.
 
@@ -55,7 +55,7 @@ REFACTOR-PLAN.md L387–393 Phase 1 명세와 본 PR 산출물 매핑.
 
 ### 3.2 vitest 세부
 
-본 PR에 신규 테스트는 없음. Plan 10.2에서 권장하는 `tests/integration/ipc-contract.spec.ts`는 미작성 — Phase 1에서는 시그니처 보존으로 회귀 검사를 갈음한다는 전제. **회귀 가능하다는 객관적 증거: 1118/1118 동수 통과**. 베이스라인 변동 0.
+본 PR에 신규 테스트는 없음. Plan 10.2에서 권장하는 `tests/integration/ipc-contract.spec.ts`는 미작성. Phase 1에서는 시그니처 보존으로 회귀 검사를 갈음한다는 전제. **회귀 가능하다는 객관적 증거: 1118/1118 동수 통과**. 베이스라인 변동 0.
 
 ### 3.3 빌드 산출물 검토
 

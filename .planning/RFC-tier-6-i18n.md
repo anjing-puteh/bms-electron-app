@@ -4,7 +4,7 @@
 > components: `NoteChartViewer.tsx` (4,646 LoC) and `Editor.tsx`
 > (2,542 LoC): into reviewable chunks before any code change.
 >
-> Status: **proposed** — needs sign-off from the loop owner before fire 12.
+> Status: **proposed**. Needs sign-off from the loop owner before fire 12.
 > Owner: i18n migration loop. Created: 2026-05-06.
 
 ## 1. Context
@@ -28,7 +28,7 @@ Split each file **by feature surface, not by line range**. Each slice is
 one fire/PR. Slices are ordered so earlier ones unblock later ones (e.g.
 toast namespace must exist before toast call sites can be migrated).
 
-This RFC does **not** propose code restructuring of the two files —
+This RFC does **not** propose code restructuring of the two files.
 extraction the JSX surface only, no logic moves.
 
 ## 3. Slice plan: `Editor.tsx` (5 fires)
@@ -67,8 +67,8 @@ highest-value slice. 13.4 has no runtime risk and can ship anytime.
   (or `editor.json` for the bms-editor file) **before** flipping any call
   site, so partial reverts never break the build.
 - **Mandatory checks per PR:**
-  1. `npm run i18n:check` — locale parity holds.
-  2. `npm run lint:i18n` — no NEW Korean literal in changed lines (use
+  1. `npm run i18n:check`: locale parity holds.
+  2. `npm run lint:i18n`: no NEW Korean literal in changed lines (use
      ESLint's `--rulesdir` overlay or rely on the file-scoped diff).
   3. Visual QA of one screen per slice (recorded in PR description).
 - **Snapshots:** Editor.tsx slice 12.4 will alter many JSX strings; bump
@@ -97,7 +97,7 @@ they touch different packages.
 
 ## 8. Decision needed
 
-- [ ] **Approve slice grain** — 5 + 4 = 9 PRs feels right? (Alt: collapse
+- [ ] **Approve slice grain**: 5 + 4 = 9 PRs feels right? (Alt: collapse
       12.4 into 12.2/12.3 = 4+4 PRs, larger but fewer rebases.)
 - [ ] **Approve sequencing**: start with 12.1 next fire?
 - [ ] **Approve "comments are a separate slice"**: would unblock all
