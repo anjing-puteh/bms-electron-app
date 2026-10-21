@@ -1,6 +1,6 @@
 {
   "name": "bms-electron-app",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "BMS Desktop - Rhythm game player and chart editor",
   "license": "MIT",
   "author": "dotoritos-kim",
@@ -96,11 +96,16 @@
       "target": [
         "nsis",
         "portable"
-      ]
+      ],
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "BMS Desktop",
+      "uninstallDisplayName": "BMS Desktop"
     },
     "fileAssociations": [
       {

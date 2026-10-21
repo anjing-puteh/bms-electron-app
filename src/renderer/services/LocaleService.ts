@@ -15,11 +15,7 @@
  */
 
 import { i18next, initI18n } from '../i18n/init';
-import {
-  ENABLED_LOCALES,
-  isEnabledLocale,
-  type SupportedLocale,
-} from '../../shared/i18n/types';
+import { ENABLED_LOCALES, isEnabledLocale, type SupportedLocale } from '../../shared/i18n/types';
 
 type LocaleListener = (locale: SupportedLocale) => void;
 
@@ -53,7 +49,11 @@ class LocaleServiceImpl {
       // Notify subscribers so components that mounted before init() completed
       // (React renders fire-and-forget of init) can update to the real locale.
       for (const fn of this.listeners) {
-        try { fn(initialLocale); } catch { /* listener errors are isolated */ }
+        try {
+          fn(initialLocale);
+        } catch {
+          /* listener errors are isolated */
+        }
       }
 
       // Listen for IME composition globally so a switch mid-input is deferred.
@@ -106,7 +106,10 @@ class LocaleServiceImpl {
    */
   async change(
     locale: SupportedLocale,
-  ): Promise<{ ok: true } | { ok: false; reason: 'invalid' | 'stale' | 'deferred' | 'load-failed'; error?: unknown }> {
+  ): Promise<
+    | { ok: true }
+    | { ok: false; reason: 'invalid' | 'stale' | 'deferred' | 'load-failed'; error?: unknown }
+  > {
     if (!isEnabledLocale(locale)) {
       return { ok: false, reason: 'invalid' };
     }

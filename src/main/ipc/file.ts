@@ -4,14 +4,22 @@ import { join, extname, basename, dirname, resolve } from 'path';
 import { handle } from './handle';
 import type { BmsFileInfo } from '../../shared/ipc-contract';
 import { t as tMenu } from '../i18n/menu';
-import { assertBmsPath, assertDirPath, assertFileContent, assertFileName, assertPathString, assertString, AUDIO_EXTENSIONS, BMS_EXTENSIONS } from './validate';
+import {
+  assertBmsPath,
+  assertDirPath,
+  assertFileContent,
+  assertFileName,
+  assertPathString,
+  assertString,
+  AUDIO_EXTENSIONS,
+  BMS_EXTENSIONS,
+} from './validate';
 import { resolveInitialLocale } from '../store/localeStore';
 
 /** Text is written as UTF-8; bytes (an already-encoded chart) as they are. */
 function writeContent(path: string, content: string | Uint8Array): Promise<void> {
   return typeof content === 'string' ? writeFile(path, content, 'utf-8') : writeFile(path, content);
 }
-
 
 export type { BmsFileInfo };
 
@@ -56,7 +64,10 @@ export function registerFileIpc(): void {
     if (dialogOpen) return null;
     dialogOpen = true;
     const win = getWindowFromEvent(event);
-    if (!win) { dialogOpen = false; return null; }
+    if (!win) {
+      dialogOpen = false;
+      return null;
+    }
 
     try {
       const locale = await resolveInitialLocale();
@@ -82,7 +93,10 @@ export function registerFileIpc(): void {
     if (dialogOpen) return null;
     dialogOpen = true;
     const win = getWindowFromEvent(event);
-    if (!win) { dialogOpen = false; return null; }
+    if (!win) {
+      dialogOpen = false;
+      return null;
+    }
 
     try {
       const locale = await resolveInitialLocale();
@@ -149,7 +163,10 @@ export function registerFileIpc(): void {
     if (dialogOpen) return null;
     dialogOpen = true;
     const win = getWindowFromEvent(event);
-    if (!win) { dialogOpen = false; return null; }
+    if (!win) {
+      dialogOpen = false;
+      return null;
+    }
 
     try {
       const locale = await resolveInitialLocale();
@@ -184,7 +201,10 @@ export function registerFileIpc(): void {
     if (dialogOpen) return [];
     dialogOpen = true;
     const win = getWindowFromEvent(event);
-    if (!win) { dialogOpen = false; return []; }
+    if (!win) {
+      dialogOpen = false;
+      return [];
+    }
 
     try {
       const locale = await resolveInitialLocale();
@@ -227,7 +247,7 @@ export function registerFileIpc(): void {
         const existing = takenBases.get(base.toLowerCase());
         if (existing !== undefined) {
           const existingPath = join(bmsDir, existing);
-          if (samePlace(existingPath) || await sameContent(srcPath, existingPath)) {
+          if (samePlace(existingPath) || (await sameContent(srcPath, existingPath))) {
             // Already in the chart folder (or an identical copy): reuse it.
             imported.push({ filename: existing, destPath: existingPath });
             continue;
@@ -293,23 +313,21 @@ export function registerFileIpc(): void {
   // Create new BMS file
   handle(
     'file:createNewBms',
-    async (
-      event,
-      opts: { title: string; artist: string; bpm: number; keyMode: string },
-    ) => {
+    async (event, opts: { title: string; artist: string; bpm: number; keyMode: string }) => {
       if (dialogOpen) return null;
       dialogOpen = true;
       const win = getWindowFromEvent(event);
-      if (!win) { dialogOpen = false; return null; }
+      if (!win) {
+        dialogOpen = false;
+        return null;
+      }
 
       try {
         const locale = await resolveInitialLocale();
         const result = await dialog.showSaveDialog(win, {
           title: tMenu(locale, 'dialog.newBms'),
           defaultPath: `${opts.title || 'untitled'}.bms`,
-          filters: [
-            { name: 'BMS Files', extensions: ['bms', 'bme', 'bml'] },
-          ],
+          filters: [{ name: 'BMS Files', extensions: ['bms', 'bme', 'bml'] }],
         });
 
         refocusWindow(win);
@@ -359,7 +377,10 @@ export function registerFileIpc(): void {
     if (dialogOpen) return null;
     dialogOpen = true;
     const win = getWindowFromEvent(event);
-    if (!win) { dialogOpen = false; return null; }
+    if (!win) {
+      dialogOpen = false;
+      return null;
+    }
 
     try {
       const locale = await resolveInitialLocale();
@@ -435,7 +456,12 @@ export function registerFileIpc(): void {
     async (
       _event,
       rawBmsDir: string,
-      slices: Array<{ filename: string; pcmData: Float32Array; sampleRate: number; channels: number }>,
+      slices: Array<{
+        filename: string;
+        pcmData: Float32Array;
+        sampleRate: number;
+        channels: number;
+      }>,
     ) => {
       const bmsDir = assertDirPath(rawBmsDir, 'bmsDir');
       const saved: string[] = [];

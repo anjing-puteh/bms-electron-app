@@ -2,11 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { localeService } from '../services/LocaleService';
-import {
-  LOCALE_CODES,
-  LOCALE_LABELS,
-  type SupportedLocale,
-} from '../../shared/i18n/types';
+import { LOCALE_CODES, LOCALE_LABELS, type SupportedLocale } from '../../shared/i18n/types';
 
 interface LanguageSwitcherProps {
   /** Compact = status-bar style (icon + ISO code). Full = labelled dropdown. */
@@ -48,25 +44,28 @@ export function LanguageSwitcher({ variant = 'compact' }: LanguageSwitcherProps)
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [open]);
 
-  const handleSelect = useCallback(async (locale: SupportedLocale) => {
-    if (locale === current || busy) {
-      setOpen(false);
-      return;
-    }
-    setNotice(null);
-    setBusy(true);
-    try {
-      const result = await localeService.change(locale);
-      if (result.ok) {
-        // current is updated via subscribe()
-      } else if (result.reason === 'load-failed') {
-        console.warn('[i18n] failed to load locale:', locale, result.error);
+  const handleSelect = useCallback(
+    async (locale: SupportedLocale) => {
+      if (locale === current || busy) {
+        setOpen(false);
+        return;
       }
-    } finally {
-      setBusy(false);
-      setOpen(false);
-    }
-  }, [current, busy]);
+      setNotice(null);
+      setBusy(true);
+      try {
+        const result = await localeService.change(locale);
+        if (result.ok) {
+          // current is updated via subscribe()
+        } else if (result.reason === 'load-failed') {
+          console.warn('[i18n] failed to load locale:', locale, result.error);
+        }
+      } finally {
+        setBusy(false);
+        setOpen(false);
+      }
+    },
+    [current, busy],
+  );
 
   const enabled = localeService.getEnabled();
 
@@ -137,7 +136,11 @@ export function LanguageSwitcher({ variant = 'compact' }: LanguageSwitcherProps)
           </option>
         ))}
       </select>
-      {notice && <p role="alert" className="mt-1 text-xs text-yellow-400">{notice}</p>}
+      {notice && (
+        <p role="alert" className="mt-1 text-xs text-yellow-400">
+          {notice}
+        </p>
+      )}
     </div>
   );
 }

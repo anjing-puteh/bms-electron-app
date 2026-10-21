@@ -59,9 +59,13 @@ jobs:
       - name: Build renderer/main/preload
         run: npm run build
 
+      # Code signing is optional: electron-builder skips signing when WIN_CSC_LINK
+      # is empty, so builds without these secrets still succeed (unsigned).
       - name: Package & publish to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
         run: npx electron-builder --win --publish always
 
       - name: Upload installer artifacts

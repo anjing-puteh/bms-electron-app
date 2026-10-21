@@ -86,7 +86,9 @@ export async function resolveInitialLocale(): Promise<SupportedLocale> {
   // so it stays in process.argv unmodified; env vars can be filtered on Windows).
   // APP_TEST_LANG is kept as a secondary fallback.
   const cliLocaleArg = process.argv.find((a) => a.startsWith('--bms-test-locale='));
-  const fromCliFlag = cliLocaleArg ? normalizeOsLocale(cliLocaleArg.slice('--bms-test-locale='.length)) : null;
+  const fromCliFlag = cliLocaleArg
+    ? normalizeOsLocale(cliLocaleArg.slice('--bms-test-locale='.length))
+    : null;
   if (fromCliFlag) return fromCliFlag;
 
   const fromTestEnv = normalizeOsLocale(process.env['APP_TEST_LANG']);
