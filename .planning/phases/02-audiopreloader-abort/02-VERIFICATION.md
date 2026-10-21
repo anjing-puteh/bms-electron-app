@@ -5,12 +5,12 @@ status: passed
 score: 4/4 must-haves verified
 ---
 
-# Phase 2: AudioPreloader Abort — Verification Report
+# Phase 2: AudioPreloader Abort, Verification Report
 
 **Phase Goal:** AudioPreloader에 abort() 메서드를 추가하여 decodeAll/loadAll 중 즉시 중단 가능하게 함
 **Verified:** 2026-04-06T21:04:00Z
 **Status:** passed
-**Re-verification:** No — initial verification
+**Re-verification:** No, initial verification
 
 ---
 
@@ -96,7 +96,7 @@ None. All abort behaviors are fully verifiable programmatically via unit tests.
 Phase goal is fully achieved. The `abort()` method exists at line 1073, correctly:
 
 1. Sets `this.aborted = true` and fires `_abortResolve?.()` to immediately resolve any in-progress `decodeAll()` Promise.race or `loadAll()` cleanup resolver.
-2. Guards `decodeAll()` at the method entry (line 398) and inside each decode `.then()` callback (line 426) — plus `decodeOne()` at lines 236, 265, 274.
+2. Guards `decodeAll()` at the method entry (line 398) and inside each decode `.then()` callback (line 426), plus `decodeOne()` at lines 236, 265, 274.
 3. Guards `loadAll()` at line 344 (post-IndexedDB-check bail-out) and via the `_abortResolve` mechanism for the Worker-awaiting promise path.
 4. Uses a per-instance field initializer (`private aborted = false`) ensuring new instances are always independent.
 

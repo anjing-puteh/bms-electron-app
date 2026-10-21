@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-04-06
 **Status:** Ready for planning
-**Mode:** Auto-generated (infrastructure phase — discuss skipped)
+**Mode:** Auto-generated (infrastructure phase, discuss skipped)
 
 <domain>
 ## Phase Boundary

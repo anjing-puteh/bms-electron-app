@@ -25,7 +25,7 @@ Editor 언마운트 시 오디오 로딩 즉시 중단. `loadAbortRef` + `inProg
 
 ## Self-Check: PASSED
 
-- Commit: 76d118e feat: Phase 3 — Editor Graceful Shutdown
+- Commit: 76d118e feat: Phase 3, Editor Graceful Shutdown
 - Editor 언마운트 abort ✓
 - App.tsx remount on file change ✓
 

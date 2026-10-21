@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] T1: Worker Phase1 — Shift-JIS 파일 제목 올바르게 반환
-- [ ] T2: Worker Phase2 — 노트 수/stats 올바르게 반환
-- [ ] T3: Worker PARSE_ERROR — 깨진 BMS 파일 → error 상태
-- [ ] T4: requestId race — 구버전 PHASE2_DONE 결과 무시 확인
-- [ ] T5: loadAudio abort — decodeAll 후 bail-out → preloader 해제 확인
+- [ ] T1: Worker Phase1, Shift-JIS 파일 제목 올바르게 반환
+- [ ] T2: Worker Phase2, 노트 수/stats 올바르게 반환
+- [ ] T3: Worker PARSE_ERROR, 깨진 BMS 파일 → error 상태
+- [ ] T4: requestId race, 구버전 PHASE2_DONE 결과 무시 확인
+- [ ] T5: loadAudio abort, decodeAll 후 bail-out → preloader 해제 확인
 - [ ] 모든 5개 테스트 파일이 vitest 통과

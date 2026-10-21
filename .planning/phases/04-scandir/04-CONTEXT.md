@@ -11,4 +11,4 @@
 
 ## Files Modified
 
-- `src/main/ipc/file.ts` — `scanDir` → `collectBmsPaths` + 병렬 stat
+- `src/main/ipc/file.ts`: `scanDir` → `collectBmsPaths` + 병렬 stat

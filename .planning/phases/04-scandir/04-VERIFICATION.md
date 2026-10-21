@@ -12,7 +12,7 @@ human_verification: []
 **Phase Goal:** 폴더 스캔 시 stat() 호출을 병렬화하여 대용량 폴더 성능 개선
 **Verified:** 2026-04-06T12:04:30Z
 **Status:** passed
-**Re-verification:** No — initial verification
+**Re-verification:** No, initial verification
 
 ## Goal Achievement
 
@@ -74,7 +74,7 @@ No gaps. All four observable truths are verified against the actual implementati
 
 1. `BATCH_SIZE = 20` is declared and drives the loop slice boundary.
 2. `Promise.all` wraps each batch of up to 20 `stat()` calls.
-3. `collectBmsPaths()` performs only `readdir` traversal — no `stat` — cleanly separating Phase 1 from Phase 2.
+3. `collectBmsPaths()` performs only `readdir` traversal, with no `stat`, cleanly separating Phase 1 from Phase 2.
 4. Recursive descent with a depth cap of 5 is present and tested.
 5. The commit `b88ffa2` is confirmed in git history with a diff touching only `src/main/ipc/file.ts`.
 6. All 6 unit tests pass in a live run (238ms).

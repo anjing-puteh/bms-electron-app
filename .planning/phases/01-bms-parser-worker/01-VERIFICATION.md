@@ -11,7 +11,7 @@ re_verification: false
 **Phase Goal:** BMS 파싱을 Web Worker로 이전하여 메인 스레드 블로킹을 제거하고 2단계 로딩으로 즉각적인 UI 피드백 제공
 **Verified:** 2026-04-06T12:00:00Z
 **Status:** passed
-**Re-verification:** No — initial verification
+**Re-verification:** No, initial verification
 
 ---
 
@@ -66,7 +66,7 @@ re_verification: false
 
 ### Behavioral Spot-Checks
 
-Step 7b: SKIPPED (requires running Electron app with a real BMS file — no runnable entry point testable without starting the full Electron process).
+Step 7b: SKIPPED. It requires running the Electron app with a real BMS file, since no runnable entry point is testable without starting the full Electron process.
 
 ---
 
@@ -89,7 +89,7 @@ Step 7b: SKIPPED (requires running Electron app with a real BMS file — no runn
 |------|------|---------|----------|--------|
 | None | — | — | — | — |
 
-No TODO/FIXME/placeholder comments found. No empty implementations. No hardcoded empty data flowing to rendered output. The `notes: []` / `stats: { total: 0 ... }` in the PHASE1_DONE handler (lines 106-113) are intentional zero-filled placeholders for Phase2 data — they are immediately replaced on PHASE2_DONE and are never the final rendered values.
+No TODO/FIXME/placeholder comments found. No empty implementations. No hardcoded empty data flowing to rendered output. The `notes: []` / `stats: { total: 0 ... }` in the PHASE1_DONE handler (lines 106-113) are intentional zero-filled placeholders for Phase2 data. They are immediately replaced on PHASE2_DONE and are never the final rendered values.
 
 ---
 
@@ -99,7 +99,7 @@ No TODO/FIXME/placeholder comments found. No empty implementations. No hardcoded
 
 **Test:** Open the app, select a large BMS file (1000+ notes), and observe the Home.tsx right panel.
 **Expected:** Title/Artist/BPM/KeyMode appear within ~100ms of selection, while stats cards show "..." with animated pulse for a brief period before updating to real values.
-**Why human:** Timing of PHASE1_DONE vs PHASE2_DONE depends on file size and CPU speed — cannot verify programmatically without running the app.
+**Why human:** Timing of PHASE1_DONE vs PHASE2_DONE depends on file size and CPU speed. It cannot be verified programmatically without running the app.
 
 #### 2. Cancel during load
 

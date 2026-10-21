@@ -10,7 +10,7 @@ score: 5/5 must-haves verified
 **Phase Goal:** Editor 언마운트 시 in-progress 오디오 로딩을 즉시 중단하고 리소스를 안전하게 해제
 **Verified:** 2026-04-06
 **Status:** PASSED
-**Re-verification:** No — initial verification
+**Re-verification:** No, initial verification
 
 ---
 
@@ -58,7 +58,7 @@ Not applicable: this phase deals with resource cleanup/abort control flow, not d
 
 ## Behavioral Spot-Checks
 
-Step 7b: SKIPPED — cleanup behavior requires runtime unmount events and audio loading in progress; cannot be verified without running the Electron app.
+Step 7b: SKIPPED. Cleanup behavior requires runtime unmount events and audio loading in progress, so it cannot be verified without running the Electron app.
 
 ---
 

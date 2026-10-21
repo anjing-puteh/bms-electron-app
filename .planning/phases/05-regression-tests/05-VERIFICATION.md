@@ -10,7 +10,7 @@ score: 5/5 must-haves verified
 **Phase Goal:** 핵심 버그 수정에 대한 테스트를 추가하여 회귀를 방지
 **Verified:** 2026-04-06T21:07:45Z
 **Status:** passed
-**Re-verification:** No — initial verification
+**Re-verification:** No, initial verification
 
 ## Goal Achievement
 
