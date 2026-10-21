@@ -14,7 +14,7 @@ import GameLoopWorkerConstructor from '../workers/gameLoop.worker?worker';
 interface PlayerProps {
   file: CurrentFile;
   onBack: () => void;
-  /** Back request from the header arrow — routed through the app navigation guard. */
+  /** Back request from the header arrow. Routed through the app navigation guard. */
   onRequestBack?: () => void;
   onClearFile?: () => void;
   onRegisterGuard: (guard: NavigationGuard | null) => void;
@@ -26,7 +26,7 @@ type ChartNote = LocalBmsChartInfo['notes'][number];
 
 /**
  * Splits chart notes into notechart input. Invisible objects (ch 31-4Z) are
- * never displayed or judged — they only define keysounds — so they stay out
+ * never displayed or judged. They only define keysounds, so they stay out
  * of the playable list (otherwise they render, count toward the gauge and MISS).
  */
 export function splitPlayerNotes(notes: ChartNote[]): { playable: ChartNote[]; landmines: ChartNote[] } {
@@ -168,7 +168,7 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
           positioning: chart.positioning,
           spacing: chart.spacing,
           barLines: chart.barLines,
-          // IIDX EX-style judgment window — default to ±20ms PGREAT / ±50ms GREAT
+          // IIDX EX-style judgment window. Defaults to ±20ms PGREAT / ±50ms GREAT
           expertJudgmentWindow: [0.020, 0.050],
         };
 
@@ -343,7 +343,7 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
   // #RANK / #DEFEXRANK / #TOTAL → engine judge windows and gauge rate
   const judgeOptions = chartJudgeOptions(chart?.bmsChart?.headers);
 
-  // Ready / Playing / Result — GamePlayer handles all game UI including ready screen and result screen
+  // Ready / Playing / Result. GamePlayer handles all game UI including ready screen and result screen
   return (
     <div className="h-full flex flex-col bg-black">
       {/* Minimal header */}
@@ -366,7 +366,7 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
         </label>
       </div>
 
-      {/* Game canvas — GamePlayer renders ready screen, game, and result screen */}
+      {/* Game canvas. GamePlayer renders ready screen, game, and result screen */}
       <div className="flex-1 min-h-0 min-w-0 relative flex items-center justify-center overflow-hidden" ref={attachContainer}>
         <GamePlayer
           notechart={notechart}

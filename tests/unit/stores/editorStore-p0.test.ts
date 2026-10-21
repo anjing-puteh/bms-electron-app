@@ -52,7 +52,7 @@ beforeEach(() => {
 });
 
 // ============================================================
-// 1. addNote duplicate detection — auto-replace
+// 1. addNote duplicate detection, auto-replace
 // ============================================================
 describe('noteIndex: addNote duplicate detection', () => {
   it('should replace existing playable note at same beat+column', () => {
@@ -73,7 +73,7 @@ describe('noteIndex: addNote duplicate detection', () => {
 
     store().addNote(mockNote({ beat: 4, column: undefined, noteType: 'bgm', keysound: '02' }) as any);
 
-    // BGM notes are not indexed — both should exist
+    // BGM notes are not indexed. Both should exist
     expect(store().notes).toHaveLength(2);
   });
 
@@ -87,7 +87,7 @@ describe('noteIndex: addNote duplicate detection', () => {
 });
 
 // ============================================================
-// 2. paste — index grows by N
+// 2. paste: index grows by N
 // ============================================================
 describe('noteIndex: paste updates index', () => {
   it('should increase note count after paste', () => {
@@ -107,7 +107,7 @@ describe('noteIndex: paste updates index', () => {
 });
 
 // ============================================================
-// 3. undo — index restored to previous state
+// 3. undo: index restored to previous state
 // ============================================================
 describe('noteIndex: undo restores index', () => {
   it('should restore index after undo of addNote', () => {
@@ -137,7 +137,7 @@ describe('noteIndex: undo restores index', () => {
 });
 
 // ============================================================
-// 4. deleteNotes — index entry removed
+// 4. deleteNotes: index entry removed
 // ============================================================
 describe('noteIndex: deleteNotes removes index entry', () => {
   it('should allow placing new note at deleted position', () => {
@@ -145,7 +145,7 @@ describe('noteIndex: deleteNotes removes index entry', () => {
 
     store().deleteNotes(['note-1']);
 
-    // Place new note at same position — should not trigger replace
+    // Place new note at same position. Should not trigger replace
     store().addNote(mockNote({ beat: 4, column: 'K2', keysound: '05' }) as any);
     expect(store().notes).toHaveLength(1);
     expect(store().notes[0].keysound).toBe('05');
@@ -153,7 +153,7 @@ describe('noteIndex: deleteNotes removes index entry', () => {
 });
 
 // ============================================================
-// 5. moveNotes — old key removed, new key added
+// 5. moveNotes: old key removed, new key added
 // ============================================================
 describe('noteIndex: moveNotes updates index', () => {
   it('should update index when note moves to new position', () => {
@@ -166,14 +166,14 @@ describe('noteIndex: moveNotes updates index', () => {
     store().selectNotes(['note-1']);
     store().moveNotes(['note-1'], { beat: 8 }, laneIds);
 
-    // Place new note at beat 0 K1 (vacated position) — should not replace
+    // Place new note at beat 0 K1 (vacated position). Should not replace
     store().addNote(mockNote({ beat: 0, column: 'K1', keysound: '03' }) as any);
     expect(store().notes).toHaveLength(3);
   });
 });
 
 // ============================================================
-// 6. BGM notes — not indexed, allow duplicates
+// 6. BGM notes: not indexed, allow duplicates
 // ============================================================
 describe('noteIndex: BGM notes not indexed', () => {
   it('should allow multiple BGM notes at same beat', () => {
@@ -188,7 +188,7 @@ describe('noteIndex: BGM notes not indexed', () => {
 });
 
 // ============================================================
-// 7. preparePaste — conflict detection
+// 7. preparePaste: conflict detection
 // ============================================================
 describe('preparePaste: conflict detection', () => {
   it('should detect conflicts with existing notes', () => {
@@ -243,7 +243,7 @@ describe('preparePaste: conflict detection', () => {
 });
 
 // ============================================================
-// 8. executePaste — replace mode
+// 8. executePaste: replace mode
 // ============================================================
 describe('executePaste: replace mode', () => {
   it('should replace conflicting notes', () => {

@@ -2,7 +2,7 @@
  * i18n type definitions shared between main, preload, and renderer.
  *
  * The `SupportedLocale` universe is duplicated in `ipc-contract.ts` to avoid
- * circular shared-package layering. Keep them in sync — the `_assert` line
+ * circular shared-package layering. Keep them in sync. The `_assert` line
  * below produces a compile error if they drift.
  */
 
@@ -14,14 +14,14 @@ export type SupportedLocale = IpcSupportedLocale;
  * Locales surfaced to users at runtime. Phase i18n-1 ships ko + en;
  * additional locales are gated until their translations are reviewed.
  *
- * Mutate this constant — never `SupportedLocale` — to enable a new language.
+ * Mutate this constant, never `SupportedLocale`, to enable a new language.
  */
 export const ENABLED_LOCALES: readonly SupportedLocale[] = ['ko', 'en', 'ja'] as const;
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en';
 export const FALLBACK_LOCALE: SupportedLocale = 'en';
 
-/** Native-script display names — never translated. */
+/** Native-script display names. Never translated. */
 export const LOCALE_LABELS: Record<SupportedLocale, string> = {
   ko: '한국어',
   en: 'English',
@@ -45,13 +45,13 @@ export const LOCALE_CODES: Record<SupportedLocale, string> = {
 
 /**
  * Namespaces. Loaded lazily per route. Keep namespaces small and
- * orthogonal — duplicate keys across namespaces force a fallback chain.
+ * orthogonal. Duplicate keys across namespaces force a fallback chain.
  *
- * - `common`  — shared UI vocabulary (actions, status, language switcher)
- * - `app`     — shell-level strings (App.tsx navigation, errors)
- * - `errors`  — runtime error messages surfaced as toasts
- * - `editor`  — strings owned by the bms-editor library (forwarded to its I18nContext)
- * - `player`  — strings owned by the bms-player library
+ * - `common`: shared UI vocabulary (actions, status, language switcher)
+ * - `app`: shell-level strings (App.tsx navigation, errors)
+ * - `errors`: runtime error messages surfaced as toasts
+ * - `editor`: strings owned by the bms-editor library (forwarded to its I18nContext)
+ * - `player`: strings owned by the bms-player library
  */
 export const NAMESPACES = ['common', 'app', 'errors', 'editor', 'player'] as const;
 export type Namespace = (typeof NAMESPACES)[number];
