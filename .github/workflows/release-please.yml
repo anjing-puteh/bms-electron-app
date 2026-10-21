@@ -3,7 +3,6 @@ name: Release Please
 on:
   push:
     branches:
-      - ship/v1.0-complete
       - main
       - master
   workflow_dispatch:

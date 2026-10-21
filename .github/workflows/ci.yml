@@ -3,12 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - ship/v1.0-complete
       - main
       - master
   pull_request:
     branches:
-      - ship/v1.0-complete
       - main
       - master
 
@@ -46,7 +44,7 @@ jobs:
           npm run build --workspace=@rhythm-archive/bms-player
           npm run build --workspace=@rhythm-archive/bms-editor
 
-      # Type check is intentionally non-blocking on ship/v1.0-complete:
+      # Type check is intentionally non-blocking on main:
       # PR #1 (refactor/stage-1-ipc-contract-ssot) explicitly documents
       # pre-existing cross-package TS errors as baseline. Tracked as
       # REFACTOR-PLAN issue #5 (useLocalBmsFile / cross-package import
