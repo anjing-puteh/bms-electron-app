@@ -34,7 +34,7 @@ locale:
 | Enable a new locale by adding it to `ENABLED_LOCALES` | Maintainer + two native speakers; PR must demonstrate ≥95% key coverage |
 
 Machine-translated drafts (DeepL, Claude, etc.) are welcome **only** as the
-basis for human review — never as the final commit. Mark such PRs with the
+basis for human review, never as the final commit. Mark such PRs with the
 `needs-native-review` label.
 
 ### Adding a new key
@@ -43,7 +43,7 @@ basis for human review — never as the final commit. Mark such PRs with the
 2. Add the equivalent to the `en` JSON. Keep keys parallel.
 3. For other locales, leave the key omitted; CI will fail until the parser
    either inserts a placeholder or you supply the translation.
-4. Reference it in code via `t('namespace:key.path')` — never inline.
+4. Reference it in code via `t('namespace:key.path')`. Never inline it.
 
 ### Library packages (`bms-editor`, `bms-player`)
 
@@ -65,7 +65,7 @@ When you add a key inside a library package:
   written in **English** as the source of truth. Korean equivalents
   (`README.ko.md`, `docs/ko/*`) are translations and must be updated in the
   same PR or labelled `docs-translation-pending`.
-- Internal docs under `.planning/**` stay in Korean — they are working
+- Internal docs under `.planning/**` stay in Korean. They are working
   notes, not external artefacts.
 - Each translated document carries a `last_synced: <commit-sha>` frontmatter
   field; the `scripts/docs-drift-check` job warns when sources drift.
@@ -74,7 +74,7 @@ When you add a key inside a library package:
 
 - TypeScript `strict` mode (already enabled). Prefer narrow types; never
   add `any` without an explanatory comment.
-- React components avoid prop drilling — use Context for cross-cutting
+- React components avoid prop drilling. Use Context for cross-cutting
   concerns (see how `LocaleService` is consumed via `useTranslation()` /
   `useI18n()`).
 - IPC channels live in `src/shared/ipc-contract.ts`. Adding a channel means

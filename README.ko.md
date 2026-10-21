@@ -1,6 +1,6 @@
 # BMS Desktop
 
-> Cross-package BMS (Be-Music Script) 데스크톱 애플리케이션 — 리듬 게임 플레이어와 채보 에디터를 하나의 Electron 앱으로 통합한 프로젝트입니다.
+> Cross-package BMS (Be-Music Script) 데스크톱 애플리케이션. 리듬 게임 플레이어와 채보 에디터를 하나의 Electron 앱으로 통합한 프로젝트입니다.
 
 [![Release](https://github.com/dotoritos-kim/bms-electron-app/actions/workflows/release.yml/badge.svg)](https://github.com/dotoritos-kim/bms-electron-app/actions/workflows/release.yml)
 [![CI](https://github.com/dotoritos-kim/bms-electron-app/actions/workflows/ci.yml/badge.svg)](https://github.com/dotoritos-kim/bms-electron-app/actions/workflows/ci.yml)
@@ -9,24 +9,24 @@
 
 `bms-electron-app`은 BMS 계열 채보 파일(`.bms`, `.bme`, `.bml`, `.pms`, `.bmson`)을 재생하고 편집할 수 있는 Windows 데스크톱 앱입니다. 본 저장소는 다음 sibling 패키지들을 통합하는 셸 역할을 합니다.
 
-- [`bms-core`](https://github.com/dotoritos-kim/bms-core) — 파서 / 도메인 모델 / 오디오 엔진 코어
-- [`bms-player`](https://github.com/dotoritos-kim/bms-player) — 플레이어 UI 및 노트 렌더링
-- [`bms-editor`](https://github.com/dotoritos-kim/bms-editor) — 채보 에디터 (편집 / 단축키 / 패턴 라이브러리)
+- [`bms-core`](https://github.com/dotoritos-kim/bms-core): 파서 / 도메인 모델 / 오디오 엔진 코어
+- [`bms-player`](https://github.com/dotoritos-kim/bms-player): 플레이어 UI 및 노트 렌더링
+- [`bms-editor`](https://github.com/dotoritos-kim/bms-editor): 채보 에디터 (편집 / 단축키 / 패턴 라이브러리)
 
 ### 주요 기능
 
-- **Player** — 채보 재생, 키사운드 / 오디오 슬라이서, 파형 오버레이
-- **Editor** — 노트 편집, BPM Tap, MIDI 매핑, 패턴 라이브러리, 자동 채보
-- **세션 복원** — 마지막으로 열었던 파일과 라우트를 자동으로 복구
-- **파일 연관(File Association)** — `.bms` / `.bme` / `.bml` / `.pms` / `.bmson` 더블클릭으로 실행
-- **메뉴 단축키** — `Ctrl+O` / `Ctrl+Shift+O` / `Ctrl+S` / `Ctrl+Shift+S`
+- **Player**: 채보 재생, 키사운드 / 오디오 슬라이서, 파형 오버레이
+- **Editor**: 노트 편집, BPM Tap, MIDI 매핑, 패턴 라이브러리, 자동 채보
+- **세션 복원**: 마지막으로 열었던 파일과 라우트를 자동으로 복구
+- **파일 연관(File Association)**: `.bms` / `.bme` / `.bml` / `.pms` / `.bmson` 더블클릭으로 실행
+- **메뉴 단축키**: `Ctrl+O` / `Ctrl+Shift+O` / `Ctrl+S` / `Ctrl+Shift+S`
 
 ## 요구 사항
 
 - **Node.js** 20.x (CI 기준)
 - **npm** 10+
 - **Windows 10/11** (배포 타겟; 개발은 macOS/Linux에서도 가능)
-- **sibling 저장소 체크아웃** — 같은 부모 폴더에 다음과 같이 배치되어 있어야 합니다.
+- **sibling 저장소 체크아웃**: 같은 부모 폴더에 다음과 같이 배치되어 있어야 합니다.
 
 ```
 parent/
@@ -141,7 +141,7 @@ npm run package     # NSIS 설치 파일 + Portable 빌드 → dist/
 릴리스 흐름:
 
 1. PR이 default 브랜치에 머지되면 [release-please.yml](.github/workflows/release-please.yml)이 실행되어, [Conventional Commits](https://www.conventionalcommits.org/) 형식의 커밋(`feat:`, `fix:`, `perf:` 등)을 분석합니다.
-2. release-please가 **Release PR**을 자동 생성/업데이트합니다 — `package.json` 버전 bump + `CHANGELOG.md` 갱신을 포함합니다.
+2. release-please가 **Release PR**을 자동 생성/업데이트합니다. 여기에는 `package.json` 버전 bump와 `CHANGELOG.md` 갱신이 포함됩니다.
 3. Release PR을 머지하면 release-please가 GitHub Release와 `v*` 태그를 자동 생성합니다.
 4. 태그 생성으로 [release.yml](.github/workflows/release.yml)이 트리거되어 다음을 수행합니다.
    - `bms-core`, `bms-player`, `bms-editor` sibling 저장소 체크아웃
@@ -168,7 +168,7 @@ npm run package     # NSIS 설치 파일 + Portable 빌드 → dist/
 - **Unit / Component**: Vitest + Testing Library + jsdom
 - **E2E**: Playwright (`tests/` 하위)
 - **Mutation**: Stryker (`stryker.config.mjs`)
-- **호환성**: `tests/compatibility/` — 다른 BMS 플레이어와의 동작 비교
+- **호환성**: `tests/compatibility/`에서 다른 BMS 플레이어와 동작을 비교합니다.
 
 자세한 전략은 [docs/QA_TEST_STRATEGY.md](docs/QA_TEST_STRATEGY.md)를 참고하세요.
 
@@ -178,6 +178,6 @@ npm run package     # NSIS 설치 파일 + Portable 빌드 → dist/
 
 ## 관련 문서
 
-- [REFACTOR-PLAN.md](REFACTOR-PLAN.md) — 진행 중인 리팩터링 계획
+- [REFACTOR-PLAN.md](REFACTOR-PLAN.md): 진행 중인 리팩터링 계획
 - [docs/QA_TEST_STRATEGY.md](docs/QA_TEST_STRATEGY.md)
 - [docs/QA_CHANGELOG.md](docs/QA_CHANGELOG.md)

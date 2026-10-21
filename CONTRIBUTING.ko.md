@@ -31,7 +31,7 @@
 | `ENABLED_LOCALES`에 언어 추가 | 메인테이너 + 원어민 2명, 키 커버리지 ≥95% PR 요구 |
 
 기계 번역(DeepL, Claude 등) 결과물은 **사람 검수의 베이스**로만 환영
-받습니다 — 최종 커밋이 될 수 없습니다. 그런 PR은 `needs-native-review`
+받습니다. 최종 커밋이 될 수 없습니다. 그런 PR은 `needs-native-review`
 라벨을 붙여 주세요.
 
 ### 새 키 추가 절차
@@ -58,7 +58,7 @@
 - 외부 공개 문서(`README.md`, `CONTRIBUTING.md`, `docs/en/*`)는 **영문이
   source of truth**. 한국어 번역(`README.ko.md`, `docs/ko/*`)은 같은
   PR에서 갱신하거나 `docs-translation-pending` 라벨을 붙여 주세요.
-- `.planning/**` 내부 문서는 한국어 단일 — 외부 산출물이 아닌 작업 노트입니다.
+- `.planning/**` 내부 문서는 한국어로만 작성합니다. 외부 산출물이 아닌 작업 노트입니다.
 - 번역 문서는 frontmatter `last_synced: <commit-sha>` 필드를 가지며,
   `scripts/docs-drift-check` 잡이 drift를 경고합니다.
 
@@ -66,7 +66,7 @@
 
 - TypeScript `strict` 모드 (이미 활성화). 좁은 타입 우선, 설명 없는
   `any` 추가 금지.
-- React 컴포넌트는 prop drilling 회피 — 가로축 관심사는 Context 사용
+- React 컴포넌트는 prop drilling을 피합니다. 가로축 관심사는 Context를 사용합니다.
   (`useTranslation()` / `useI18n()`이 좋은 예).
 - IPC 채널은 `src/shared/ipc-contract.ts`에 정의. 신규 채널 추가 시
   `IpcInvokeMap` / `IpcSendMap`에 선언하고 preload에서 노출. 렌더러에서
