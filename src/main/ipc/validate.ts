@@ -78,6 +78,15 @@ export function assertFileName(value: unknown, label = 'filename'): string {
   return value;
 }
 
+/**
+ * Chart file contents: text (written as UTF-8) or already-encoded bytes (e.g.
+ * Shift_JIS / EUC-KR produced by the renderer to keep the source encoding).
+ */
+export function assertFileContent(value: unknown, label = 'content'): string | Uint8Array {
+  if (typeof value === 'string' || value instanceof Uint8Array) return value;
+  throw new IpcValidationError(`${label} must be a string or Uint8Array`);
+}
+
 export function assertString(value: unknown, label = 'value'): string {
   if (typeof value !== 'string') {
     throw new IpcValidationError(`${label} must be a string`);

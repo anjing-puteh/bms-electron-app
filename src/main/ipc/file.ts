@@ -4,8 +4,13 @@ import { join, extname, basename, dirname, resolve } from 'path';
 import { handle } from './handle';
 import type { BmsFileInfo } from '../../shared/ipc-contract';
 import { t as tMenu } from '../i18n/menu';
-import { assertBmsPath, assertDirPath, assertFileName, assertPathString, assertString, AUDIO_EXTENSIONS, BMS_EXTENSIONS } from './validate';
+import { assertBmsPath, assertDirPath, assertFileContent, assertFileName, assertPathString, assertString, AUDIO_EXTENSIONS, BMS_EXTENSIONS } from './validate';
 import { resolveInitialLocale } from '../store/localeStore';
+
+/** Text is written as UTF-8; bytes (an already-encoded chart) as they are. */
+function writeContent(path: string, content: string | Uint8Array): Promise<void> {
+  return typeof content === 'string' ? writeFile(path, content, 'utf-8') : writeFile(path, content);
+}
 
 
 export type { BmsFileInfo };
@@ -100,16 +105,16 @@ export function registerFileIpc(): void {
   });
 
   // Save BMS file (atomic: write to temp, then rename)
-  handle('file:saveBms', async (_event, rawPath: string, rawContent: string) => {
+  handle('file:saveBms', async (_event, rawPath: string, rawContent: string | Uint8Array) => {
     const filePath = assertBmsPath(rawPath, 'filePath');
-    const content = assertString(rawContent, 'content');
+    const content = assertFileContent(rawContent, 'content');
     const tmpPath = filePath + '.tmp';
-    await writeFile(tmpPath, content, 'utf-8');
+    await writeContent(tmpPath, content);
     try {
       await rename(tmpPath, filePath);
     } catch {
       // rename can fail across drives on Windows; fall back to direct write + cleanup
-      await writeFile(filePath, content, 'utf-8');
+      await writeContent(filePath, content);
       await unlink(tmpPath).catch(() => {});
     }
     return true;
@@ -137,8 +142,8 @@ export function registerFileIpc(): void {
   });
 
   // Save As dialog + write
-  handle('file:saveAs', async (event, rawContent: string, defaultName?: string) => {
-    const content = assertString(rawContent, 'content');
+  handle('file:saveAs', async (event, rawContent: string | Uint8Array, defaultName?: string) => {
+    const content = assertFileContent(rawContent, 'content');
     if (dialogOpen) return null;
     dialogOpen = true;
     const win = getWindowFromEvent(event);
@@ -157,11 +162,11 @@ export function registerFileIpc(): void {
       refocusWindow(win);
       if (result.canceled || !result.filePath) return null;
       const tmpPath = result.filePath + '.tmp';
-      await writeFile(tmpPath, content, 'utf-8');
+      await writeContent(tmpPath, content);
       try {
         await rename(tmpPath, result.filePath);
       } catch {
-        await writeFile(result.filePath, content, 'utf-8');
+        await writeContent(result.filePath, content);
         await unlink(tmpPath).catch(() => {});
       }
       return result.filePath;
@@ -245,6 +250,8 @@ export function registerFileIpc(): void {
 
   // Write autosave file
   handle('file:writeAutoSave', async (_event, rawPath: string, rawContent: string) => {
+    // Autosave stays UTF-8 text: it is read back with checkAutoSave as text and
+    // re-encoded on recovery like any other save.
     const filePath = assertBmsPath(rawPath, 'filePath');
     const content = assertString(rawContent, 'content');
     const autoPath = filePath + '.autosave';

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import i18next from 'i18next';
-import { BMSParser, Timing, Positioning, Spacing, SongInfo, KeySounds, Notes, DEFAULT_BPM } from '@rhythm-archive/bms-core';
+import { BMSParser, Timing, Positioning, Spacing, SongInfo, KeySounds, Notes, DEFAULT_BPM, extendedBpmHeader, encodeText } from '@rhythm-archive/bms-core';
 import type { BMSChart, BMSNote, ISongInfoData } from '@rhythm-archive/bms-core';
 import { detectKeyMode } from '@rhythm-archive/bms-editor';
 import type { KeyMode, BpmChange, StopEvent, ScrollSpeedChange } from '@rhythm-archive/bms-editor';
@@ -31,6 +31,27 @@ export interface LocalBmsChartInfo {
   barLines: number[];
   /** Raw BMSChart object for Editor (BMSWriter.fromBMSChart) */
   bmsChart: BMSChart | null;
+  /** Encoding the file was read with (WHATWG label, e.g. 'shift_jis'); the editor saves in it. */
+  sourceEncoding: string;
+  /** Whether the file started with a byte order mark. */
+  sourceBom: boolean;
+}
+
+/**
+ * Encodes chart text for saving in the encoding the file was read with, so a
+ * Shift_JIS / EUC-KR chart stays readable by players that do not detect UTF-8.
+ * UTF-8 sources are written as text (unchanged behaviour). When the text has a
+ * character the source encoding cannot represent, it is written as UTF-8 with
+ * a BOM and `fellBack` is set so the caller can tell the user.
+ */
+export function encodeForSave(
+  text: string,
+  chart: Pick<LocalBmsChartInfo, 'sourceEncoding' | 'sourceBom'> | null | undefined,
+): { content: string | Uint8Array; fellBack: boolean } {
+  const encoding = chart?.sourceEncoding ?? 'utf-8';
+  if (encoding === 'utf-8' && !chart?.sourceBom) return { content: text, fellBack: false };
+  const r = encodeText(text, encoding, chart?.sourceBom ?? false);
+  return { content: r.bytes, fellBack: !r.exact };
 }
 
 /**
@@ -109,7 +130,7 @@ export function useLocalBmsFile() {
             if (bpmValue > maxBpm) maxBpm = bpmValue;
           }
         } else if (ch === '08') {
-          const bpmValue = parseFloat(chart.headers.get('bpm' + obj.value) || '');
+          const bpmValue = parseFloat(extendedBpmHeader(chart.headers, obj.value) || '');
           if (!isNaN(bpmValue) && bpmValue > 0) {
             const beat = chart.measureToBeat(obj.measure, obj.fraction);
             bpmChanges.push({ beat, bpm: bpmValue });
@@ -226,6 +247,8 @@ export function useLocalBmsFile() {
           songInfoObj,
           barLines,
           bmsChart: chart,
+          sourceEncoding: parser.encoding ?? 'utf-8',
+          sourceBom: parser.bom,
         },
         isLoading: false,
         error: null,

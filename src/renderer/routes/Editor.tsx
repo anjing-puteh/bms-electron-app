@@ -24,7 +24,7 @@ import { AudioPreloader, WorkerAudioScheduler } from '@rhythm-archive/bms-player
 import type { FileMap, SchedulerNote } from '@rhythm-archive/bms-player';
 import AudioSchedulerWorkerConstructor from '../workers/audioScheduler.worker?worker';
 import type { CurrentFile, NavigationGuard } from '../App';
-import { useLocalBmsFile, parseVolWav, isEditableNote } from '../hooks/useLocalBmsFile';
+import { useLocalBmsFile, parseVolWav, isEditableNote, encodeForSave } from '../hooks/useLocalBmsFile';
 import { createLocalAudioWorker } from '../lib/LocalAudioWorker';
 import { Player } from './Player';
 import { useEditorStore } from '../stores/editorStore';
@@ -959,7 +959,10 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       }
       const bmsContent = writer.write(chartToSave);
       reportWriterWarnings(writer.getWarnings());
-      await window.api.file.saveBms(file.path, bmsContent);
+      // Keep the source encoding (Shift_JIS / EUC-KR ...) so other players can read it.
+      const encoded = encodeForSave(bmsContent, chart);
+      if (encoded.fellBack) showToast(t('editor:routes.editor.toast.encodingFallback', { encoding: chart.sourceEncoding }), 'warning');
+      await window.api.file.saveBms(file.path, encoded.content);
       // Save .bms.meta sidecar alongside BMS file
       const s = useEditorStore.getState();
       const meta = buildMetaFromState({
@@ -1013,7 +1016,9 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       const writer = new BMSWriter({ lnMode, lnObjValue: origLnObj || undefined });
       const bmsContent = writer.write(chartToSave);
       reportWriterWarnings(writer.getWarnings());
-      const newPath = await window.api.file.saveAs(bmsContent, file.name);
+      const encoded = encodeForSave(bmsContent, chart);
+      if (encoded.fellBack) showToast(t('editor:routes.editor.toast.encodingFallback', { encoding: chart.sourceEncoding }), 'warning');
+      const newPath = await window.api.file.saveAs(encoded.content, file.name);
       if (newPath) {
         // Carry the sidecar (bookmarks, colors, groups...) to the new file.
         const s = useEditorStore.getState();
@@ -2537,7 +2542,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           <button
             onClick={async () => {
               if (autoSaveContentRef.current) {
-                await window.api.file.saveBms(file.path, autoSaveContentRef.current);
+                await window.api.file.saveBms(file.path, encodeForSave(autoSaveContentRef.current, chart).content);
                 await window.api.file.deleteAutoSave(file.path).catch(() => {});
                 autoSaveContentRef.current = null;
                 load(file.path);

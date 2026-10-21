@@ -91,6 +91,20 @@ describe('file:saveBms', () => {
 
     expect(mockWriteFile).toHaveBeenCalledWith('/chart.bms.tmp', koreanContent, 'utf-8');
   });
+
+  it('writes already-encoded bytes (source encoding kept) verbatim', async () => {
+    mockWriteFile.mockResolvedValue(undefined);
+    mockRename.mockResolvedValue(undefined);
+
+    const sjis = new Uint8Array([0x23, 0x83, 0x65]); // "#テ" in Shift_JIS
+    await getHandler('file:saveBms')(fakeEvent, '/chart.bms', sjis);
+
+    expect(mockWriteFile).toHaveBeenCalledWith('/chart.bms.tmp', sjis);
+  });
+
+  it('rejects content that is neither text nor bytes', async () => {
+    await expect(getHandler('file:saveBms')(fakeEvent, '/chart.bms', 42)).rejects.toThrow(/string or Uint8Array/);
+  });
 });
 
 describe('file:createNewBms', () => {

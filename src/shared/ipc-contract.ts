@@ -70,8 +70,9 @@ export interface IpcInvokeMap {
 
   // bms file io
   'file:readBms': { in: [filePath: string]; out: Uint8Array };
-  'file:saveBms': { in: [filePath: string, content: string]; out: boolean };
-  'file:saveAs': { in: [content: string, defaultName?: string]; out: string | null };
+  // content: text (written as UTF-8) or already-encoded bytes (source encoding kept)
+  'file:saveBms': { in: [filePath: string, content: string | Uint8Array]; out: boolean };
+  'file:saveAs': { in: [content: string | Uint8Array, defaultName?: string]; out: string | null };
 
   // sidecar meta
   'file:readMeta': { in: [bmsFilePath: string]; out: string | null };

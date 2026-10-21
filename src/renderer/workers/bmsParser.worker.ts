@@ -11,7 +11,7 @@
  *   PARSE_ERROR  {requestId, error: string}
  */
 
-import { BMSParser, KeySounds, DEFAULT_BPM } from '@rhythm-archive/bms-core';
+import { BMSParser, KeySounds, DEFAULT_BPM, extendedBpmHeader } from '@rhythm-archive/bms-core';
 import { detectKeyMode } from '@rhythm-archive/bms-editor';
 
 interface ParsePhase1Message {
@@ -84,7 +84,7 @@ self.onmessage = async (event: MessageEvent<WorkerInMessage>) => {
           if (bpmValue > maxBpm) maxBpm = bpmValue;
         }
       } else if (obj.channel === '08') {
-        const bpmValue = parseFloat(chart.headers.get('bpm' + obj.value) || '');
+        const bpmValue = parseFloat(extendedBpmHeader(chart.headers, obj.value) || '');
         if (!isNaN(bpmValue) && bpmValue > 0) {
           const beat = chart.measureToBeat(obj.measure, obj.fraction);
           bpmChanges.push({ beat, bpm: bpmValue });

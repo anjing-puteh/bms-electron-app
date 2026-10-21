@@ -23,8 +23,8 @@ export interface ElectronAPI {
     openBmsFile: () => Promise<string | null>;
     openBmsFolder: () => Promise<string | null>;
     readBms: (filePath: string) => Promise<Uint8Array>;
-    saveBms: (filePath: string, content: string) => Promise<boolean>;
-    saveAs: (content: string, defaultName?: string) => Promise<string | null>;
+    saveBms: (filePath: string, content: string | Uint8Array) => Promise<boolean>;
+    saveAs: (content: string | Uint8Array, defaultName?: string) => Promise<string | null>;
     readMeta: (bmsFilePath: string) => Promise<string | null>;
     saveMeta: (bmsFilePath: string, content: string) => Promise<boolean>;
     listBmsFolder: (folderPath: string) => Promise<BmsFileInfo[]>;
