@@ -65,7 +65,7 @@ jobs:
         run: npm run i18n:check
 
       # ESLint Korean-literal regression check: BLOCKING. Tier 1-7 migration
-      # complete as of fire 12-13 — 0 user-facing Korean literals remain in
+      # complete as of fire 12-13. 0 user-facing Korean literals remain in
       # src/**. New hardcoded Korean strings will now block PRs.
       - name: ESLint hardcoded Korean check
         id: lint-i18n
