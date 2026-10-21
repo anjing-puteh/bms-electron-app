@@ -7,7 +7,7 @@ import { isAbsolute, extname, basename, normalize } from 'path';
  * `file:*` / `audio:*` handler must treat its arguments as untrusted input.
  * TypeScript types only hold at compile time; these guards enforce them at
  * runtime and narrow the reachable filesystem surface to the file kinds the
- * app actually works with (QA SEC-001 / SEC-005).
+ * app works with (QA SEC-001 / SEC-005).
  */
 
 export const BMS_EXTENSIONS = new Set(['.bms', '.bme', '.bml', '.pms', '.bmson']);

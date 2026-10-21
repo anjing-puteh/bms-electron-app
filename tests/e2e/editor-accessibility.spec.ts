@@ -117,7 +117,7 @@ test.describe('Escape Key Management', () => {
     await window.keyboard.press('Control+f');
     await window.waitForTimeout(1000);
 
-    // Ctrl+F may be intercepted by Chromium; just verify no crash
+    // Ctrl+F may be intercepted by Chromium. Verify no crash
     await window.keyboard.press('Escape');
     await window.waitForTimeout(300);
 

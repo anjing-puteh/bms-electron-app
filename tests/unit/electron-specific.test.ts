@@ -24,7 +24,7 @@ function assertType<T>(_value: T): void {
 
 /**
  * Build a mock localStorage backed by a Map, matching the subset of the
- * Storage interface that the codebase actually uses.
+ * Storage interface that the codebase uses.
  */
 function createMockStorage() {
   const store = new Map<string, string>();

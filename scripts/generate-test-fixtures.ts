@@ -20,7 +20,7 @@ interface ModeSpec {
 
 // BMS channel mapping:
 // SP: 11-19 (1-7 keys, 16=SC, 17=FZ for 7K mode; but standard is 11-15=col1-5, 16=SC, 18-19=col6-7)
-// Actually for standard BMS:
+// For standard BMS:
 //   11=1, 12=2, 13=3, 14=4, 15=5, 16=SC, 18=6, 19=7
 //   21=8(2P-1), 22=9(2P-2), 23=10(2P-3), 24=11(2P-4), 25=12(2P-5), 26=SC2, 28=13(2P-6), 29=14(2P-7)
 // For keyboard/PMS modes without SC: same channels but parser maps differently

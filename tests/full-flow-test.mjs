@@ -54,7 +54,7 @@ async function main() {
     // Find React root fiber to get the App component's setState
     const rootEl = document.getElementById('root');
     // We'll use a different approach: dispatch a custom event
-    // Actually, let's just reload the page with a hash that triggers folder load
+    // Let's reload the page with a hash that triggers folder load
 
     // Simpler: Create a synthetic click on Open Folder, but intercept the dialog
     // This won't work easily. Instead, let's directly manipulate the DOM to show the file list.

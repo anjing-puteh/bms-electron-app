@@ -176,7 +176,7 @@ test.describe('Search Shortcut', () => {
     await window.waitForTimeout(1000);
 
     // Ctrl+F may be intercepted by Chromium's built-in find bar in some envs
-    // Just verify no crash; the dialog opening is best-effort
+    // Verify no crash. The dialog opening is best-effort
     const searchVisible = await window.locator('text=노트 검색').count();
     // Graceful: log but don't fail if Chromium intercepted
     if (searchVisible > 0) {

@@ -1033,7 +1033,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         await window.api.file.saveMeta(newPath, serializeMeta(meta)).catch(() => {});
         store.setHasUnsavedChanges(false);
         showToast(t('editor:routes.editor.toast.savedAs'), 'success');
-        // Continue editing the file we just wrote, not the old path.
+        // Continue editing the file just written, not the old path.
         if (newPath !== file.path && onOpenFile) {
           const name = newPath.split(/[\\/]/).pop() || newPath;
           onOpenFile({ path: newPath, name, folderPath: newPath.slice(0, newPath.length - name.length - 1) });
@@ -2314,7 +2314,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
               const dr = popoutDragRef.current;
               const wasDragging = dr !== null && (Math.abs(e.clientX - dr.startX) > 5 || Math.abs(e.clientY - dr.startY) > 5);
               popoutDragRef.current = null;
-              // Auto-dock only when actually dragged to right edge (not on plain click)
+              // Auto-dock only when dragged to right edge (not on plain click)
               if (wasDragging && popoutPos.x + 180 >= window.innerWidth - rightPanelWidth - 6) {
                 setMinimapPopout(false);
               }

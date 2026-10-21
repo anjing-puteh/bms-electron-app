@@ -183,7 +183,7 @@ describe('LocalAudioWorker', () => {
       worker.terminate();
 
       // After terminate, addEventListener listeners should be cleared
-      // But postMessage still processes internally; listeners just won't fire
+      // But postMessage still processes internally, and listeners won't fire
       worker.postMessage({
         type: 'LOAD_AUDIO',
         payload: { baseUrl: '', fileMap: { k: 'v.wav' } },

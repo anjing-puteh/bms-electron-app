@@ -83,7 +83,7 @@ _Note: All three tasks were implemented and committed together in a single atomi
 
 ## Decisions Made
 - Home and Editor use separate hooks: useHomeBmsFile returns serializable plain data (suitable for postMessage), while useLocalBmsFile returns full BMSChart objects (required by Editor/Player, not serializable)
-- Worker per-request (not singleton): each file load terminates the previous Worker. Cancel is just `terminate()`, no abort signals needed
+- Worker per-request (not singleton): each file load terminates the previous Worker. Cancel is `terminate()`, no abort signals needed
 - Phase1 auto-advances to Phase2 within the same Worker: eliminates a message round-trip and removes per-phase state from the Worker
 
 ## Deviations from Plan

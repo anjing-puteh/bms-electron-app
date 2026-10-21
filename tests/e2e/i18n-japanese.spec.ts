@@ -4,7 +4,7 @@
  * Boots the app with APP_TEST_LANG=ja and asserts that key user-facing strings
  * render in Japanese. Avoids golden-image visual regression (font rendering
  * varies across OS), so it checks text content instead. Visual diffs across OSs
- * are inherently flaky for CJK fallback fonts.
+ * are flaky for CJK fallback fonts.
  *
  * Coverage:
  *   - Home screen labels (recent files, language switcher)

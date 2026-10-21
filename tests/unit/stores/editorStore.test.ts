@@ -926,7 +926,7 @@ describe('Clipboard', () => {
       act().setCurrentBeat(0);
       act().paste();
       // offset = max(-4, 0-4) = max(-4, -4) = -4, but clamp ensures no negative
-      // Actually offset = max(-minBeat, currentBeat - minBeat) = max(-4, -4) = -4
+      // Offset = max(-minBeat, currentBeat - minBeat) = max(-4, -4) = -4
       // That means beat 4 + (-4) = 0, beat 8 + (-4) = 4
       const pasted = store().notes.slice(2);
       expect(pasted[0].beat).toBeGreaterThanOrEqual(0);

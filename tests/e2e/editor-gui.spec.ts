@@ -82,7 +82,7 @@ test.describe('Editor GUI - Real BMS File', () => {
     const bodyText = await window.locator('body').textContent();
 
     // Should show "수정 중" indicator (unsaved changes after no edits = false)
-    // Just verify toolbar area renders without crash
+    // Verify toolbar area renders without crash
     const buttons = await window.locator('button').count();
     expect(buttons).toBeGreaterThan(10); // toolbar + panels + header = many buttons
 

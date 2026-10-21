@@ -805,7 +805,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       const key = noteIndexKey(newNote.beat, newNote.column);
       const indexedId = s._noteIndex.get(key);
       // Guard against a stale index entry (e.g. the note became BGM / moved):
-      // only replace a playable note that really sits at this beat+column.
+      // only replace a playable note that sits at this beat+column.
       const existing = indexedId ? s.notes.find((n) => n.id === indexedId) : undefined;
       const existingId = existing && existing.noteType === 'playable'
         && existing.column === newNote.column && existing.beat === newNote.beat
@@ -1018,7 +1018,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set({ notes, _noteIndex: buildNoteIndex(notes), hasUnsavedChanges: true });
   },
 
-  // Select everything that can actually be edited: hidden and locked layers are skipped.
+  // Select everything that can be edited: hidden and locked layers are skipped.
   selectAll: () => set((s) => ({
     selectedNotes: new Set(
       s.notes
