@@ -15,15 +15,28 @@ interface LanguageSwitcherProps {
 
 export function LanguageSwitcher({ variant = 'compact' }: LanguageSwitcherProps) {
   const { t } = useTranslation('common');
+  const { t: tErrors } = useTranslation('errors');
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState<SupportedLocale>(() => localeService.getCurrent());
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Reflect main-driven changes (other window, persistence rebroadcast)
   useEffect(() => {
     return localeService.subscribe(setCurrent);
   }, []);
+
+  // Surface load / persistence failures reported by the service
+  useEffect(() => {
+    return localeService.subscribeError((error, locale) => {
+      setNotice(
+        error === 'load-failed'
+          ? t('language.loadFailed', { name: LOCALE_LABELS[locale] })
+          : tErrors('locale.persistFailed'),
+      );
+    });
+  }, [t, tErrors]);
 
   // Close on outside click
   useEffect(() => {
@@ -40,6 +53,7 @@ export function LanguageSwitcher({ variant = 'compact' }: LanguageSwitcherProps)
       setOpen(false);
       return;
     }
+    setNotice(null);
     setBusy(true);
     try {
       const result = await localeService.change(locale);
@@ -70,6 +84,14 @@ export function LanguageSwitcher({ variant = 'compact' }: LanguageSwitcherProps)
           <Globe size={12} />
           <span>{LOCALE_CODES[current]}</span>
         </button>
+        {notice && !open && (
+          <div
+            role="alert"
+            className="absolute right-0 bottom-full mb-1 whitespace-nowrap bg-zinc-900 border border-yellow-700/60 text-yellow-300 rounded px-2 py-1 text-xs shadow-lg z-50"
+          >
+            {notice}
+          </div>
+        )}
         {open && (
           <div
             role="listbox"
@@ -115,6 +137,7 @@ export function LanguageSwitcher({ variant = 'compact' }: LanguageSwitcherProps)
           </option>
         ))}
       </select>
+      {notice && <p role="alert" className="mt-1 text-xs text-yellow-400">{notice}</p>}
     </div>
   );
 }

@@ -59,8 +59,9 @@ export function registerFileIpc(): void {
     if (!win) { dialogOpen = false; return null; }
 
     try {
+      const locale = await resolveInitialLocale();
       const result = await dialog.showOpenDialog(win, {
-        title: 'Open BMS File',
+        title: tMenu(locale, 'dialog.openBmsFile'),
         filters: [
           { name: 'BMS Files', extensions: ['bms', 'bme', 'bml', 'pms', 'bmson'] },
           { name: 'All Files', extensions: ['*'] },
@@ -84,8 +85,9 @@ export function registerFileIpc(): void {
     if (!win) { dialogOpen = false; return null; }
 
     try {
+      const locale = await resolveInitialLocale();
       const result = await dialog.showOpenDialog(win, {
-        title: 'Open BMS Folder',
+        title: tMenu(locale, 'dialog.openBmsFolder'),
         properties: ['openDirectory'],
       });
 
@@ -150,8 +152,9 @@ export function registerFileIpc(): void {
     if (!win) { dialogOpen = false; return null; }
 
     try {
+      const locale = await resolveInitialLocale();
       const result = await dialog.showSaveDialog(win, {
-        title: 'Save BMS File',
+        title: tMenu(locale, 'dialog.saveBmsFile'),
         defaultPath: defaultName,
         filters: [
           { name: 'BMS Files', extensions: ['bms', 'bme', 'bml'] },

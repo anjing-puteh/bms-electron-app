@@ -23,12 +23,17 @@ import {
 
 type LocaleListener = (locale: SupportedLocale) => void;
 
+/** `load-failed`: the namespaces for a locale could not be loaded. `persist-failed`: main could not save it. */
+export type LocaleError = 'load-failed' | 'persist-failed';
+type LocaleErrorListener = (error: LocaleError, locale: SupportedLocale) => void;
+
 class LocaleServiceImpl {
   private current: SupportedLocale = 'en';
   private requestId = 0;
   private pendingLocale: SupportedLocale | null = null;
   private isComposing = false;
   private listeners = new Set<LocaleListener>();
+  private errorListeners = new Set<LocaleErrorListener>();
   private initialized = false;
   private _initPromise: Promise<void> | null = null;
 
@@ -64,6 +69,14 @@ class LocaleServiceImpl {
     })();
 
     await this._initPromise;
+  }
+
+  /** Subscribe to load / persistence failures. Returns an unsubscribe function. */
+  subscribeError(fn: LocaleErrorListener): () => void {
+    this.errorListeners.add(fn);
+    return () => {
+      this.errorListeners.delete(fn);
+    };
   }
 
   /** Resolves once init() has fully completed. Safe to call before init(). */
@@ -120,6 +133,7 @@ class LocaleServiceImpl {
       // language. If this throws, we revert without disturbing the UI.
       await i18next.loadLanguages(locale);
     } catch (err) {
+      this.emitError('load-failed', locale);
       return { ok: false, reason: 'load-failed', error: err };
     }
 
@@ -132,9 +146,14 @@ class LocaleServiceImpl {
     this.current = locale;
 
     if (persist) {
-      // Fire-and-forget; persistence failure is surfaced via the renderer's
-      // toast layer using `errors:locale.persistFailed`. Do not block the UI.
-      void window.api.locale.set(locale);
+      // Fire-and-forget; a failed save is reported to error subscribers.
+      // Do not block the UI.
+      void window.api.locale.set(locale).then(
+        (saved) => {
+          if (!saved) this.emitError('persist-failed', locale);
+        },
+        () => this.emitError('persist-failed', locale),
+      );
     }
 
     for (const fn of this.listeners) {
@@ -146,6 +165,16 @@ class LocaleServiceImpl {
     }
 
     return { ok: true };
+  }
+
+  private emitError(error: LocaleError, locale: SupportedLocale): void {
+    for (const fn of this.errorListeners) {
+      try {
+        fn(error, locale);
+      } catch {
+        // listener errors are isolated
+      }
+    }
   }
 
   private onCompositionStart = (): void => {

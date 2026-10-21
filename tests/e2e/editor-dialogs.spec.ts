@@ -295,9 +295,9 @@ test.describe('BPM Tap Dialog - Deep Interaction', () => {
       await window.waitForTimeout(150);
     }
 
-    // BPM value should be displayed in the dialog (check for "5 taps" text)
+    // BPM value should be displayed in the dialog (check for "5회 탭" text)
     const bodyText = await window.locator('body').textContent() || '';
-    expect(bodyText).toContain('5 taps');
+    expect(bodyText).toContain('5회 탭');
     // The BPM dialog should show a numeric value (the dialog renders bpm > 0)
     expect(bodyText).toContain('BPM');
 
@@ -329,7 +329,7 @@ test.describe('BPM Tap Dialog - Deep Interaction', () => {
 
     // Should show 0 taps
     const bodyText = await window.locator('body').textContent() || '';
-    expect(bodyText).toContain('0 taps');
+    expect(bodyText).toContain('0회 탭');
 
     await window.keyboard.press('Escape');
   });

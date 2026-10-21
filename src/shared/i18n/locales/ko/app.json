@@ -69,9 +69,9 @@
       "resetButton": "리셋",
       "resetIndicator": "리셋됨",
       "tapButton": "탭 (Space)",
-      "tapsCount": "BPM ({{count}} taps)",
-      "tapsCount_one": "BPM ({{count}} tap)",
-      "tapsCount_other": "BPM ({{count}} taps)",
+      "tapsCount": "BPM ({{count}}회 탭)",
+      "tapsCount_one": "BPM ({{count}}회 탭)",
+      "tapsCount_other": "BPM ({{count}}회 탭)",
       "title": "BPM 탭"
     },
     "keyBindings": {

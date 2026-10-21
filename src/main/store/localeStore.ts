@@ -14,7 +14,7 @@
  */
 
 import { app } from 'electron';
-import { isSupportedLocale, type SupportedLocale } from '../../shared/i18n/types';
+import { isEnabledLocale, type SupportedLocale } from '../../shared/i18n/types';
 
 interface StoreShape {
   locale?: SupportedLocale;
@@ -46,14 +46,14 @@ async function getStore(): Promise<ElectronStore> {
 function normalizeOsLocale(raw: string | undefined): SupportedLocale | null {
   if (!raw) return null;
   const lang = raw.toLowerCase().split(/[-_]/)[0];
-  return isSupportedLocale(lang) ? lang : null;
+  return isEnabledLocale(lang) ? lang : null;
 }
 
 export async function getStoredLocale(): Promise<SupportedLocale | null> {
   try {
     const store = await getStore();
     const value = store.get('locale');
-    return value && isSupportedLocale(value) ? value : null;
+    return value && isEnabledLocale(value) ? value : null;
   } catch {
     return null;
   }

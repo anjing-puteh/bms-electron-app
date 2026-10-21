@@ -40,7 +40,10 @@ type MenuKey =
   | 'menu.toggleFullScreen'
   | 'dialog.importKeysound'
   | 'dialog.newBms'
-  | 'dialog.openAudio';
+  | 'dialog.openAudio'
+  | 'dialog.openBmsFile'
+  | 'dialog.openBmsFolder'
+  | 'dialog.saveBmsFile';
 
 type MenuDictionary = Record<MenuKey, string>;
 
@@ -70,6 +73,9 @@ const dictionaries: Partial<Record<SupportedLocale, MenuDictionary>> = {
     'dialog.importKeysound': '키음 파일 가져오기',
     'dialog.newBms': '새 BMS 파일 만들기',
     'dialog.openAudio': '오디오 파일 열기',
+    'dialog.openBmsFile': 'BMS 파일 열기',
+    'dialog.openBmsFolder': 'BMS 폴더 열기',
+    'dialog.saveBmsFile': 'BMS 파일 저장',
   },
   en: {
     'menu.file': 'File',
@@ -96,6 +102,9 @@ const dictionaries: Partial<Record<SupportedLocale, MenuDictionary>> = {
     'dialog.importKeysound': 'Import keysound files',
     'dialog.newBms': 'Create new BMS file',
     'dialog.openAudio': 'Open audio file',
+    'dialog.openBmsFile': 'Open BMS File',
+    'dialog.openBmsFolder': 'Open BMS Folder',
+    'dialog.saveBmsFile': 'Save BMS File',
   },
   ja: {
     'menu.file': 'ファイル',
@@ -122,6 +131,9 @@ const dictionaries: Partial<Record<SupportedLocale, MenuDictionary>> = {
     'dialog.importKeysound': 'キーサウンドファイルをインポート',
     'dialog.newBms': '新規BMSファイル作成',
     'dialog.openAudio': 'オーディオファイルを開く',
+    'dialog.openBmsFile': 'BMSファイルを開く',
+    'dialog.openBmsFolder': 'BMSフォルダを開く',
+    'dialog.saveBmsFile': 'BMSファイルを保存',
   },
 };
 
