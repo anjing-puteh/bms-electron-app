@@ -68,7 +68,7 @@ describe('chartJudgeOptions', () => {
         expect(fromHeaders.judge(offset, 0).judgment).toBe(ref.judge(offset, 0).judgment);
       }
     }
-    // NORMAL GOOD window (LR2 100ms) — not narrowed to 64ms
+    // NORMAL GOOD window (LR2 100ms). Not narrowed to 64ms
     expect(new JudgmentEngine({ ...chartJudgeOptions(chart.headers) }).judge(90, 0).judgment)
       .toBe(rank2.judge(90, 0).judgment);
     expect(rank2.judge(90, 0).judgment).toBe('GOOD');

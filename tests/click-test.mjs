@@ -1,5 +1,5 @@
 /**
- * Interactive GUI click test — actually clicks every button and takes screenshots.
+ * Interactive GUI click test. It clicks every button and takes screenshots.
  */
 import puppeteer from 'puppeteer-core';
 

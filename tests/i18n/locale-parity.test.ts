@@ -17,7 +17,7 @@ import jaPlayer from '../../src/shared/i18n/locales/ja/player.json';
 /**
  * Parity test: ko and en must define exactly the same keys for every
  * namespace. This is the renderer-side equivalent of the menu dictionary
- * parity test — caught at PR time it prevents shipping a half-translated UI.
+ * parity test. Caught at PR time, it prevents shipping a half-translated UI.
  */
 function flatten(obj: unknown, prefix = ''): string[] {
   if (obj == null || typeof obj !== 'object') return [];
@@ -28,7 +28,7 @@ function flatten(obj: unknown, prefix = ''): string[] {
   });
 }
 
-// Korean's CLDR plural rule is "other" only — i18next-parser emits an
+// Korean's CLDR plural rule is "other" only. i18next-parser emits an
 // English-side `_one` companion key that Korean intentionally omits. Strip
 // those from the en side before comparison so the missing-by-design keys
 // don't trip the parity test.

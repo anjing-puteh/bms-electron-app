@@ -5,7 +5,7 @@
  * - abort() 호출 후 in-flight decode가 완료되어도 결과가 저장되지 않음
  */
 
-// AudioPreloader needs AudioContext and Worker — mock both
+// AudioPreloader needs AudioContext and Worker. Mock both
 class MockAudioLoaderWorker {
   onmessage: ((e: MessageEvent) => void) | null = null;
   terminated = false;
@@ -87,7 +87,7 @@ describe('AudioPreloader.abort()', () => {
     (preloader as unknown as { fetchPipeline: { audioDataMap: Map<string, ArrayBuffer> } }).fetchPipeline.audioDataMap.set('a', new ArrayBuffer(8));
     (preloader as unknown as { fetchPipeline: { audioDataMap: Map<string, ArrayBuffer> } }).fetchPipeline.audioDataMap.set('b', new ArrayBuffer(8));
 
-    // Start decodeAll — it will hang waiting for mock decodeAudioData
+    // Start decodeAll. It will hang waiting for mock decodeAudioData
     const decodePromise = preloader.decodeAll();
 
     // Abort immediately
@@ -119,14 +119,14 @@ describe('AudioPreloader.abort()', () => {
 
     (preloader as unknown as { fetchPipeline: { audioDataMap: Map<string, ArrayBuffer> } }).fetchPipeline.audioDataMap.set('c', new ArrayBuffer(8));
 
-    // Start decode — hangs in pending
+    // Start decode. Hangs in pending
     const decodePromise = preloader.decodeAll();
 
     // Abort
     preloader.abort();
     await decodePromise;
 
-    // Resolve any pending decode after abort — result should NOT be stored
+    // Resolve any pending decode after abort. Result should NOT be stored
     ctx.resolveAllPending();
     await Promise.resolve(); // yield to micro-tasks
 

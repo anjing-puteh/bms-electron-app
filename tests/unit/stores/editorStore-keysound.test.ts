@@ -100,7 +100,7 @@ describe('replaceKeysound', () => {
 
     store().replaceKeysound('01', '01');
 
-    expect(store().notes).toBe(notesBefore); // reference equality — no change
+    expect(store().notes).toBe(notesBefore); // reference equality. No change
   });
 
   it('should be undoable in a single step', () => {
@@ -123,7 +123,7 @@ describe('replaceKeysound', () => {
 
     store().replaceKeysound('99', '01');
 
-    // pushUndo was called but notes unchanged (acceptable — undo is cheap)
+    // pushUndo was called but notes unchanged (acceptable, since undo is cheap)
     expect(store().notes[0].keysound).toBe('02');
   });
 });

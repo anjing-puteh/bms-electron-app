@@ -1,5 +1,5 @@
 /**
- * estimateDifficulty — only notes the player actually hits count.
+ * estimateDifficulty: only notes the player actually hits count.
  */
 import type { EditableBMSNote } from '@rhythm-archive/bms-core';
 import { estimateDifficulty } from '../../../src/renderer/components/ChartStatsView';

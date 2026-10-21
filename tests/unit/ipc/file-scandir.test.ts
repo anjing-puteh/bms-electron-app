@@ -28,7 +28,7 @@ vi.mock('fs/promises', () => ({
   readdir: vi.fn(),
   stat: vi.fn(async (_path: string) => {
     statCallTimes.push(Date.now());
-    // Return immediately — parallel check is based on call count tracking
+    // Return immediately. Parallel check is based on call count tracking
     return { size: 1024 };
   }),
   copyFile: vi.fn(),

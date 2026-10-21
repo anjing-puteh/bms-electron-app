@@ -36,7 +36,7 @@ export const test = base.extend<{ electronApp: ElectronApplication; window: Page
     });
     await use(electronApp);
     // A test that leaves unsaved edits makes the window-close guard open the
-    // "quit" confirmation dialog, and nobody is there to answer it — close()
+    // "quit" confirmation dialog, and nobody is there to answer it. close()
     // would hang until the teardown timeout. Confirm the close directly.
     for (const page of electronApp.windows()) {
       await page

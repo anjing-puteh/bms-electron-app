@@ -12,7 +12,7 @@ import {
 } from '../../../src/renderer/lib/keyBindings';
 import type { KeyBinding, KeyAction } from '../../../src/renderer/lib/keyBindings';
 
-// Helpers to look up translated category/action labels — the dialog renders
+// Helpers to look up translated category/action labels. The dialog renders
 // translations via t(`editor:keyBindings.{categories,actions}.${id}`), not
 // the English ACTION_CATEGORIES/ACTION_LABELS constants.
 const t = (key: string) => i18next.t(key);
@@ -177,7 +177,7 @@ describe('KeyBindingsDialog', () => {
 
   // 13. Reset button restores DEFAULT_BINDINGS
   it('restores DEFAULT_BINDINGS when "기본값 복원" is clicked', () => {
-    // Start with a modified binding — use ctrl+shift+f (not in DEFAULT_BINDINGS)
+    // Start with a modified binding. Use ctrl+shift+f (not in DEFAULT_BINDINGS)
     const modified = DEFAULT_BINDINGS.map((b) =>
       b.action === 'save' ? { ...b, key: 'ctrl+shift+f' } : b,
     );

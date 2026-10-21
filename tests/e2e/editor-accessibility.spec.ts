@@ -210,7 +210,7 @@ test.describe('Panel Visibility', () => {
     const leftPanel = window.locator('[data-testid="left-panel"]');
     expect(await leftPanel.count()).toBeGreaterThan(0);
 
-    // Toggle off — dispatchEvent because resize handle / right-panel intercepts pointer in CI viewport
+    // Toggle off. Uses dispatchEvent because resize handle / right-panel intercepts pointer in CI viewport
     const toggleBtn = window.locator('[data-testid="toggle-left-panel"]');
     await toggleBtn.dispatchEvent('click');
     await window.waitForTimeout(300);

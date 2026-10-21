@@ -19,7 +19,7 @@ function parseBms(bmsString: string): { chart: BMSChart; notes: BMSNote[] } {
 }
 
 // ============================================================
-// BUG-P1: Unmatched long notes — should NOT be silently dropped
+// BUG-P1: Unmatched long notes. Should NOT be silently dropped
 // ============================================================
 describe('BUG-P1: Unmatched long notes recovered as normal notes', () => {
   it('LN start (5x) without matching end (6x) is still present in output', () => {
@@ -101,7 +101,7 @@ describe('BUG-P1: Unmatched long notes recovered as normal notes', () => {
 });
 
 // ============================================================
-// BUG-P2: LNOBJ mode — should only apply to playable notes
+// BUG-P2: LNOBJ mode. Should only apply to playable notes
 // ============================================================
 describe('BUG-P2: LNOBJ only applies to playable notes', () => {
   it('LNOBJ marker on invisible channel does NOT create LN end', () => {
@@ -233,7 +233,7 @@ describe('BUG-P4: TimeSignatures rejects zero/negative measure sizes', () => {
 });
 
 // ============================================================
-// BUG-P3: barLines — test via TimeSignatures.beatToMeasure
+// BUG-P3: barLines. Test via TimeSignatures.beatToMeasure
 // (useLocalBmsFile is a React hook, so we test the underlying logic)
 // ============================================================
 describe('BUG-P3: beatToMeasure correctly handles non-4/4 time signatures', () => {
@@ -438,7 +438,7 @@ describe('BUG-WRITER-1: 64th-note triplet roundtrip fidelity', () => {
   });
 
   it('기존 resolution=192 동작은 tick 없는 노트에서 유지됨 (하위호환)', () => {
-    // tick 필드 없는 레거시 노트 — fraction=0.5 (beat 2.0 in 4/4)
+    // tick 필드 없는 레거시 노트. fraction=0.5 (beat 2.0 in 4/4)
     const legacyNote = {
       id: 'legacy',
       tick: undefined as unknown as number,

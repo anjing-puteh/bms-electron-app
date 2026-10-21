@@ -386,7 +386,7 @@ describe('MinLnLength', () => {
 });
 
 // ============================================================
-// setKeyMode — orphan note detection
+// setKeyMode: orphan note detection
 // ============================================================
 describe('setKeyMode orphan detection', () => {
   function seedWithKeyMode(notes: EditableBMSNote[], keyMode = '7K') {

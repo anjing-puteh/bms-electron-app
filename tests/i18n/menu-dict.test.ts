@@ -41,7 +41,7 @@ describe('main process menu dictionary', () => {
   });
 
   it('Korean and English have parity (same key set)', () => {
-    // structural check — both dictionaries must define the same keys
+    // Structural check. Both dictionaries must define the same keys
     const sampleKey = 'menu.toggleFullScreen';
     expect(t('ko', sampleKey)).not.toBe(t('en', sampleKey)); // distinct translations
     expect(t('ko', sampleKey)).toBeTruthy();

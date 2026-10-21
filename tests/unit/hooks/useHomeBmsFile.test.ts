@@ -1,5 +1,5 @@
 /**
- * T4: requestId race condition — 구버전 PHASE2_DONE 결과 무시 확인
+ * T4: requestId race condition: 구버전 PHASE2_DONE 결과 무시 확인
  *
  * useHomeBmsFile에서 Worker 기반 파싱의 requestId guard 동작을 검증합니다.
  */
@@ -153,7 +153,7 @@ describe('useHomeBmsFile — requestId race condition guard', () => {
     // Worker #2 now active with reqId=2
     act(() => { mockWorkerInstance?.simulatePhase1Done(2); });
 
-    // Worker #2 receives stale PARSE_ERROR with requestId=1 — should be ignored
+    // Worker #2 receives stale PARSE_ERROR with requestId=1. Should be ignored
     act(() => { mockWorkerInstance?.simulateParseError(1); });
 
     expect(result.current.error).toBeNull();

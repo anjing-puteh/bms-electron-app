@@ -351,7 +351,7 @@ test.describe('Key Bindings Dialog - Deep Interaction', () => {
     expect(bodyText).toContain('키 바인딩 설정');
 
     // Find a key binding button and click it to start editing.
-    // Scope to the dialog — `button.font-mono` alone also matches the
+    // Scope to the dialog. `button.font-mono` alone also matches the
     // language-selector button in the header, which sits behind the modal
     // overlay and causes the click to be intercepted.
     const dialog = window.getByRole('dialog');

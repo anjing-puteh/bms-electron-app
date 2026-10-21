@@ -1,5 +1,5 @@
 /**
- * editorStore — placement integrity with many keysounds / BGM notes:
+ * editorStore: placement integrity with many keysounds / BGM notes:
  * moves keep off-grid timing, lane conversions don't stack notes, locked
  * layers stay untouched, removed #WAV ids leave no dangling references,
  * and undo snapshots don't deep-clone the chart.

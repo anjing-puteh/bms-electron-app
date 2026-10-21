@@ -40,7 +40,7 @@ describe('sessionStorage — recentFiles', () => {
   it('pinned files survive re-add after pinning', () => {
     addRecentFile({ path: '/pinme.bms', name: 'pinme.bms', folderPath: '/' });
     togglePinRecentFile('/pinme.bms');
-    // Re-add the same file — should keep pinned status
+    // Re-add the same file. Should keep pinned status
     const result = addRecentFile({ path: '/pinme.bms', name: 'pinme.bms', folderPath: '/' });
     expect(result[0].pinned).toBe(true);
   });

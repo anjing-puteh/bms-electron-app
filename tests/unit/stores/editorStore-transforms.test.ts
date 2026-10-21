@@ -483,9 +483,9 @@ describe('Transform Operations - Multi-Mode', () => {
   });
 
   // --- Policy: 4K/5K/6K full-positional mirror (same policy as 7K) ---
-  // 4K: SC(0),1(1),2(2),4(3),5(4),FZ(5)           — col 3 absent by spec
+  // 4K: SC(0),1(1),2(2),4(3),5(4),FZ(5)           : col 3 absent by spec
   // 5K: SC(0),1(1),2(2),3(3),4(4),5(5),FZ(6)
-  // 6K: SC(0),1(1),2(2),3(3),5(4),6(5),7(6),FZ(7) — col 4 absent by spec
+  // 6K: SC(0),1(1),2(2),3(3),5(4),6(5),7(6),FZ(7): col 4 absent by spec
 
   describe('4K-specific mirror (SC+1,2,4,5+FZ — skips col 3)', () => {
     const laneIds4K = getLaneIds('4K'); // ['SC','1','2','4','5','FZ']

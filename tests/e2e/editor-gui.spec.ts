@@ -285,7 +285,7 @@ test.describe('Editor GUI - Real BMS File', () => {
   test('playback controls render and respond', async ({ window }) => {
     await openEditorWithRealFile(window);
 
-    // Playback controls should render — either the manual load button (no keysounds)
+    // Playback controls should render: either the manual load button (no keysounds)
     // or the transport controls (after auto-load). The container is always present.
     const playbackControls = window.locator('[data-testid="playback-controls"]');
     expect(await playbackControls.count()).toBeGreaterThan(0);

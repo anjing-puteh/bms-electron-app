@@ -1,7 +1,7 @@
 /**
- * T1: Worker Phase1 — Shift-JIS 파일 제목 올바르게 반환
- * T2: Worker Phase2 — 노트 수/stats 올바르게 반환
- * T3: Worker PARSE_ERROR — 깨진 BMS 파일 → error 상태
+ * T1: Worker Phase1: Shift-JIS 파일 제목 올바르게 반환
+ * T2: Worker Phase2: 노트 수/stats 올바르게 반환
+ * T3: Worker PARSE_ERROR: 깨진 BMS 파일 → error 상태
  *
  * Worker를 직접 실행할 수 없으므로 BMSParser + bms-core API를
  * 직접 테스트하여 Worker가 사용하는 파싱 로직을 검증합니다.
@@ -151,7 +151,7 @@ describe('bmsParser — error handling (PARSE_ERROR)', () => {
     const randomBytes = new Uint8Array(100);
     for (let i = 0; i < 100; i++) randomBytes[i] = Math.floor(Math.random() * 256);
     const parser = new BMSParser();
-    // Should not throw — reader has fallback encoding
+    // Should not throw. Reader has fallback encoding
     await expect(parser.readBuffer(randomBytes.buffer)).resolves.toBeDefined();
   });
 
