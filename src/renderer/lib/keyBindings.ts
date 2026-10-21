@@ -211,7 +211,7 @@ export function loadKeyBindings(): KeyBinding[] {
     const saved = JSON.parse(raw) as KeyBinding[];
     if (!Array.isArray(saved)) return DEFAULT_BINDINGS;
     // Several actions intentionally have two bindings (letter + number row),
-    // so match saved entries by (action, ordinal) rather than by action alone —
+    // so match saved entries by (action, ordinal) rather than by action alone.
     // keying by action only would collapse both rows onto the last saved key.
     const savedByAction = new Map<KeyAction, KeyBinding[]>();
     for (const b of saved) {

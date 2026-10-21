@@ -27,7 +27,7 @@ import {
 let initPromise: Promise<I18nInstance> | null = null;
 
 const backend = resourcesToBackend(async (language: string, namespace: string) => {
-  // Vite handles the dynamic import — it splits each JSON into a chunk.
+  // Vite handles the dynamic import. It splits each JSON into a chunk.
   const mod = (await import(`../../shared/i18n/locales/${language}/${namespace}.json`)) as {
     default: Record<string, unknown>;
   };
@@ -37,7 +37,7 @@ const backend = resourcesToBackend(async (language: string, namespace: string) =
 const isDev = import.meta.env.DEV;
 
 /**
- * Initialize i18next exactly once. Safe to call multiple times — subsequent
+ * Initialize i18next exactly once. Safe to call multiple times. Subsequent
  * calls return the same in-flight promise.
  */
 export function initI18n(initialLocale: SupportedLocale): Promise<I18nInstance> {
@@ -50,7 +50,7 @@ export function initI18n(initialLocale: SupportedLocale): Promise<I18nInstance> 
       lng: initialLocale,
       fallbackLng: FALLBACK_LOCALE,
       defaultNS: 'app',
-      // 5 namespaces total / 정렬된 ko+en 합계 1,078줄 — 모두 preload해도 비용 무시 수준이며
+      // 5 namespaces total. 정렬된 ko+en 합계 1,078줄. 모두 preload해도 비용 무시 수준이며
       // E2E에서 dialog 진입 직후 raw key가 노출되는 문제를 막는다.
       ns: ['common', 'app', 'editor', 'errors', 'player'],
       load: 'languageOnly',

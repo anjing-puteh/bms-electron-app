@@ -1,5 +1,5 @@
 /**
- * .bms.meta — Sidecar metadata file for BMS editor
+ * .bms.meta: Sidecar metadata file for BMS editor
  *
  * Stores editor-specific data that doesn't belong in the BMS format:
  * - Note groups
@@ -15,7 +15,7 @@
 /**
  * Schema version for forward compatibility.
  * v2: note references (bgmChannels keys, noteGroups.noteKeys) are position-based
- *     keys from `notePositionKeys` — editor note ids are reassigned on every load.
+ *     keys from `notePositionKeys`, because editor note ids are reassigned on every load.
  */
 const META_VERSION = 2;
 
@@ -122,7 +122,7 @@ export function deserializeMeta(json: string): BmsMetaData {
     const data = JSON.parse(json);
     if (!data || typeof data !== 'object') return createDefaultMeta();
     // Version migration: v1 keyed BGM channels by session note id, which
-    // points at the wrong notes after any edit — drop them (defaults apply).
+    // points at the wrong notes after any edit. Drop them (defaults apply).
     if (!data.version || data.version < 2) {
       delete data.bgmChannels;
     }

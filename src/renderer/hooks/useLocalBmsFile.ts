@@ -58,7 +58,7 @@ export function encodeForSave(
  * Whether a parsed note becomes an editable note. BGM notes always do; lane
  * notes only when their channel maps to a column. Lane objects without a
  * column (extension lanes 1A-2Z, channels outside the detected layout) are kept
- * verbatim by `BMSWriter.fromBMSChart` (`extraObjects`) instead — as editable
+ * verbatim by `BMSWriter.fromBMSChart` (`extraObjects`) instead, as editable
  * notes they would also be written back on the BGM channel (01).
  */
 export function isEditableNote(note: Pick<BMSNote, 'noteType' | 'column'>): boolean {
@@ -171,7 +171,7 @@ export function useLocalBmsFile() {
       const positioning = Positioning.fromBMSChart(chart, timing);
       const spacing = Spacing.fromBMSChart(chart);
       const keysoundsObj = KeySounds.fromBMSChart(chart);
-      // Keysound map — base-aware: #BASE 62 ids are case-sensitive (folding
+      // Keysound map: base-aware. #BASE 62 ids are case-sensitive (folding
       // them merged different keysounds into one).
       const keysounds: Record<string, string> = { ...keysoundsObj.all() };
       const base62 = keysoundsObj.base62;
@@ -283,7 +283,7 @@ export function useLocalBmsFile() {
   return { ...state, load, reset };
 }
 
-/** Global `#VOLWAV n` — percent of the keysound volume (default 100). */
+/** Global `#VOLWAV n`: percent of the keysound volume (default 100). */
 export function parseVolWav(value: string | undefined): number {
   const v = value === undefined ? NaN : parseFloat(value);
   return Number.isFinite(v) && v >= 0 ? Math.min(v, 1000) : 100;

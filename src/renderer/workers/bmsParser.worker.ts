@@ -181,7 +181,7 @@ self.onmessage = async (event: MessageEvent<WorkerInMessage>) => {
 };
 
 self.onerror = (event: string | Event) => {
-  // Crash-level error — requestId unknown, send -1 as sentinel.
+  // Crash-level error. requestId is unknown, so send -1 as sentinel.
   // OnErrorEventHandler signature is `string | Event`; narrow to ErrorEvent for .message access.
   const message = typeof event === 'string'
     ? event

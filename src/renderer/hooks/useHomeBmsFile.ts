@@ -49,7 +49,7 @@ export function useHomeBmsFile() {
   const phase1CacheRef = useRef<Phase1Cache | null>(null);
 
   const load = useCallback(async (filePath: string) => {
-    // Increment requestId — any prior Worker message with old id will be ignored
+    // Increment requestId. Any prior Worker message with old id will be ignored
     const reqId = ++requestIdRef.current;
 
     // Terminate previous Worker immediately
@@ -107,7 +107,7 @@ export function useHomeBmsFile() {
             keyMode: p1.keyMode,
             bpm: p1.bpm,
             lnType: p1.lnType,
-            // Phase2 data not yet available — zeroed out
+            // Phase2 data not yet available. Zeroed out
             notes: [],
             stats: { total: 0, scratch: 0, longNotes: 0, landmines: 0, invisible: 0 },
             bpmChanges: [],

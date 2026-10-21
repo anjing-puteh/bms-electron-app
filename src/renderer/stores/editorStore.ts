@@ -1511,7 +1511,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       return analysis; // Return for dropped count toast
     }
 
-    // Has conflicts — return analysis for Editor.tsx dialog
+    // Has conflicts. Return analysis for Editor.tsx dialog
     // Store nextId for executePaste
     set({ nextNoteId: nextId });
     return analysis;
@@ -1648,7 +1648,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       case 'timesig-edit':
         if (dialog.measure !== undefined) {
           if (num <= 0) {
-            // Invalid — ignore
+            // Invalid. Ignore
           } else {
             s.setTimeSignature(dialog.measure, num);
           }
@@ -2047,7 +2047,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectionToPatternData: (laneIds) => {
     const s = get();
     if (s.selectedNotes.size === 0) return null;
-    // Pattern requires concrete column + noteType — drop notes lacking either
+    // Pattern requires concrete column + noteType. Drop notes lacking either
     const selected = s.notes.filter(
       (n): n is typeof n & { column: string; noteType: NonNullable<typeof n.noteType> } =>
         s.selectedNotes.has(n.id) && typeof n.column === 'string' && n.noteType !== undefined,
