@@ -73,9 +73,9 @@ src/
 | `noUnusedLocals/Parameters` 재활성 | 런타임 코드 청소 | MID — 다수 미사용 변수 추정 |
 
 ### 점진 활성화 경로
-1. **Phase A (즉시)**: `noImplicitReturns`, `noFallthroughCasesInSwitch` — 거의 무영향.
-2. **Phase B (디자인 패턴 적용 후)**: `noUnusedLocals/Parameters=true` — Editor 분할 후 dead code 정리.
-3. **Phase C (타입 안전성 단계 끝)**: `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` — 다수 콜사이트에 `??`/가드 추가 필요.
+1. **Phase A (즉시)**: `noImplicitReturns`, `noFallthroughCasesInSwitch`. 거의 무영향.
+2. **Phase B (디자인 패턴 적용 후)**: `noUnusedLocals/Parameters=true`. Editor 분할 후 dead code 정리.
+3. **Phase C (타입 안전성 단계 끝)**: `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`. 다수 콜사이트에 `??`/가드 추가 필요.
 
 ---
 
@@ -103,10 +103,10 @@ src/
 > 19개 invoke 채널 + 4개 send 채널. **모두 채널 문자열 리터럴이 main/preload/renderer 3중 산재**.
 
 ### 4.2 외부 라이브러리 의존 (sibling packages)
-- `@rhythm-archive/bms-core` — `BMSParser`, `Timing`, `Positioning`, `Spacing`, `KeySounds`, `SongInfo`, `Notes`, `BMSWriter`, 타입 다수.
-- `@rhythm-archive/bms-editor` — `NoteChartEditor`, `EditorToolbar`, `KeysoundPanel`, `Minimap`, `getLaneIds`, 타입(`NoteChartEditorProps`, `KeyMode`, `EditorTool`, …).
-- `@rhythm-archive/bms-player` — `AudioPreloader`, `WorkerAudioScheduler`, `FileMap`, `SchedulerNote`.
-- ⚠️ `useLocalBmsFile.ts` L4: `import { detectKeyMode } from '../../../../bms-editor/src/chart/useBmsChart'` — **alias 우회 깊은 상대경로**, 캡슐화 위반.
+- `@rhythm-archive/bms-core`: `BMSParser`, `Timing`, `Positioning`, `Spacing`, `KeySounds`, `SongInfo`, `Notes`, `BMSWriter`, 타입 다수.
+- `@rhythm-archive/bms-editor`: `NoteChartEditor`, `EditorToolbar`, `KeysoundPanel`, `Minimap`, `getLaneIds`, 타입(`NoteChartEditorProps`, `KeyMode`, `EditorTool`, …).
+- `@rhythm-archive/bms-player`: `AudioPreloader`, `WorkerAudioScheduler`, `FileMap`, `SchedulerNote`.
+- ⚠️ `useLocalBmsFile.ts` L4: `import { detectKeyMode } from '../../../../bms-editor/src/chart/useBmsChart'`. **alias 우회 깊은 상대경로**이며 캡슐화 위반.
 - ⚠️ `electron-store` 패키지가 deps에 있으나 `src/`에서 사용 안 함(localStorage가 sessionStorage 대용). **데드 의존성**.
 
 ---
@@ -116,8 +116,8 @@ src/
 ### HIGH
 1. **거대 라우트/스토어**: `Editor.tsx` 2,529줄, `editorStore.ts` 1,792줄. 단일 책임 원칙 위반, 진단/리팩토링 비용 높음.
 2. **IPC 채널 문자열 4중 산재**: main 핸들러/preload invoke/.d.ts/renderer 호출자 모두 리터럴. 오타 시 런타임 실패. Single Source of Truth 부재.
-3. **preload `on()` 채널 화이트리스트 없음** — `index.ts` L58: `on: (channel: string, callback)` — 임의 채널 등록 가능. contextIsolation은 켜져 있으나 채널 표면 좁히지 못함. 보안/유지보수 리스크.
-4. **명시적 `as any` (Editor.tsx L1620–1621)** — `layer as any`로 타입 시스템 우회. `keyof LayerConfig`로 좁힐 수 있는데 캐스트로 방치.
+3. **preload `on()` 채널 화이트리스트 없음**: `index.ts` L58의 `on: (channel: string, callback)`은 임의 채널 등록을 허용합니다. contextIsolation은 켜져 있으나 채널 표면을 좁히지 못했습니다. 보안/유지보수 리스크입니다.
+4. **명시적 `as any` (Editor.tsx L1620–1621)**: `layer as any`로 타입 시스템을 우회합니다. `keyof LayerConfig`로 좁힐 수 있는데 캐스트로 방치했습니다.
 5. **Cross-package 소스 직접 참조**: `useLocalBmsFile.ts` L4, sibling `bms-editor/src/chart/useBmsChart`를 `../../../../`로 가져옴. alias 무시. 패키지 경계 무너짐.
 
 ### MID
@@ -125,13 +125,13 @@ src/
 7. **`ipc/file.ts` 단일 파일 17개 핸들러**: dialog/IO/WAV write/스캔이 한 파일에 혼재.
 8. **WAV 인코딩 로직 중복** (file.ts L306–348 vs L351–392). 단일/배치 핸들러가 동일 인코더 두 번 구현.
 9. **`dialogOpen` 모듈 전역 플래그**: file.ts L26, 다중 윈도우/멀티 호출 시 race 위험. mutex/큐 패턴 부재.
-10. **메인 프로세스 입력 검증 부재** — `filePath: string` 매개변수에 traversal/허용경로 검증 없음. `readFile(arbitraryPath)` 가능. 샌드박스가 아닌 IPC라서 신뢰 가능하지만, BMS 폴더 외부 임의 파일 읽기 가능.
-11. **`Editor.tsx`의 메뉴 단축키 dispatch 우회** — App.tsx L156–165: `menu:save` 수신 시 `KeyboardEvent` 합성 dispatch. Editor 내부와 결합도 높음 (Command 패턴 부재).
-12. **`window` 글로벌 데브 헬퍼 (`__DEV_OPEN_FILE__`)** — App.tsx L124–131, `Record<string, unknown>` 캐스트로 부착. 빌드 산출물에서 분리되지 않을 가능성.
+10. **메인 프로세스 입력 검증 부재**: `filePath: string` 매개변수에 traversal/허용경로 검증이 없어서 `readFile(arbitraryPath)`가 가능합니다. 샌드박스가 아닌 IPC라서 신뢰할 수 있지만, BMS 폴더 외부 임의 파일 읽기가 가능합니다.
+11. **`Editor.tsx`의 메뉴 단축키 dispatch 우회**: App.tsx L156–165에서 `menu:save` 수신 시 `KeyboardEvent`를 합성해 dispatch합니다. Editor 내부와 결합도가 높습니다 (Command 패턴 부재).
+12. **`window` 글로벌 데브 헬퍼 (`__DEV_OPEN_FILE__`)**: App.tsx L124–131에서 `Record<string, unknown>` 캐스트로 부착합니다. 빌드 산출물에서 분리되지 않을 가능성이 있습니다.
 
 ### LOW
-13. **`electron-store` deps 미사용** — package.json:28에 있으나 src/에서 0회 사용. localStorage로 대체된 것으로 보임. 제거 또는 채택 결정 필요.
-14. **`tsconfig.web.json`에 `noUnusedLocals: false`** — 명시적으로 꺼져 있음. 정리 압박 부재.
+13. **`electron-store` deps 미사용**: package.json:28에 있으나 src/에서 0회 사용됩니다. localStorage로 대체된 것으로 보입니다. 제거 또는 채택 결정이 필요합니다.
+14. **`tsconfig.web.json`에 `noUnusedLocals: false`**: 명시적으로 꺼져 있습니다. 정리 압박이 없습니다.
 15. **TS strict 추가 옵션 비활성** (3장 참조).
 16. **Buffer→ArrayBuffer 변환 코드 중복** (audio.ts L11, L52-55).
 17. **`LocalAudioWorker.ts` `as unknown as Worker`** (L109): Worker 호환 shim, 의도적이지만 더 좋은 추상화(EventEmitter 인터페이스) 가능.
@@ -299,7 +299,7 @@ const commands: Record<string, EditorCommand> = { save: { ... }, saveAs: { ... }
 ### 7.3 IPC 경계 가드 명세
 - **모든 invoke 핸들러는 인자 검증**: 패스 traversal 방지(`isAbsolute(p) && p.startsWith(allowedRoot)` 권장).
 - **모든 invoke 응답은 직렬화 가능 타입만**: 현재 `Float32Array`, `Buffer`, `ArrayBuffer` 사용 중. Buffer→Uint8Array 변환은 preload에서 처리.
-- **`menu:*` send는 인자 없음 유지** — 인자 추가 시 `IpcSendMap`에 정의 후 type guard 의무화.
+- **`menu:*` send는 인자 없음 유지**. 인자를 추가하면 `IpcSendMap`에 정의하고 type guard를 의무화합니다.
 
 ---
 
