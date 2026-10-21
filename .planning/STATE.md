@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 캔버스 줌 컨트롤
 status: active
-stopped_at: 08-01 complete — all 4 tasks committed (4cd423b)
+stopped_at: 08-01 complete. All 4 tasks committed (4cd423b)
 last_updated: "2026-04-06T13:18:01Z"
 progress:
   total_phases: 1
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** 파일 탐색, 노트 편집, 오디오 미리듣기가 모두 끊김 없이 동작
-**Current focus:** v1.2 — 08-01 canvas zoom complete
+**Current focus:** v1.2. 08-01 canvas zoom complete
 
 ## Current Position
 
-Phase: 08-canvas-zoom — Plan 01 COMPLETE (all 4 tasks done)
-Status: Complete — ZoomControl API + cursor-anchored zoom + toolbar buttons (4cd423b)
+Phase: 08-canvas-zoom. Plan 01 COMPLETE (all 4 tasks done)
+Status: Complete. ZoomControl API + cursor-anchored zoom + toolbar buttons (4cd423b)
 
 Progress: [██████████] 100%
 
@@ -51,13 +51,13 @@ Progress: [██████████] 100%
 
 ### What Was Shipped (v1.1)
 
-- **Phase 6** (6ede91e): Minimap sidebar — Canvas 2D, density heatmap, bookmark markers, always-visible w-16 sidebar, click-to-navigate
+- **Phase 6** (6ede91e): Minimap sidebar. Canvas 2D, density heatmap, bookmark markers, always-visible w-16 sidebar, click-to-navigate
 - **Phase 7** (00ee25b): Bookmark add/remove modal (Ctrl+B toggle) + LayerPanel (Eye/Lock icons + opacity slider)
 - **QA fix** (same commit): useLocalBmsFile yield + async initFromChart to eliminate parsing freeze
 
 ### What Was Shipped (v1.2)
 
-- **Phase 8** (4cd423b): Canvas zoom overhaul — ZoomControl imperative ref, cursor-anchored Ctrl+Wheel zoom (x1.15, bounds 2~200), keymode-based defaults, EditorToolbar zoom button group with preset dropdown
+- **Phase 8** (4cd423b): Canvas zoom overhaul. ZoomControl imperative ref, cursor-anchored Ctrl+Wheel zoom (x1.15, bounds 2~200), keymode-based defaults, EditorToolbar zoom button group with preset dropdown
 
 ### Key Decisions (08-01)
 
@@ -82,10 +82,10 @@ Progress: [██████████] 100%
 
 ### Blockers/Concerns
 
-None — all requirements met
+None. All requirements met
 
 ## Session Continuity
 
 Last session: 2026-04-06T13:18:01Z
-Stopped at: 08-01 complete — all 4 tasks committed (4cd423b)
-Next step: None — plan fully complete
+Stopped at: 08-01 complete. All 4 tasks committed (4cd423b)
+Next step: None. Plan fully complete
