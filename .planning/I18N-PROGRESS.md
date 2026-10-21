@@ -8,7 +8,7 @@
 - **Phase 분할**: 4 phase 순차 (1: 인프라, 2: 추출, 3: ja, 4: 외부 문서)
 - **부분 출시**: `ENABLED_LOCALES` feature flag
 - **main 프로세스**: 별도 미니 사전 (`src/main/i18n/menu.ts`)
-- **bms-editor/player**: React Context (`useI18n()`) — Phase 2에서 적용
+- **bms-editor/player**: React Context (`useI18n()`), Phase 2에서 적용
 - **자동 번역**: ko/en은 본인, 그 외는 DeepL/Claude draft + 사람 검수
 - **문서 범위**: 외부 공개 + 사용자 가이드만 (`.planning/**` 한국어 유지)
 - **인코딩**: bms-core ENCODINGS_TO_TRY에 windows-1251 추가 (Phase 2)
@@ -29,8 +29,8 @@
 - [x] **renderer/i18next.d.ts**: `CustomTypeOptions`로 type-safe `t()`
 - [x] **main/i18n/menu.ts**: 미니 사전 ~21 키 × ko/en, fallback to en
 - [x] **main/store/localeStore.ts**: electron-store ESM dynamic import wrapper, `getStoredLocale`, `setStoredLocale`, `resolveInitialLocale` (stored → OS → en)
-- [x] **main/ipc/locale.ts**: `registerLocaleIpc()` — invoke handlers + 모든 윈도우 broadcast + menu rebuild
-- [x] **main/menu.ts**: `createMenu(locale)` — 미니 사전 사용
+- [x] **main/ipc/locale.ts**: `registerLocaleIpc()`, invoke handlers + 모든 윈도우 broadcast + menu rebuild
+- [x] **main/menu.ts**: `createMenu(locale)`, 미니 사전 사용
 - [x] **main/index.ts**: locale IPC 등록 + initial menu locale + boot 흐름
 - [x] **preload/index.ts**: `window.api.locale.{getInitial,set}` 노출
 - [x] **preload/index.d.ts**: locale API 타입
@@ -38,7 +38,7 @@
 - [x] **renderer/components/LanguageSwitcher.tsx**: compact (status bar) + full (settings) variant, 키보드 접근, aria
 - [x] **renderer/components/AppStatusBar.tsx**: 하단 status bar
 - [x] **renderer/components/Layout.tsx**: column 구조 + AppStatusBar 통합
-- [x] **renderer/main.tsx**: boot 순서 — `localeService.init()` 후 React mount
+- [x] **renderer/main.tsx**: boot 순서: `localeService.init()` 후 React mount
 - [x] **renderer/App.tsx**: 5 한글 리터럴 → t() 치환 (`화면 이동`, `취소`, `저장 안 함`, `저장 후 이동`, `나가기`), Suspense boundary
 
 ### Known Environment Issues (불완전한 npm install)
@@ -80,7 +80,7 @@
 - [x] **bms-player/tests/i18n/fallback.test.ts**: 4/4 passed
 
 ### Done (fire 4)
-- [x] **bms-electron-app/src/renderer/components/BpmTapDialog.tsx** — 6개 한글 → `t('app:dialogs.bpmTap.*')` 치환 + locale JSON 갱신
+- [x] **bms-electron-app/src/renderer/components/BpmTapDialog.tsx**: 6개 한글 → `t('app:dialogs.bpmTap.*')` 치환 + locale JSON 갱신
 - [x] **bms-editor/src/chart/panels/Minimap.tsx**: `useI18n()` 통합, "Minimap" 헤더 + "클릭/드래그하여 이동" tooltip → `t('panels.minimap.*')`
 - [x] **bms-editor/src/i18n/defaults.ts**: `panels.minimap.navigationTooltip` 추가
 - [x] **bms-electron-app locales/{ko,en}/editor.json**: Minimap navigationTooltip 키 추가
@@ -88,21 +88,21 @@
 - [x] **`.planning/I18N-EXTRACTION-PLAYBOOK.md`**: 컴포넌트별 추출 레시피 + 우선순위 매트릭스 + 흔한 함정
 
 ### Done (fire 5): Tier 1 완료
-- [x] **bms-electron-app/src/renderer/components/ToastStack.tsx** — `aria-label="알림 닫기"` → `t('common:actions.dismiss')` + `dismiss` 키 양국어 추가
-- [x] **bms-electron-app/src/renderer/components/ChartStatsView.tsx** — `마디`, `재생 시간` → `t('app:stats.*')` + 양국어 키 추가
+- [x] **bms-electron-app/src/renderer/components/ToastStack.tsx**: `aria-label="알림 닫기"` → `t('common:actions.dismiss')` + `dismiss` 키 양국어 추가
+- [x] **bms-electron-app/src/renderer/components/ChartStatsView.tsx**: `마디`, `재생 시간` → `t('app:stats.*')` + 양국어 키 추가
 - [x] **bms-editor/src/chart/panels/StatusBar.tsx**: 10개 user-facing (tooltip 6 + label 2 + count 형식 2) → `useI18n().t('panels.statusBar.*')` + 13개 신규 키
 - [x] NoteSearchDialog (한글 주석만), AccessibleDialog (한글 주석 + title prop): 사용자 노출 한글 0건, **변환 불필요 확정**
 - [x] bms-editor 테스트 4/4 회귀 없음
 
 ### Done (fire 6): Tier 2 완료
-- [x] **NoteColorDialog.tsx** — 21 user-facing → `t('app:dialogs.noteColor.*')` (title, description, swatch tooltip, custom badge, reset, fields ×6 label/desc, buttons)
-- [x] **KeyBindingsDialog.tsx** — 8 user-facing → `t('app:dialogs.keyBindings.*')` + `t('common:actions.cancel')` (title, conflict, listening, reset, save)
-- [x] **MidiMappingDialog.tsx** — 19 user-facing → `t('app:dialogs.midiMapping.*')` (sections, modes ×3, helps ×3, presets, lane mapping, status, close)
+- [x] **NoteColorDialog.tsx**: 21 user-facing → `t('app:dialogs.noteColor.*')` (title, description, swatch tooltip, custom badge, reset, fields ×6 label/desc, buttons)
+- [x] **KeyBindingsDialog.tsx**: 8 user-facing → `t('app:dialogs.keyBindings.*')` + `t('common:actions.cancel')` (title, conflict, listening, reset, save)
+- [x] **MidiMappingDialog.tsx**: 19 user-facing → `t('app:dialogs.midiMapping.*')` (sections, modes ×3, helps ×3, presets, lane mapping, status, close)
 - [x] **EditorContextMenu**: 사용자 노출 한글 0건 확정 (모두 영문 메뉴 항목)
 - [x] **dialogs.{noteColor,keyBindings,midiMapping}** namespace 추가, ko/en 양국어 동시 작성
 
 ### Done (fire 7): Tier 3 시작
-- [x] **HeaderEditorPanel.tsx** — 17 user-facing → `useI18n().t('panels.header.*')`: tabs ×5, fields ×8, search/empty/delete/value placeholder/raw help/apply
+- [x] **HeaderEditorPanel.tsx**: 17 user-facing → `useI18n().t('panels.header.*')`, tabs ×5, fields ×8, search/empty/delete/value placeholder/raw help/apply
 - [x] **bms-editor/src/i18n/defaults.ts**: `panels.header.{tabs,fields,common}` 추가
 - [x] **bms-electron-app locales/{ko,en}/editor.json**: 동일 namespace 양국어 추가
 - [x] **bms-editor 테스트 4/4 회귀 없음**
@@ -115,15 +115,15 @@
 - [x] bms-editor 테스트 4/4 통과
 
 ### Done (fire 9): Tier 3 완료
-- [x] **NoteInfoPanel.tsx** — 25 user-facing → `useI18n().t('panels.noteInfo.*')`: 17 labels, 5 values (notesCount, uniqueKeysoundsCount, gridAligned/Unaligned, silentKeysound), 2 tooltips (deleteLayer, addLayer), title/empty/multiTitle
+- [x] **NoteInfoPanel.tsx**: 25 user-facing → `useI18n().t('panels.noteInfo.*')`, 17 labels, 5 values (notesCount, uniqueKeysoundsCount, gridAligned/Unaligned, silentKeysound), 2 tooltips (deleteLayer, addLayer), title/empty/multiTitle
 - [x] bms-editor `panels.noteInfo` defaults 대폭 확장 (labels, values, tooltips 섹션)
 - [x] bms-electron-app locales/{ko,en}/editor.json 동일 확장
 - [x] bms-editor 테스트 4/4 통과
 
 ### Done (fires 10–11): Tier 4 완료
-- [x] **PatternLibraryPanel.tsx** — 12 user-facing → `t('app:dialogs.patternLibrary.*')` (panel title, search, save selection, applyTooltip, patternStats, deleteTooltip, save dialog with 3 keys, no results / empty)
-- [x] **AutoChartDialog.tsx** — 21 user-facing → `t('app:dialogs.autoChart.*')` (title, 2 tabs, audio section, difficulty/lnRatio labels, toggles, generate/suggest buttons, suggest explanation, count label, 2 warnings, preview/summary, apply)
-- [x] **EditorToolbar.tsx** — 30+ user-facing → `useI18n().t('toolbar.*')`: 7 tools (label + description), 14 labels (thickness, zoom, keyMode, grid, snap toggle), 8 actions (undo/redo/copy/paste/save/zoom aria + tooltip), 3 zoom presets, 4 layer state translations
+- [x] **PatternLibraryPanel.tsx**: 12 user-facing → `t('app:dialogs.patternLibrary.*')` (panel title, search, save selection, applyTooltip, patternStats, deleteTooltip, save dialog with 3 keys, no results / empty)
+- [x] **AutoChartDialog.tsx**: 21 user-facing → `t('app:dialogs.autoChart.*')` (title, 2 tabs, audio section, difficulty/lnRatio labels, toggles, generate/suggest buttons, suggest explanation, count label, 2 warnings, preview/summary, apply)
+- [x] **EditorToolbar.tsx**: 30+ user-facing → `useI18n().t('toolbar.*')`, 7 tools (label + description), 14 labels (thickness, zoom, keyMode, grid, snap toggle), 8 actions (undo/redo/copy/paste/save/zoom aria + tooltip), 3 zoom presets, 4 layer state translations
 - [x] bms-editor `toolbar` defaults 대폭 확장 (tools, labels, layer, actions, presets 섹션)
 - [x] `dialogs.patternLibrary` + `dialogs.autoChart` namespace 추가, ko/en 양국어
 - [x] bms-editor 테스트 4/4 통과: 회귀 없음
@@ -131,8 +131,8 @@
 ### Done (fire 12): Tier 5-7 잔여 user-facing 일괄 변환
 - [x] **AudioSlicer.tsx 검증**: 25 키 양국어 완비, 변환 완료 상태 확인
 - [x] **Editor.tsx / NoteChartViewer.tsx hardcoded-Korean 정밀 스캔**: Editor.tsx 14 lines 전부 주석, NoteChartViewer 130 lines 중 user-facing 11 (나머지 119는 trailing 주석)
-- [x] **BmsChartDiff.tsx** — 14 user-facing → `useI18n().t('diff.*')`: ariaLabel(×2), noChanges title/detail, measureCount, nav prev/next + tooltips, filter changesOnly, viewModeAria, sidebar heading + measureLabel, legend added/removed/modified/unchangedDimmed, empty before/after
-- [x] **NoteChartViewer.tsx** — 11 user-facing → `t('noteChart.*')`: measureProgress, settings.{resetLabel×2, lanePerBeatHint, dragSensitivityHint, clickToSeekHint, noteWidthHint}, layout.{horizontalColumns, verticalSingle}, error.webglLost
+- [x] **BmsChartDiff.tsx**: 14 user-facing → `useI18n().t('diff.*')`, ariaLabel(×2), noChanges title/detail, measureCount, nav prev/next + tooltips, filter changesOnly, viewModeAria, sidebar heading + measureLabel, legend added/removed/modified/unchangedDimmed, empty before/after
+- [x] **NoteChartViewer.tsx**: 11 user-facing → `t('noteChart.*')`, measureProgress, settings.{resetLabel×2, lanePerBeatHint, dragSensitivityHint, clickToSeekHint, noteWidthHint}, layout.{horizontalColumns, verticalSingle}, error.webglLost
 - [x] **HeaderEditorPanel.tsx**: 8 fallback 라벨 영문화 (제목→Title, 부제목→Subtitle, ..., 판정→Rank). `fieldLabel(key, fallback)` 패턴이 이미 t() lookup을 수행하므로 fallback 영문화로 lint 정책 충족
 - [x] **Minimap.tsx**: `마디` → `t('noteChart.measureProgress')`
 - [x] **EditorToolbar.tsx**: KEY_MODE_LABELS `유이팩`/`에리팩` → `Yuipack`/`Eripack` (변형 label, 변환 불필요)
@@ -140,24 +140,24 @@
 - [x] **main/i18n/menu.ts**: 3 dialog 키 (importKeysound, newBms, openAudio) ko/en 양국어 추가
 - [x] **bms-editor defaults.ts (vendor + canonical)**: `diff` (15 keys), `noteChart` (10 keys), `layers` namespace 추가
 - [x] **locales/{ko,en}/editor.json**: diff + noteChart namespace 양국어 동시 작성
-- [x] **judgements/index.ts:248** — invariant 한글 메시지 영문화 (developer-facing, ASCII)
+- [x] **judgements/index.ts:248**: invariant 한글 메시지 영문화 (developer-facing, ASCII)
 - [x] **테스트 결과**: bms-electron-app i18n 20/20 + bms-editor i18n 4/4 통과, typecheck 0 errors
 - [x] 잔여 한글 119건: 전부 **trailing code comments** (코드 뒤 // 주석) + 1건 multi-language search heuristic (`KeysoundPanel '무음'.includes()`), user-facing 0건
 
 ### Done (fire 13): Parser 실행 + ESLint pipeline + 5개 locale skeleton
-- [x] **`.i18next-parser.config.cjs`** — `failOnWarnings: true → false` + 정책 주석 추가
+- [x] **`.i18next-parser.config.cjs`**: `failOnWarnings: true → false` + 정책 주석 추가
   - 정당한 dynamic key 호출 (`t(\`${ns}:fields.${key}.label\`)` 등)이 false-positive로 게이트를 막던 문제 해소
   - 진짜 누락은 `failOnUpdate`(`i18n:check` 스크립트가 활성화) 경로로 catch
-- [x] **`npm run i18n:extract` 1차 실행** — 7 locale × 4 namespace 키 동기화 완료
+- [x] **`npm run i18n:extract` 1차 실행**: 7 locale × 4 namespace 키 동기화 완료
   - 21 locale 파일 갱신 (ko/en 신규 키 + de/es/ja/ru/zh skeleton expansion)
   - 5 신규 `errors.json` 생성: de/es/ja/ru/zh (audio/bms/file/locale 카테고리, 값은 빈 문자열 placeholder)
   - `_one`/`_other` plural variants 자동 생성 (`{{count}}` 패턴 키)
-- [x] **`scripts/i18n-fill-plurals.cjs` 신설** — parser가 만드는 빈 `_one`/`_other` 값을 un-suffixed 부모 키 값으로 백필 (ko/en 대상)
+- [x] **`scripts/i18n-fill-plurals.cjs` 신설**: parser가 만드는 빈 `_one`/`_other` 값을 un-suffixed 부모 키 값으로 백필 (ko/en 대상)
 - [x] **`package.json` scripts**: `i18n:extract`가 추출 후 자동 backfill (`&& node scripts/i18n-fill-plurals.cjs`), `i18n:fill-plurals` 단독 호출도 가능
-- [x] **`npm run i18n:check` exit 0 확인** — extract+backfill 사이클 안정화 (재실행해도 git diff 없음 = parser stable state)
-- [x] **ESLint `local/no-hardcoded-korean` 검증** — `eslint.config.js`에 등록, `src/**/*.{ts,tsx}` 0 errors (4 dead-disable warnings만 잔존)
-- [x] **`src/main/store/localeStore.ts`**: `app.getLocale()` try/catch wrapper — electron mock이 `app` export 누락한 unit-test에서 `en` 폴백
-- [x] **`src/main/i18n/menu.ts`** — `dialog.*` 키 (importKeysound/newBms/openAudio) ko/en 양국어 (fire 12 추가분, 정상 동작 확인)
+- [x] **`npm run i18n:check` exit 0 확인**: extract+backfill 사이클 안정화 (재실행해도 git diff 없음 = parser stable state)
+- [x] **ESLint `local/no-hardcoded-korean` 검증**: `eslint.config.js`에 등록, `src/**/*.{ts,tsx}` 0 errors (4 dead-disable warnings만 잔존)
+- [x] **`src/main/store/localeStore.ts`**: `app.getLocale()` try/catch wrapper, electron mock이 `app` export 누락한 unit-test에서 `en` 폴백
+- [x] **`src/main/i18n/menu.ts`**: `dialog.*` 키 (importKeysound/newBms/openAudio) ko/en 양국어 (fire 12 추가분, 정상 동작 확인)
 - [x] **전체 회귀 테스트 통과** (Auto-fill plural 적용 후):
   - bms-electron-app unit: 1152/1152
   - bms-electron-app integration: 66/66
@@ -167,12 +167,12 @@
 
 ### Done (fire 13 후속)
 - [x] **dead eslint-disable 정리**: `LanguageSwitcher.tsx`, `init.ts`, `main.tsx` 3건 제거
-- [x] **`.github/workflows/test.yml`** — `i18n:check` + `lint:i18n` blocking step 추가 (test.yml에서는 게이팅 활성화)
+- [x] **`.github/workflows/test.yml`**: `i18n:check` + `lint:i18n` blocking step 추가 (test.yml에서는 게이팅 활성화)
 
 ### Done (fire 16-18)
-- [x] **`ci.yml` lint:i18n blocking 전환** — fire 16 완료 (Tier 1-7 완료, 0 user-facing literals)
+- [x] **`ci.yml` lint:i18n blocking 전환**: fire 16 완료 (Tier 1-7 완료, 0 user-facing literals)
 - [x] **7개 locale 본문 번역**: ja fire 14, de/es/ru/zh fire 17 완료
-- [x] **trailing 주석 정책 결정** — fire 18: `// 한글 주석` 119건은 ESLint rule이 `Literal`/`JSXText`만 방문 (Comment node 제외), `lint:i18n` 이미 exit 0. 별도 처리 불필요 — 정책: 코드 내부 주석은 한국어 허용
+- [x] **trailing 주석 정책 결정**: fire 18: `// 한글 주석` 119건은 ESLint rule이 `Literal`/`JSXText`만 방문 (Comment node 제외), `lint:i18n` 이미 exit 0. 별도 처리 불필요. 정책: 코드 내부 주석은 한국어 허용
 
 ---
 
@@ -184,14 +184,14 @@
   - `ja/errors.json`: 13키 (audio, bms, file, locale)
   - `ja/app.json`: 170키 (audioSlicer 25 + dialogs 6분류 + errors + home + navigation + player + stats)
   - `ja/editor.json`: 426키 (diff, keyBindings, noteChart, panels 8분류, routes.editor, store, toolbar)
-  - `ja/player.json` — 20키 (judgment, gauge, hud, errors, state) — 새 파일 생성
+  - `ja/player.json`: 20키 (judgment, gauge, hud, errors, state), 새 파일 생성
 - [x] **BMS 도메인 용어 일관성**: キーサウンド(키음), ノーツ(노트), 譜面(차트), レーン(레인), 小節(마디), 拍(비트), ロングノート(롱노트), 地雷(지뢰), インビジブル(인비저블), スクラッチ(스크래치), クオンタイズ(퀀타이즈), ジャック(잭), ロール(롤), トリル(트릴), パターン(패턴) 등
-- [x] **`src/shared/i18n/types.ts`** — `ENABLED_LOCALES`에 `'ja'` 추가 (`['ko','en'] → ['ko','en','ja']`)
-- [x] **`src/main/i18n/menu.ts`** — `dictionaries.ja` 추가 (24키, dialog.* 3건 포함)
-- [x] **`src/renderer/global.css`** — `font-family` 스택에 Yu Gothic UI, Meiryo, Noto Sans CJK JP, Noto Sans JP, Hiragino Sans, Hiragino Kaku Gothic ProN 추가 (한·중·일 시스템 폰트 모두 커버)
+- [x] **`src/shared/i18n/types.ts`**: `ENABLED_LOCALES`에 `'ja'` 추가 (`['ko','en'] → ['ko','en','ja']`)
+- [x] **`src/main/i18n/menu.ts`**: `dictionaries.ja` 추가 (24키, dialog.* 3건 포함)
+- [x] **`src/renderer/global.css`**: `font-family` 스택에 Yu Gothic UI, Meiryo, Noto Sans CJK JP, Noto Sans JP, Hiragino Sans, Hiragino Kaku Gothic ProN 추가 (한·중·일 시스템 폰트 모두 커버)
 - [x] **테스트 보강**:
-  - `tests/i18n/menu-dict.test.ts` — `returns Japanese label when locale=ja` 신규 + 기존 fallback test을 `ru/zh`로 이동
-  - `tests/i18n/locale-parity.test.ts` — 5 namespace × `ja` import 추가, `ja matches ko key set` assertion + empty-string walk에 ja 포함
+  - `tests/i18n/menu-dict.test.ts`: `returns Japanese label when locale=ja` 신규 + 기존 fallback test을 `ru/zh`로 이동
+  - `tests/i18n/locale-parity.test.ts`: 5 namespace × `ja` import 추가, `ja matches ko key set` assertion + empty-string walk에 ja 포함
 - [x] **회귀 결과**:
   - bms-electron-app i18n: 26/26 (20 → 26, ja parity 6건 추가)
   - bms-electron-app unit: 1132/1132
@@ -200,25 +200,25 @@
   - ja/{app,common,editor,errors} 파리티 100% (missing=0, empty=0, extra=0)
 
 ### Done (fire 15): ja smoke test infra
-- [x] **`tests/e2e/i18n-japanese.spec.ts`** — 신규 spec 4건:
+- [x] **`tests/e2e/i18n-japanese.spec.ts`**: 신규 spec 4건:
   - `home screen renders in Japanese`: DOM 본문에서 일본어 문자열 regex 검출 (日本語/最近のファイル/ファイル/新規BMS/キーモード 중 1개 이상)
   - `language switcher shows 日本語 as current`: LanguageSwitcher 버튼 텍스트 확인
-  - `navigation to editor preserves ja locale` — `__DEV_OPEN_FILE__` + `__DEV_NAVIGATE__` 후 에디터 ja 라벨 (追加/選択/移動/譜面情報/キーサウンド/小節/ノーツ) 검출
-  - `native menu labels match Japanese dictionary` — Electron `Menu.getApplicationMenu()` 최상위 라벨이 `ファイル/編集/表示`인지 검증
+  - `navigation to editor preserves ja locale`: `__DEV_OPEN_FILE__` + `__DEV_NAVIGATE__` 후 에디터 ja 라벨 (追加/選択/移動/譜面情報/キーサウンド/小節/ノーツ) 검출
+  - `native menu labels match Japanese dictionary`: Electron `Menu.getApplicationMenu()` 최상위 라벨이 `ファイル/編集/表示`인지 검증
 - [x] **fixture 분리**: `electron-app.ts`는 `--lang=ko` 강제 (기존 e2e 보존), 새 spec은 `--lang=ja` 사용 base.extend 패턴
-- [x] **시각 회귀 미채택 사유** — CJK 폴백 폰트 렌더링이 OS마다 다르고 (Windows: Yu Gothic UI, macOS: Hiragino, Linux: Noto Sans CJK JP), 골든 이미지 관리 비용이 검증 가치보다 큼. 텍스트 contains 방식으로 시맨틱 검증
+- [x] **시각 회귀 미채택 사유**: CJK 폴백 폰트 렌더링이 OS마다 다르고 (Windows: Yu Gothic UI, macOS: Hiragino, Linux: Noto Sans CJK JP), 골든 이미지 관리 비용이 검증 가치보다 큼. 텍스트 contains 방식으로 시맨틱 검증
 - [x] **typecheck**: 0 errors (`tsconfig.web.json` + `tsconfig.node.json`)
 - [x] Playwright 실행은 CI에서 `npm run test:e2e`로 트리거 (로컬은 빌드 시간 큼)
 
 ### Done (fire 16)
-- [x] **`ci.yml` `lint:i18n` blocking 전환** — `continue-on-error: true` 제거, 주석 갱신 (Tier 1-7 완료 명시)
+- [x] **`ci.yml` `lint:i18n` blocking 전환**: `continue-on-error: true` 제거, 주석 갱신 (Tier 1-7 완료 명시)
 
 ### Done (fire 17): de/es/ru/zh 4개 gated locale 초안 번역
 - [x] **de (German)**: 308 empty keys → 0 (Speichern, Abbrechen, Takt, Spur 등)
 - [x] **es (Spanish)**: 329 empty keys → 0 (Guardar, Cancelar, compás, carril 등)
 - [x] **ru (Russian)**: 350 empty keys → 0 (Сохранить, Отмена, такт, дорожка 등)
 - [x] **zh (Simplified Chinese)**: 287 empty keys → 0 (保存, 取消, 小节, 轨道, 键音 등)
-- [x] **Parser 안정화** — `npm run i18n:extract` 2회 실행 후 git diff 없음 (stable state)
+- [x] **Parser 안정화**: `npm run i18n:extract` 2회 실행 후 git diff 없음 (stable state)
 - [x] **bms-editor fire 12 미커밋 변경 커밋**: BmsChartDiff, NoteChartViewer, EditorToolbar, HeaderEditorPanel, Minimap + defaults.ts
 - [x] **bms-player fire 12 미커밋 변경 커밋**: judgements invariant English
 - [x] **submodule 포인터 bump**: bms-editor 8d0e9c2→62bd0d2, bms-player e80bb39→9980696
@@ -250,8 +250,8 @@
 - [x] **shared/i18n/locales/{ko,en}/{editor,player}.json**: 라이브러리 namespace 키 (toolbar, panels, judgment, gauge, hud, errors, state)
 
 ### Pending (i18n-4 잔여)
-- [ ] **docs/{en,ko}/**: 디렉터리 분리, bms-format spec 영문 작성 — 별도 자료 작업
-- [ ] **bms-core/editor/player JSDoc**: public API 영문화 — 코드 내부 주석 작업
+- [ ] **docs/{en,ko}/**: 디렉터리 분리, bms-format spec 영문 작성. 별도 자료 작업
+- [ ] **bms-core/editor/player JSDoc**: public API 영문화, 코드 내부 주석 작업
 - [ ] 사용자 가이드 (단축키, BMS 작성 튜토리얼): 신규 콘텐츠 작성 필요
 
 ---
@@ -280,7 +280,7 @@
 
 ---
 
-*Last updated: 2026-05-29 — fire 18: trailing 주석 정책 확정 (ESLint comment 제외 확인, 별도 처리 불필요)*
+*Last updated: 2026-05-29, fire 18: trailing 주석 정책 확정 (ESLint comment 제외 확인, 별도 처리 불필요)*
 *Next fire 진입점: 네이티브 검수 완료 후 ENABLED_LOCALES에 de/es/ru/zh 추가 (외부 작업 대기 중)*
 
 ## 누적 변환 현황
