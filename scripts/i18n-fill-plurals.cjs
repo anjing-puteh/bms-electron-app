@@ -6,7 +6,7 @@
  * Why this exists:
  *   i18next-parser auto-generates `_one`/`_other` (and other CLDR plural
  *   forms) when it sees `{{count}}` interpolation, writing empty strings.
- *   For Korean — which has no morphological plural — the un-suffixed key is
+ *   For Korean, which has no morphological plural, the un-suffixed key is
  *   already the canonical translation, so the empty `_other` placeholders
  *   are noise. For English, the un-suffixed key is also typically the
  *   plural form, so duplicating it gives a workable default that
@@ -16,7 +16,7 @@
  *   because empty translation strings are treated as missing.
  *
  * Scope:
- *   Operates on `ko` and `en` only — these are the locales that ship in
+ *   Operates on `ko` and `en` only. These are the locales that ship in
  *   ENABLED_LOCALES. Other locales remain empty for translator review.
  *
  * Usage:

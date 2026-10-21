@@ -56,7 +56,7 @@ function createWindow(): void {
     closeConfirmed = false;
   });
 
-  // Open external links in the system browser — http(s) only. Any other
+  // Open external links in the system browser. Only http(s) is allowed. Any other
   // scheme (file:, javascript:, custom protocol handlers) is dropped so a
   // crafted chart cannot launch local programs through the renderer.
   mainWindow.webContents.setWindowOpenHandler((details) => {

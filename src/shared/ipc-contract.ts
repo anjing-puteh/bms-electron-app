@@ -110,7 +110,7 @@ export interface IpcInvokeMap {
   // locale
   'locale:getInitial': { in: []; out: SupportedLocale };
   'locale:set': { in: [locale: SupportedLocale]; out: boolean };
-  // app lifecycle — renderer answers a close request once unsaved work is settled
+  // app lifecycle. The renderer answers a close request once unsaved work is settled
   'app:confirmClose': { in: []; out: boolean };
 }
 

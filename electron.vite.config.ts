@@ -13,7 +13,7 @@ function resolveFromRoot(): Plugin {
     enforce: 'pre',
     async resolveId(source, importer, options) {
       if (!importer || !source.startsWith('.') && !source.startsWith('/') && !source.startsWith('\0')) {
-        // Bare specifier from an external source file — try resolving from root
+        // Bare specifier from an external source file. Try resolving from root
         if (importer && !importer.includes('node_modules')) {
           const resolved = await this.resolve(source, resolve(rootNodeModules, '_virtual.js'), {
             ...options,

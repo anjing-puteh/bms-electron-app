@@ -252,7 +252,7 @@ export function registerFileIpc(): void {
             imported.push({ filename: existing, destPath: existingPath });
             continue;
           }
-          // Different audio under the same name: never overwrite — pick a free name.
+          // Different audio under the same name: never overwrite. Pick a free name.
           let n = 2;
           while (takenBases.has(`${base}_${n}`.toLowerCase())) n++;
           filename = `${base}_${n}${ext}`;

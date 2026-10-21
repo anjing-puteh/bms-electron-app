@@ -7,7 +7,7 @@
  *
  * Conventions:
  *   - All seven locales are listed even though only `ko` and `en` ship in
- *     phase i18n-1. Inactive locales get empty strings — translators fill
+ *     phase i18n-1. Inactive locales get empty strings. Translators fill
  *     them in PRs gated by ENABLED_LOCALES.
  *   - We do NOT auto-translate placeholders; missing strings are written as
  *     empty so review tooling can highlight gaps.
@@ -42,7 +42,7 @@ module.exports = {
   verbose: false,
   // `failOnWarnings` is intentionally false: several call sites resolve keys
   // dynamically (`t(`${ns}:fields.${key}.label`)`) and the parser cannot
-  // statically extract those — they would always trip the gate while the keys
+  // statically extract those. They would always trip the gate while the keys
   // themselves are present in locale JSONs. CI relies on `--fail-on-update`
   // (set by the `i18n:check` script) to catch genuine missing keys.
   failOnWarnings: false,

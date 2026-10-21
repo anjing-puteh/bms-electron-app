@@ -1,7 +1,7 @@
 /**
  * BMS Parser Worker
  * Parses BMS files off the main thread in two phases:
- *   Phase 1: songInfo, bpm, keyMode, lnType  (fast — no note iteration)
+ *   Phase 1: songInfo, bpm, keyMode, lnType  (fast, no note iteration)
  *   Phase 2: notes, stats, bpmChanges, stops, scrollChanges, keysounds, barLines
  *
  * Protocol:

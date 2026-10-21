@@ -5,7 +5,7 @@
  * renderer:
  *   - This is ~30 keys vs the renderer's ~1,500. Pulling react-i18next into
  *     the main bundle would inflate boot time for negligible reuse.
- *   - main is a different process — there is no way to share an i18next
+ *   - main is a different process, so there is no way to share an i18next
  *     instance even if we wanted to.
  *   - Keys here are stable; new menu items are rare. The cost of duplication
  *     is small.

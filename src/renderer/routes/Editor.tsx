@@ -828,7 +828,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
   }, []);
 
   // Connect MIDI on recording mode change. Access alone does not deliver
-  // notes — an input must be connected in the MIDI dialog — so if nothing is
+  // notes. An input must be connected in the MIDI dialog, so if nothing is
   // connected yet, open the dialog instead of silently recording nothing.
   useEffect(() => {
     if (midiRecordingMode === 'off') return;
@@ -877,7 +877,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     try {
       const imported = await window.api.file.importKeysounds(file.path);
       if (imported.length === 0) return;
-      // Ids referenced by notes count as used even without a #WAV line —
+      // Ids referenced by notes count as used even without a #WAV line.
       // otherwise a new file would suddenly sound on those notes.
       const usedIds = new Set(Object.keys(keysoundRecord).map(canonId));
       for (const n of useEditorStore.getState().notes) {
@@ -1009,7 +1009,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     const chartToSave = store.savableChart();
     if (!chart || !chartToSave) return;
     try {
-      // Same LN encoding decision as handleSave — Save As must not silently
+      // Same LN encoding decision as handleSave. Save As must not silently
       // rewrite an LNOBJ chart as channel-style long notes (or vice versa).
       const origLnObj = chartToSave.headers.lnobj;
       const lnMode = origLnObj ? 'lnobj' as const : 'channel' as const;
@@ -1252,7 +1252,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         return;
       }
       await preloader.decodeAll();
-      // Bail-out: abort() already resolved decodeAll early — don't proceed
+      // Bail-out: abort() already resolved decodeAll early. Don't proceed
       if (loadAbortRef.current) {
         preloader.releaseAllResources();
         inProgressPreloaderRef.current = null;
@@ -1381,7 +1381,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       playbackBeatRef.current = lo;
       playbackOffsetRef.current = currentSec;
 
-      // Throttle store updates to ~100ms (10fps) — refs are always instant
+      // Throttle store updates to ~100ms (10fps). Refs are always instant
       const now = performance.now();
       if (now - lastStoreUpdate > 100) {
         lastStoreUpdate = now;
@@ -1709,7 +1709,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           <ArrowLeft className="h-4 w-4" />
         </button>
         <span className="text-sm font-medium truncate">{chart?.songInfo?.title || file.name}</span>
-        {/* Save button — next to filename, highlighted when there are unsaved changes */}
+        {/* Save button, next to filename, highlighted when there are unsaved changes */}
         <button
           onClick={handleSaveWithCleanup}
           disabled={!hasUnsavedChanges}
@@ -1731,7 +1731,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         )}
         <div className="flex-1" />
 
-        {/* === Measure insert/delete — exposed directly in the header === */}
+        {/* === Measure insert/delete, exposed directly in the header === */}
         <div className="flex items-center gap-0.5">
           <button
             onClick={() => openModal('measureInsert')}
@@ -1937,7 +1937,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           {/* Playback Controls */}
           <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 border-b border-zinc-800 bg-muted/30 shrink-0 text-xs min-w-0 overflow-hidden" data-testid="playback-controls">
             {audioPhase === 'idle' && (!chart || Object.keys(chart.keysounds).length > 0) ? (
-              // Chart not loaded yet or auto-load pending — show spinner to prevent button flicker
+              // Chart not loaded yet or auto-load pending. Show spinner to prevent button flicker
               <AudioLoadingProgress />
             ) : audioPhase === 'idle' ? (
               <button onClick={loadAudio} className="flex items-center gap-1.5 px-3 py-1 bg-zinc-800 hover:bg-zinc-700 rounded transition-colors text-zinc-300">
@@ -1972,7 +1972,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
                   </button>
                 )}
                 <div className="w-px h-4 bg-zinc-700" />
-                {/* Speed control — select for presets + slider for fine control */}
+                {/* Speed control: select for presets + slider for fine control */}
                 <select
                   value={[0.25, 0.5, 0.75, 1, 1.5, 2].includes(playbackSpeed) ? String(playbackSpeed) : 'custom'}
                   onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) store.setPlaybackSpeed(v); }}
@@ -2001,7 +2001,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
                 />
                 <div className="flex-1" />
                 <div className="w-px h-4 bg-zinc-700" />
-                {/* BPM tap + Play test — moved from header to transport context */}
+                {/* BPM tap + Play test, moved from header to transport context */}
                 <button
                   onClick={() => openModal('bpmTap')}
                   className="p-2 rounded hover:bg-zinc-800 transition-colors text-zinc-400"
@@ -2020,7 +2020,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
                 </button>
               </>
             )}
-            {/* View toggles — always visible (regardless of audio state) */}
+            {/* View toggles: always visible (regardless of audio state) */}
             <div className="ml-auto flex items-center gap-0.5 shrink-0">
               <div className="w-px h-4 bg-zinc-700 mx-0.5" />
               <button onClick={store.toggleLeftPanel} aria-pressed={showLeftPanel} aria-label={t('editor:routes.editor.playback.keysoundPanelTitle')} className="p-1.5 rounded hover:bg-zinc-800 transition-colors text-zinc-400" title={t('editor:routes.editor.playback.keysoundPanelTitle')} data-testid="toggle-left-panel">
@@ -2290,7 +2290,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           className="border border-zinc-700 rounded bg-zinc-900 shadow-xl flex flex-col"
           data-testid="minimap-popout"
         >
-          {/* Drag handle header — drag near right edge to re-dock */}
+          {/* Drag handle header: drag near right edge to re-dock */}
           <div
             className="px-2 py-1 text-xs font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-700 shrink-0 flex items-center justify-between cursor-grab active:cursor-grabbing select-none"
             onPointerDown={(e) => {
@@ -2332,7 +2332,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
               >
                 <PanelRightOpen className="w-3.5 h-3.5" />
               </button>
-              {/* Close popout — return to inline sidebar */}
+              {/* Close popout: return to inline sidebar */}
               <button
                 onClick={() => setMinimapPopout(false)}
                 onPointerDown={(e) => e.stopPropagation()}
