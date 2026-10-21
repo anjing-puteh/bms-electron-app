@@ -1,4 +1,4 @@
-# BMS Electron App — 프롬프트 히스토리
+# BMS Electron App: 프롬프트 히스토리
 
 이 문서는 프로젝트 개발 과정에서 실제로 사용된 주요 프롬프트(지시사항)를 Phase별로 기록합니다.
 

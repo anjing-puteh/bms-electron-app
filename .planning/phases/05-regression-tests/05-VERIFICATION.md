@@ -52,7 +52,7 @@ score: 5/5 must-haves verified
 
 ### Data-Flow Trace (Level 4)
 
-Not applicable — these are test files. They exercise the logic of production code via mocked dependencies; there is no user-facing rendering path to trace.
+Not applicable: these are test files. They exercise the logic of production code via mocked dependencies; there is no user-facing rendering path to trace.
 
 ### Behavioral Spot-Checks
 

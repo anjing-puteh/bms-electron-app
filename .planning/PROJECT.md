@@ -6,15 +6,15 @@ Electron 기반 BMS 차트 에디터 앱. 리듬 게임용 .bms/.bme/.bml 파일
 
 ## Core Value
 
-에디터에서 차트를 빠르고 직관적으로 편집할 수 있어야 한다 — 파일 탐색, 노트 편집, 오디오 미리듣기가 모두 끊김 없이 동작해야 한다.
+에디터에서 차트를 빠르고 직관적으로 편집할 수 있어야 한다: 파일 탐색, 노트 편집, 오디오 미리듣기가 모두 끊김 없이 동작해야 한다.
 
 ## Requirements
 
 ### Validated
 
-- tick 기반 노트 시스템 (960 ticks/beat) — Phase 1-7 완료
+- tick 기반 노트 시스템 (960 ticks/beat): Phase 1-7 완료
 - Web Worker 기반 오디오 스케줄러 (Alt-tab 문제 해결)
-- 에디터 스토어 (Zustand) — 전체 에디터 상태 관리
+- 에디터 스토어 (Zustand): 전체 에디터 상태 관리
 - 파일 IPC 인프라 (read/save/autosave/meta)
 - 홈 화면 파일 브라우저 (폴더 스캔 + 최근 파일)
 - AudioPreloader (IndexedDB 캐시, progressive decode, EQ/컴프레서)
@@ -39,11 +39,11 @@ Electron 기반 BMS 차트 에디터 앱. 리듬 게임용 .bms/.bme/.bml 파일
 
 ### Out of Scope
 
-- .bms.meta 파싱 결과 캐시 — 백로그
-- AudioContext 앱 수준 싱글턴 — per-request 방식 유지
-- Home에서 Timing/Positioning Worker 직렬화 — Home은 stats/headers만 필요
-- 미니맵 드래그 스크롤 — v1.1에서 클릭 이동만 구현
-- 북마크 이름 편집 UI — renameBookmark 액션은 있으나 UI 미구현
+- .bms.meta 파싱 결과 캐시: 백로그
+- AudioContext 앱 수준 싱글턴: per-request 방식 유지
+- Home에서 Timing/Positioning Worker 직렬화: Home은 stats/headers만 필요
+- 미니맵 드래그 스크롤: v1.1에서 클릭 이동만 구현
+- 북마크 이름 편집 UI: renameBookmark 액션은 있으나 UI 미구현
 - 레이어 커스텀 이름 지정
 
 ## Context

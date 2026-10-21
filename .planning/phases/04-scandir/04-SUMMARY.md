@@ -7,7 +7,7 @@
 
 `src/main/ipc/file.ts`에서 `scanDir` 함수를 두 단계로 분리:
 
-1. `collectBmsPaths()` — readdir만으로 BMS 파일 경로 수집 (stat 없음)
+1. `collectBmsPaths()`: readdir만으로 BMS 파일 경로 수집 (stat 없음)
 2. `file:listBmsFolder` — batchSize=20 병렬 stat으로 파일 정보 수집
 
 ## Results

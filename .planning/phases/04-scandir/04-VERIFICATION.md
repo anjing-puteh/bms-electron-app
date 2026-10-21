@@ -44,7 +44,7 @@ human_verification: []
 
 ### Data-Flow Trace (Level 4)
 
-Not applicable — this is a Node.js IPC handler (no React rendering or UI data binding). Data correctness is verified by unit tests.
+Not applicable: this is a Node.js IPC handler (no React rendering or UI data binding). Data correctness is verified by unit tests.
 
 ### Behavioral Spot-Checks
 

@@ -2,7 +2,7 @@
 
 > Step-by-step recipe for converting one component's Korean literals to
 > `t()` calls. Each cron fire (or human contributor) processes one component
-> per pass. Keep PRs small — one component per PR is the recommended grain.
+> per pass. Keep PRs small: one component per PR is the recommended grain.
 
 ## Choose the next component
 
@@ -79,7 +79,7 @@ For library packages: edit
 - `bms-editor/src/i18n/defaults.ts` (English baked-in fallback)
 - `bms-electron-app/src/shared/i18n/locales/{ko,en}/editor.json` (consumer translations)
 
-Both ko and en MUST be updated in the same PR — CI parity test fails otherwise.
+Both ko and en MUST be updated in the same PR: CI parity test fails otherwise.
 
 ### 4. Verify
 
@@ -100,28 +100,28 @@ npx vitest run tests/i18n/locale-parity.test.ts
 
 ## What NOT to translate
 
-- **Code comments** — they're for developers, not users.
-- **`console.log` / `console.warn` strings** — diagnostic only.
+- **Code comments**: they're for developers, not users.
+- **`console.log` / `console.warn` strings**: diagnostic only.
 - **Test fixture strings**.
-- **User chart data** — `#TITLE`, `#ARTIST`, keysound filenames are user
+- **User chart data**: `#TITLE`, `#ARTIST`, keysound filenames are user
   input and pass through unchanged.
 - **HTML attribute values that aren't user-visible** (`data-*`, `aria-hidden`
   values, etc.).
 
 ## Common pitfalls
 
-- **Ellipses** — Korean often uses `...` where English uses `…` (U+2026).
+- **Ellipses**: Korean often uses `...` where English uses `…` (U+2026).
   The keys are language-specific values; don't normalize across locales.
-- **Plurals** — use `t('panels.statusBar.notes', { count })` and provide
+- **Plurals**: use `t('panels.statusBar.notes', { count })` and provide
   i18next plural keys (`notes_one`, `notes_other`) when the language
   requires it. Korean uses a single form; English needs both.
-- **Interpolation order** — i18next replaces `{{name}}` regardless of
+- **Interpolation order**: i18next replaces `{{name}}` regardless of
   position. If a translation needs to reorder values, that's already
   handled by writing the target string in the natural word order for that
   language.
-- **`title` attributes** — these surface as tooltips; translate them.
-- **`aria-label`** — these are read by screen readers; translate them.
-- **Unit suffixes** — append in the locale string, not in JSX
+- **`title` attributes**: these surface as tooltips; translate them.
+- **`aria-label`**: these are read by screen readers; translate them.
+- **Unit suffixes**: append in the locale string, not in JSX
   (`{`{{count}} notes`}` not `{count} {t('notes')}`).
 
 ## Tracking

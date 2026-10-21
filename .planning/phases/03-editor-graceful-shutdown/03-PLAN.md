@@ -8,8 +8,8 @@
 Editor 언마운트 시 in-progress 오디오 로딩을 즉시 중단하고 리소스를 안전하게 해제한다.
 
 **Modified files:**
-1. `src/renderer/routes/Editor.tsx` — loadAbortRef + inProgressPreloaderRef 추가
-2. `src/renderer/App.tsx` — key={currentFile.path} 강제 리마운트
+1. `src/renderer/routes/Editor.tsx`: loadAbortRef + inProgressPreloaderRef 추가
+2. `src/renderer/App.tsx`: key={currentFile.path} 강제 리마운트
 
 ---
 

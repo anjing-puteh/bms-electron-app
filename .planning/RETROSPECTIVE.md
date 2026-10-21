@@ -1,4 +1,4 @@
-# Retrospective — BMS Editor (bms-electron-app)
+# Retrospective: BMS Editor (bms-electron-app)
 
 ## Milestone: v1.0 — 파일 로딩 프리징 버그 수정
 
@@ -7,11 +7,11 @@
 
 ### What Was Built
 
-- BMS 파싱 Worker 이전 — 메인 스레드 UI 프리징 완전 제거 (2단계 프로토콜, requestId guard)
-- AudioPreloader.abort() — decodeAll/loadAll 중 즉시 중단 가능 (고아 Promise 제거)
-- Editor graceful shutdown — 언마운트 시 오디오 로딩 즉시 abort + 리소스 해제
-- scanDir batchSize=20 병렬 stat — 대용량 폴더 최대 20x 성능 향상
-- 회귀 테스트 5 스위트 33개 — 1118/1118 통과
+- BMS 파싱 Worker 이전: 메인 스레드 UI 프리징 완전 제거 (2단계 프로토콜, requestId guard)
+- AudioPreloader.abort(): decodeAll/loadAll 중 즉시 중단 가능 (고아 Promise 제거)
+- Editor graceful shutdown: 언마운트 시 오디오 로딩 즉시 abort + 리소스 해제
+- scanDir batchSize=20 병렬 stat: 대용량 폴더 최대 20x 성능 향상
+- 회귀 테스트 5 스위트 33개: 1118/1118 통과
 
 ### What Worked
 
@@ -37,7 +37,7 @@
 
 ### Key Lessons
 
-- BMS 파싱 Worker 이전 시 Phase1이 "헤더만"이 아님 — detectKeyMode도 note scan 필요. 계획에 명시해야 함
+- BMS 파싱 Worker 이전 시 Phase1이 "헤더만"이 아님: detectKeyMode도 note scan 필요. 계획에 명시해야 함
 - ArrayBuffer vs Uint8Array IPC 경계: `window.api.file.readBms()`는 Uint8Array 반환 → test mock도 Uint8Array 사용 필요 (ArrayBuffer 아님)
 - vitest globals mode에서 `import from 'vitest'` 혼용 금지
 
@@ -56,10 +56,10 @@
 
 ### What Was Built
 
-- Canvas 2D 수직 미니맵 사이드바 — density heatmap, viewport indicator, bookmark markers
-- Ctrl+B 북마크 토글 — AccessibleDialog 이름 입력 (prompt() 대체)
-- LayerPanel — 4레이어 가시성·잠금·불투명도 슬라이더 (inline component)
-- QA 성능 수정 — async initFromChart + yield으로 파일 오픈 프리징 제거
+- Canvas 2D 수직 미니맵 사이드바: density heatmap, viewport indicator, bookmark markers
+- Ctrl+B 북마크 토글: AccessibleDialog 이름 입력 (prompt() 대체)
+- LayerPanel: 4레이어 가시성·잠금·불투명도 슬라이더 (inline component)
+- QA 성능 수정: async initFromChart + yield으로 파일 오픈 프리징 제거
 
 ### What Worked
 
@@ -84,7 +84,7 @@
 
 - GSD autonomous 모드에서 이미 커밋된 phase는 `roadmap_complete: true` 체크 후 건너뛰어야 함 — 현재는 plan/execute를 다시 시도함
 - SUMMARY.md 생성 시 `requirements-completed:` YAML frontmatter 포함 권장 — CLI 추출 정확도 향상
-- Canvas 2D minimap은 jsdom에서 테스트 불가 — RTL 컴포넌트 테스트 대신 E2E playwright로 커버 필요
+- Canvas 2D minimap은 jsdom에서 테스트 불가: RTL 컴포넌트 테스트 대신 E2E playwright로 커버 필요
 
 ### Cost Observations
 

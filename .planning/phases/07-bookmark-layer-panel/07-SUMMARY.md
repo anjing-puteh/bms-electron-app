@@ -1,4 +1,4 @@
-# Phase 7 Summary — 북마크 추가/삭제 UI + 레이어 패널
+# Phase 7 Summary: 북마크 추가/삭제 UI + 레이어 패널
 
 **Status**: COMPLETE
 **Completed**: 2026-04-06
@@ -13,8 +13,8 @@
   - `layerConfig: LayerConfig` — current layer state
   - `onVisibleToggle`, `onLockToggle`, `onOpacityChange` callbacks
 - Per-layer row rendering:
-  - Eye/EyeOff (Lucide) — visibility toggle, `data-testid="layer-visible-{layer}"`
-  - Lock/Unlock (Lucide) — lock toggle (yellow when locked), `data-testid="layer-lock-{layer}"`
+  - Eye/EyeOff (Lucide): visibility toggle, `data-testid="layer-visible-{layer}"`
+  - Lock/Unlock (Lucide): lock toggle (yellow when locked), `data-testid="layer-lock-{layer}"`
   - Label (10px, truncated)
   - `<input type="range">` slider 0–1 step 0.05, `data-testid="layer-opacity-{layer}"`
 - Reset button calls `store.resetLayerConfig()`
@@ -46,4 +46,4 @@ TypeScript check clean.
 
 ## Files Modified
 
-- `src/renderer/routes/Editor.tsx` — LayerPanel component + bookmark modal + lucide imports
+- `src/renderer/routes/Editor.tsx`: LayerPanel component + bookmark modal + lucide imports

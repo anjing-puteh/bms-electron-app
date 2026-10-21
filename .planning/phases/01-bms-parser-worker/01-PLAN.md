@@ -8,11 +8,11 @@
 BMS 파싱을 Web Worker로 이전하여 메인 스레드 블로킹을 제거하고, Home 화면에 2단계 로딩(Phase1: 헤더 즉시 표시, Phase2: 노트/stats 업데이트)을 제공한다.
 
 **New files:**
-1. `src/renderer/workers/bmsParser.worker.ts` — Worker 내부 파싱 로직
-2. `src/renderer/hooks/useHomeBmsFile.ts` — Worker 기반 Home 전용 hook
+1. `src/renderer/workers/bmsParser.worker.ts`: Worker 내부 파싱 로직
+2. `src/renderer/hooks/useHomeBmsFile.ts`: Worker 기반 Home 전용 hook
 
 **Modified files:**
-1. `src/renderer/routes/Home.tsx` — useLocalBmsFile → useHomeBmsFile 교체
+1. `src/renderer/routes/Home.tsx`: useLocalBmsFile → useHomeBmsFile 교체
 
 ---
 

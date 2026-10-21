@@ -20,7 +20,7 @@ decisions:
   - "DENSITY_BAR_WIDTH=8 constant in useEffect render scope (not module-level) for clarity"
   - "Map icon imported as LucideMap to avoid conflict with JS Map global"
   - "Toggle button shows active state: text-zinc-200 when minimap visible vs text-zinc-400 when hidden"
-  - "Minimap strip positioned between canvas and right panel (flex row order) — was incorrectly appended after right panel"
+  - "Minimap strip positioned between canvas and right panel (flex row order): was incorrectly appended after right panel"
   - "Popout uses pointer capture (setPointerCapture) for smooth drag without mouseleave interruption"
   - "Inline strip hidden when popout is active (!minimapPopout guard) to avoid duplication"
 metrics:
@@ -63,7 +63,7 @@ Each task was committed atomically:
 
 ## Decisions Made
 - Minimap strip placed in flex row BEFORE `{showRightPanel}` block so it renders left of the right panel
-- Popout state (`minimapPopout`, `popoutPos`, `popoutDragRef`) kept in local React state (not editorStore) — ephemeral UI-only state
+- Popout state (`minimapPopout`, `popoutPos`, `popoutDragRef`) kept in local React state (not editorStore): ephemeral UI-only state
 - Pointer capture API (`setPointerCapture`) used so drag works even if pointer leaves the header element
 - Inline strip hidden when popout is open (`!minimapPopout` guard) to avoid showing both simultaneously
 
@@ -99,7 +99,7 @@ Each task was committed atomically:
 
 ## Known Stubs
 
-None — density data wiring (`minimapDensityData`) and bookmark wiring (`minimapBookmarks`) were already implemented in MinimapBridge. All data flows correctly.
+None: density data wiring (`minimapDensityData`) and bookmark wiring (`minimapBookmarks`) were already implemented in MinimapBridge. All data flows correctly.
 
 ## Self-Check
 
@@ -118,7 +118,7 @@ None — density data wiring (`minimapDensityData`) and bookmark wiring (`minima
 ## Next Phase Readiness
 - Minimap sidebar fully functional with toggle, repositioned correctly, and detachable as floating window
 - Ready for any further editor panel layout work
-- bms-editor pre-existing TS errors (bgmChannel) remain deferred — separate issue
+- bms-editor pre-existing TS errors (bgmChannel) remain deferred: separate issue
 
 ---
 *Phase: 06-minimap-sidebar*

@@ -4,11 +4,11 @@
 
 ## Test Files
 
-1. `tests/unit/workers/bmsParser.worker.test.ts` — bms-core 파싱 로직 직접 검증
-2. `tests/unit/hooks/useHomeBmsFile.test.ts` — Worker 모킹 + requestId guard
-3. `tests/unit/routes/Editor-audio.test.ts` — AudioPreloader abort bail-out
-4. `tests/unit/lib/AudioPreloader-abort.test.ts` — abort() 동작 검증
-5. `tests/unit/ipc/file-scandir.test.ts` — 병렬 stat (fs/promises 모킹)
+1. `tests/unit/workers/bmsParser.worker.test.ts`: bms-core 파싱 로직 직접 검증
+2. `tests/unit/hooks/useHomeBmsFile.test.ts`: Worker 모킹 + requestId guard
+3. `tests/unit/routes/Editor-audio.test.ts`: AudioPreloader abort bail-out
+4. `tests/unit/lib/AudioPreloader-abort.test.ts`: abort() 동작 검증
+5. `tests/unit/ipc/file-scandir.test.ts`: 병렬 stat (fs/promises 모킹)
 
 ## Acceptance criteria
 

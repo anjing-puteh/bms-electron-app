@@ -15,7 +15,7 @@ AudioPreloader에 abort() 메서드를 추가하여 decodeAll/loadAll 중 즉시
 ## Implementation Decisions
 
 ### Claude's Discretion
-All implementation choices are at Claude's discretion — pure infrastructure phase. Method added to bms-player/src/audio/loader/AudioPreloader.ts with internal abort flag pattern.
+All implementation choices are at Claude's discretion: pure infrastructure phase. Method added to bms-player/src/audio/loader/AudioPreloader.ts with internal abort flag pattern.
 
 </decisions>
 
@@ -39,13 +39,13 @@ All implementation choices are at Claude's discretion — pure infrastructure ph
 <specifics>
 ## Specific Ideas
 
-No specific requirements — infrastructure phase, abort() method added.
+No specific requirements: infrastructure phase, abort() method added.
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-None — discussion stayed within phase scope.
+None: discussion stayed within phase scope.
 
 </deferred>

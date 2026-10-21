@@ -117,7 +117,7 @@ tests/
 
 ## 5. 단위 테스트 상세
 
-### 5.1 editorStore.ts (176 tests) — 최고 ROI
+### 5.1 editorStore.ts (176 tests): 최고 ROI
 
 Zustand 스토어의 모든 액션을 테스트한다. DOM/Electron 의존 없이 순수 로직만 검증.
 

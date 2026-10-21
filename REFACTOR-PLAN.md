@@ -114,17 +114,17 @@ src/
 ## 5. 식별된 이슈
 
 ### HIGH
-1. **거대 라우트/스토어** — `Editor.tsx` 2,529줄, `editorStore.ts` 1,792줄. 단일 책임 원칙 위반, 진단/리팩토링 비용 높음.
-2. **IPC 채널 문자열 4중 산재** — main 핸들러/preload invoke/.d.ts/renderer 호출자 모두 리터럴. 오타 시 런타임 실패. Single Source of Truth 부재.
+1. **거대 라우트/스토어**: `Editor.tsx` 2,529줄, `editorStore.ts` 1,792줄. 단일 책임 원칙 위반, 진단/리팩토링 비용 높음.
+2. **IPC 채널 문자열 4중 산재**: main 핸들러/preload invoke/.d.ts/renderer 호출자 모두 리터럴. 오타 시 런타임 실패. Single Source of Truth 부재.
 3. **preload `on()` 채널 화이트리스트 없음** — `index.ts` L58: `on: (channel: string, callback)` — 임의 채널 등록 가능. contextIsolation은 켜져 있으나 채널 표면 좁히지 못함. 보안/유지보수 리스크.
 4. **명시적 `as any` (Editor.tsx L1620–1621)** — `layer as any`로 타입 시스템 우회. `keyof LayerConfig`로 좁힐 수 있는데 캐스트로 방치.
-5. **Cross-package 소스 직접 참조** — `useLocalBmsFile.ts` L4, sibling `bms-editor/src/chart/useBmsChart`를 `../../../../`로 가져옴. alias 무시. 패키지 경계 무너짐.
+5. **Cross-package 소스 직접 참조**: `useLocalBmsFile.ts` L4, sibling `bms-editor/src/chart/useBmsChart`를 `../../../../`로 가져옴. alias 무시. 패키지 경계 무너짐.
 
 ### MID
-6. **Renderer→IPC 호출이 컴포넌트 내부에 직접 산재** — `window.api.file.*` 호출이 Editor/Home/AudioSlicer/AutoChartDialog/hooks 등 ≥10개 위치. 테스트 mock·교체 어려움.
-7. **`ipc/file.ts` 단일 파일 17개 핸들러** — dialog/IO/WAV write/스캔이 한 파일에 혼재.
+6. **Renderer→IPC 호출이 컴포넌트 내부에 직접 산재**: `window.api.file.*` 호출이 Editor/Home/AudioSlicer/AutoChartDialog/hooks 등 ≥10개 위치. 테스트 mock·교체 어려움.
+7. **`ipc/file.ts` 단일 파일 17개 핸들러**: dialog/IO/WAV write/스캔이 한 파일에 혼재.
 8. **WAV 인코딩 로직 중복** (file.ts L306–348 vs L351–392). 단일/배치 핸들러가 동일 인코더 두 번 구현.
-9. **`dialogOpen` 모듈 전역 플래그** — file.ts L26, 다중 윈도우/멀티 호출 시 race 위험. mutex/큐 패턴 부재.
+9. **`dialogOpen` 모듈 전역 플래그**: file.ts L26, 다중 윈도우/멀티 호출 시 race 위험. mutex/큐 패턴 부재.
 10. **메인 프로세스 입력 검증 부재** — `filePath: string` 매개변수에 traversal/허용경로 검증 없음. `readFile(arbitraryPath)` 가능. 샌드박스가 아닌 IPC라서 신뢰 가능하지만, BMS 폴더 외부 임의 파일 읽기 가능.
 11. **`Editor.tsx`의 메뉴 단축키 dispatch 우회** — App.tsx L156–165: `menu:save` 수신 시 `KeyboardEvent` 합성 dispatch. Editor 내부와 결합도 높음 (Command 패턴 부재).
 12. **`window` 글로벌 데브 헬퍼 (`__DEV_OPEN_FILE__`)** — App.tsx L124–131, `Record<string, unknown>` 캐스트로 부착. 빌드 산출물에서 분리되지 않을 가능성.
@@ -134,13 +134,13 @@ src/
 14. **`tsconfig.web.json`에 `noUnusedLocals: false`** — 명시적으로 꺼져 있음. 정리 압박 부재.
 15. **TS strict 추가 옵션 비활성** (3장 참조).
 16. **Buffer→ArrayBuffer 변환 코드 중복** (audio.ts L11, L52-55).
-17. **`LocalAudioWorker.ts` `as unknown as Worker`** (L109) — Worker 호환 shim, 의도적이지만 더 좋은 추상화(EventEmitter 인터페이스) 가능.
+17. **`LocalAudioWorker.ts` `as unknown as Worker`** (L109): Worker 호환 shim, 의도적이지만 더 좋은 추상화(EventEmitter 인터페이스) 가능.
 
 ---
 
 ## 6. 디자인 패턴 적용 계획 (전/후 스니펫)
 
-### 6.1 Channel 타이핑 + Adapter (HIGH 우선) — 채널 SSOT
+### 6.1 Channel 타이핑 + Adapter (HIGH 우선): 채널 SSOT
 **문제**: 같은 채널명 `'file:readBms'`가 main/preload/.d.ts/renderer에서 4번 등장.
 
 **Before** (파편화):
@@ -178,7 +178,7 @@ export function invoke<K extends IpcChannel>(ch: K, ...args: IpcInvokeMap[K]['in
 ```
 → 오타·인자 불일치를 컴파일 타임에 차단. `index.d.ts` 수동 동기화 제거.
 
-### 6.2 Repository 패턴 (MID) — 파일/메타/오토세이브 그룹화
+### 6.2 Repository 패턴 (MID): 파일/메타/오토세이브 그룹화
 `src/main/repositories/BmsFileRepository.ts`, `KeysoundRepository.ts`, `AutoSaveRepository.ts`로 분리. 각 IPC 핸들러는 얇은 어댑터로만 동작.
 
 ```ts
@@ -194,7 +194,7 @@ const repo = new BmsFileRepository();
 handle('file:readBms', (_e, p) => repo.read(p).then(toUint8));
 ```
 
-### 6.3 Facade 패턴 (MID) — Renderer에서 IPC 사용 단일화
+### 6.3 Facade 패턴 (MID): Renderer에서 IPC 사용 단일화
 `src/renderer/services/FileService.ts`, `AudioService.ts`, `MenuService.ts`. 컴포넌트는 서비스만 호출, `window.api`는 서비스에서만 import.
 
 ```ts
@@ -210,7 +210,7 @@ export const fileService = {
 ```
 → vitest mocking 단순화, IPC 교체 가능, Editor.tsx의 `window.api.*` 18회 호출 제거.
 
-### 6.4 Discriminated Union — IPC Result 타입 (HIGH for boundary)
+### 6.4 Discriminated Union: IPC Result 타입 (HIGH for boundary)
 **문제**: `audio:readBatch`가 `{results, errors}`로 부분 실패 표현하지만, 다른 핸들러는 throw 또는 `null`로 통일성 없음.
 
 **After**:
@@ -237,7 +237,7 @@ on<K extends keyof IpcSendMap>(channel: K, cb: (...args: IpcSendMap[K]) => void)
 }
 ```
 
-### 6.6 Store Slice 패턴 (HIGH) — editorStore 분할
+### 6.6 Store Slice 패턴 (HIGH): editorStore 분할
 1,792줄 단일 store를 도메인 슬라이스로 쪼갬 (zustand `combine` / slice composition):
 - `notesSlice` (notes, selection, layerConfig, undo/redo)
 - `audioSlice` (audioPhase, playbackTime, loopA/B, volume)
@@ -247,7 +247,7 @@ on<K extends keyof IpcSendMap>(channel: K, cb: (...args: IpcSendMap[K]) => void)
 
 각 slice는 독립 파일에서 정의/테스트. 현재 80+ 액션이 5–8개 슬라이스로 응집.
 
-### 6.7 Command 패턴 (MID) — 메뉴/단축키
+### 6.7 Command 패턴 (MID): 메뉴/단축키
 현재 App.tsx가 `menu:save` 수신 → 합성 KeyboardEvent dispatch → Editor 핸들러 가로채기. Command 객체로 분리:
 ```ts
 interface EditorCommand { id: string; canExecute(): boolean; execute(): Promise<void> | void; }
@@ -297,8 +297,8 @@ const commands: Record<string, EditorCommand> = { save: { ... }, saveAs: { ... }
 **예상 신규 에러 수**: `noUncheckedIndexedAccess` 활성 시 50–150건 추정 (대부분 `??`/가드 한 줄 수정).
 
 ### 7.3 IPC 경계 가드 명세
-- **모든 invoke 핸들러는 인자 검증** — 패스 traversal 방지(`isAbsolute(p) && p.startsWith(allowedRoot)` 권장).
-- **모든 invoke 응답은 직렬화 가능 타입만** — 현재 `Float32Array`, `Buffer`, `ArrayBuffer` 사용 중. Buffer→Uint8Array 변환은 preload에서 처리.
+- **모든 invoke 핸들러는 인자 검증**: 패스 traversal 방지(`isAbsolute(p) && p.startsWith(allowedRoot)` 권장).
+- **모든 invoke 응답은 직렬화 가능 타입만**: 현재 `Float32Array`, `Buffer`, `ArrayBuffer` 사용 중. Buffer→Uint8Array 변환은 preload에서 처리.
 - **`menu:*` send는 인자 없음 유지** — 인자 추가 시 `IpcSendMap`에 정의 후 type guard 의무화.
 
 ---
@@ -379,12 +379,12 @@ src/
 
 ## 9. 단계별 실행 계획
 
-### Phase 0 — 준비 (반나절)
+### Phase 0: 준비 (반나절)
 - [ ] 본 REFACTOR-PLAN.md 검토 및 합의
 - [ ] 현 메인/리포 코드 baseline 태그
 - [ ] vitest, playwright, stryker 회귀 베이스라인 캡처 (테스트 통과율, 커버리지)
 
-### Phase 1 — IPC 계약 SSOT (1–2일) ← 6.1, 6.5
+### Phase 1: IPC 계약 SSOT (1–2일) ← 6.1, 6.5
 1. `src/shared/ipc-contract.ts` 작성 (19 invoke + 4 send 채널 매핑)
 2. `main/ipc/handle()` generic 헬퍼 도입 → 기존 17개 핸들러를 generic으로 교체 (시그니처 보존)
 3. `preload/index.ts`에서 `invoke`/`on` generic 헬퍼 사용, `on` 화이트리스트 적용
@@ -392,36 +392,36 @@ src/
 5. **검증**: `npm run type-check`, vitest, playwright 회귀
 6. **결과**: 명시적 any 4건 (preload 2 + .d.ts 1 + Editor 2)이 3건으로 감소 (Editor 2건은 7.1 별도 작업).
 
-### Phase 2 — 타입 가드 / Editor any 제거 (반나절) ← 7.1
+### Phase 2: 타입 가드 / Editor any 제거 (반나절) ← 7.1
 1. Editor.tsx L1620–1621: `keyof LayerConfig` 타입 술어 도입
 2. `LocalAudioWorker.ts` L109: shim Worker 인터페이스 좁힘
 3. **결과**: 명시적 any/unknown 0건.
 
-### Phase 3 — Facade(Service) 도입 (1일) ← 6.3
+### Phase 3: Facade(Service) 도입 (1일) ← 6.3
 1. `services/FileService`, `AudioService`, `MenuService`, `AutoSaveService` 작성
 2. `App.tsx`, `Home.tsx`, `Editor.tsx`, `AudioSlicer.tsx`, `AutoChartDialog.tsx`, hooks의 `window.api.*` 호출 18곳을 service 경유로 교체
 3. **검증**: vitest mock을 service 경유로 단순화 (test:compat 호환)
 
-### Phase 4 — Repository + DialogService (1–2일) ← 6.2, MID #7,8,9
+### Phase 4: Repository + DialogService (1–2일) ← 6.2, MID #7,8,9
 1. `BmsFileRepository`, `AutoSaveRepository`, `KeysoundRepository`, `WavEncoder` 추출
 2. `dialogOpen` 모듈 전역 → `DialogService` 인스턴스
 3. `ipc/file.ts` 438줄 → `file.handlers.ts` 200줄 + `dialog.handlers.ts` + `repositories/*`
 4. **검증**: 기존 IPC 시그니처 100% 유지 → 렌더러 변경 없음.
 
-### Phase 5 — Editor 분할 (3–5일) ← 6.6, HIGH #1
+### Phase 5: Editor 분할 (3–5일) ← 6.6, HIGH #1
 1. `editorStore.ts` slice 분할 (7개)
 2. `Editor.tsx` → 컨테이너 + sub-component + hooks
 3. **검증**: playwright E2E 그대로 통과해야 함. 각 슬라이스 단위 vitest 추가.
 
-### Phase 6 — Discriminated Union / Result (1일) ← 6.4
+### Phase 6: Discriminated Union / Result (1일) ← 6.4
 1. 부분 실패 의미 가진 핸들러(`audio:readBatch`, `file:saveWavSlices`)를 `Result<T,E>`로 통일
 2. 렌더러 호출자 업데이트
 
-### Phase 7 — Command 패턴 (1일) ← 6.7, MID #11
+### Phase 7: Command 패턴 (1일) ← 6.7, MID #11
 1. `App.tsx`의 KeyboardEvent 합성 dispatch 제거
 2. Editor가 `commandRegistry`에 등록 → `MenuService`가 커맨드 호출
 
-### Phase 8 — strict 추가 옵션 점진 활성 ← 3장
+### Phase 8: strict 추가 옵션 점진 활성 ← 3장
 1. `noImplicitReturns`, `noFallthroughCasesInSwitch` 활성 (Phase A 즉시)
 2. `noUnusedLocals/Parameters` 활성 (Phase 5 후)
 3. `noUncheckedIndexedAccess` 활성 (Phase 6 후)
@@ -496,7 +496,7 @@ src/
 
 ---
 
-## 부록 A — 본 분석에서 명확화된 사항 (사용자 지시 대비)
+## 부록 A: 본 분석에서 명확화된 사항 (사용자 지시 대비)
 
 | 사용자 지시 | 실제 |
 |---|---|
@@ -505,7 +505,7 @@ src/
 | "any/unknown 6건 / 4파일" | 확인. 단 명시적 진성 any는 Editor.tsx 2건뿐, 나머지 4건은 의도적 unknown(IPC 광역) 또는 Worker shim 캐스트. |
 | "electron-store 의존" | package.json에는 있으나 src/에서 0회 사용. 데드 의존성 또는 미구현 기능. |
 
-## 부록 B — 메트릭 요약
+## 부록 B: 메트릭 요약
 - 총 LoC (src/): **11,302** (사용자 제공) / 본 분석 wc: 11,294 (workers 포함)
 - 가장 큰 파일: Editor.tsx 2,529 / editorStore.ts 1,792 / AudioSlicer.tsx 633 / file.ts(main) 438
 - IPC 채널: invoke 19 + send 4 = 23

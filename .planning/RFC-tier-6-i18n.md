@@ -1,8 +1,8 @@
 # RFC: Tier 6 i18n migration granularity
 
 > Phase i18n-2 final block. Decides how to split the two largest remaining
-> components — `NoteChartViewer.tsx` (4,646 LoC) and `Editor.tsx`
-> (2,542 LoC) — into reviewable chunks before any code change.
+> components: `NoteChartViewer.tsx` (4,646 LoC) and `Editor.tsx`
+> (2,542 LoC): into reviewable chunks before any code change.
 >
 > Status: **proposed** — needs sign-off from the loop owner before fire 12.
 > Owner: i18n migration loop. Created: 2026-05-06.
@@ -31,7 +31,7 @@ toast namespace must exist before toast call sites can be migrated).
 This RFC does **not** propose code restructuring of the two files —
 extraction the JSX surface only, no logic moves.
 
-## 3. Slice plan — `Editor.tsx` (5 fires)
+## 3. Slice plan: `Editor.tsx` (5 fires)
 
 | Fire | Slice | Surface | Korean count | Notes |
 | ---: | --- | --- | ---: | --- |
@@ -46,7 +46,7 @@ extraction the JSX surface only, no logic moves.
 function definitions inside `Editor.tsx`. Their localized strings are
 included in the slice that owns the surrounding feature.
 
-## 4. Slice plan — `NoteChartViewer.tsx` (4 fires)
+## 4. Slice plan: `NoteChartViewer.tsx` (4 fires)
 
 This file's 386 Korean lines decompose very differently from `Editor.tsx`:
 the bulk is internal JSDoc, not UI text. Slice by *audience*.
@@ -99,8 +99,8 @@ they touch different packages.
 
 - [ ] **Approve slice grain** — 5 + 4 = 9 PRs feels right? (Alt: collapse
       12.4 into 12.2/12.3 = 4+4 PRs, larger but fewer rebases.)
-- [ ] **Approve sequencing** — start with 12.1 next fire?
-- [ ] **Approve "comments are a separate slice"** — would unblock all
+- [ ] **Approve sequencing**: start with 12.1 next fire?
+- [ ] **Approve "comments are a separate slice"**: would unblock all
       runtime work first; doc-only PRs (12.5, 13.4) can ship last.
 
 After sign-off, append the green-lit slice list to

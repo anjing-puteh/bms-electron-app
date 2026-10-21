@@ -52,7 +52,7 @@ score: 5/5 must-haves verified
 
 ## Data-Flow Trace (Level 4)
 
-Not applicable — this phase deals with resource cleanup/abort control flow, not data rendering.
+Not applicable: this phase deals with resource cleanup/abort control flow, not data rendering.
 
 ---
 
@@ -86,7 +86,7 @@ No TODO/FIXME/placeholder/stub patterns found in the modified files for this pha
 
 `AudioPreloader.initAudioWorklet()` (AudioPreloader.ts line 494) does not check `this.aborted` internally. If unmount occurs while `initAudioWorklet()` is running, the method will complete before the Editor's `inProgressPreloaderRef.current = null` (line 836) executes, and ownership transfer to `audioPreloaderRef` happens. However, the cleanup useEffect also calls `audioPreloaderRef.current?.releaseAllResources()` (line 1080), so the resources will be released as long as the ownership transfer at line 840 occurs before the cleanup runs. If the cleanup runs first (before `initAudioWorklet()` returns), the preloader at that point is still in `inProgressPreloaderRef` and is released via `abort()` + `releaseAllResources()` at lines 1075-1077.
 
-The race window is narrow and the abort flag (`loadAbortRef.current = true`) is set synchronously at unmount time, so this does not constitute a blocker for the phase goal. The PLAN's Step 1 description mentions "3 checkpoints" but the actual success criterion specifies checkpoints after `loadAll()` and `decodeAll()` only — both are present and verified.
+The race window is narrow and the abort flag (`loadAbortRef.current = true`) is set synchronously at unmount time, so this does not constitute a blocker for the phase goal. The PLAN's Step 1 description mentions "3 checkpoints" but the actual success criterion specifies checkpoints after `loadAll()` and `decodeAll()` only: both are present and verified.
 
 ---
 

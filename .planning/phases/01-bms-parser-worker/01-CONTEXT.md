@@ -9,8 +9,8 @@
 
 BMS 파싱을 Web Worker로 이전하여 메인 스레드 블로킹을 완전히 제거한다.
 두 개의 신규 파일을 생성한다:
-- `src/renderer/workers/bmsParser.worker.ts` — Worker 내부 파싱 로직
-- `src/renderer/hooks/useHomeBmsFile.ts` — Worker 기반 Home 화면 전용 hook
+- `src/renderer/workers/bmsParser.worker.ts`: Worker 내부 파싱 로직
+- `src/renderer/hooks/useHomeBmsFile.ts`: Worker 기반 Home 화면 전용 hook
 
 기존 `useLocalBmsFile`은 Editor용으로 유지한다 (bmsChart 인스턴스 직렬화 불가).
 
@@ -21,7 +21,7 @@ BMS 파싱을 Web Worker로 이전하여 메인 스레드 블로킹을 완전히
 
 ### Worker 아키텍처
 - per-request 방식: 파일 선택마다 new Worker() 생성, terminate()로 취소
-- 싱글턴 아님 — 취소가 terminate()로 단순해짐
+- 싱글턴 아님: 취소가 terminate()로 단순해짐
 - Worker 프로토콜: PARSE_PHASE1 수신 → PHASE1_DONE 전송 → 자동으로 Phase2 실행 → PHASE2_DONE 전송
 - 별도 PARSE_PHASE2 메시지 불필요 (Worker가 자동 연속)
 
@@ -63,10 +63,10 @@ BMS 파싱을 Web Worker로 이전하여 메인 스레드 블로킹을 완전히
 ## Existing Code Insights
 
 ### Reusable Assets
-- `src/renderer/workers/bmsParser.worker.ts` — 신규 파일 (gameLoop.worker.ts, audioScheduler.worker.ts 패턴 참고)
-- `bms-core/src/parser/modules/reader/index.ts` — read() 함수, TextDecoder 기반, Worker 호환 확인됨
-- `bms-core/src/parser/index.ts` — BMSParser (compileString, getNotes, getSongInfo 등)
-- `src/renderer/lib/LocalAudioWorker.ts` — Worker-like 객체 패턴 참고
+- `src/renderer/workers/bmsParser.worker.ts`: 신규 파일 (gameLoop.worker.ts, audioScheduler.worker.ts 패턴 참고)
+- `bms-core/src/parser/modules/reader/index.ts`: read() 함수, TextDecoder 기반, Worker 호환 확인됨
+- `bms-core/src/parser/index.ts`: BMSParser (compileString, getNotes, getSongInfo 등)
+- `src/renderer/lib/LocalAudioWorker.ts`: Worker-like 객체 패턴 참고
 
 ### Established Patterns
 - Worker entry: `import '../../../../bms-player/src/game/AudioSchedulerWorker';`
@@ -93,8 +93,8 @@ BMS 파싱을 Web Worker로 이전하여 메인 스레드 블로킹을 완전히
 <deferred>
 ## Deferred Ideas
 
-- .bms.meta 파싱 결과 캐시 — 별도 마일스톤
-- Worker 싱글턴 (requestId 방식) — per-request가 더 단순하므로 현재 불필요
-- Timing/Positioning을 Worker에서 직렬화 — Home에서 불필요
+- .bms.meta 파싱 결과 캐시: 별도 마일스톤
+- Worker 싱글턴 (requestId 방식): per-request가 더 단순하므로 현재 불필요
+- Timing/Positioning을 Worker에서 직렬화: Home에서 불필요
 
 </deferred>

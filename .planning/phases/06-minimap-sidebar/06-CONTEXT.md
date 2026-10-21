@@ -58,14 +58,14 @@
 - `c:/SourceCode/bms-editor/src/chart/panels/Minimap.tsx` — 현재 Minimap 컴포넌트 (Canvas 2D, 뷰포트 팟, 클릭 이동 모두 구현됨)
 
 ### 밀도 히트맵 유틸리티
-- `src/renderer/lib/densityMap.ts` — computeDensityMap(), densityToColor() 구현체
+- `src/renderer/lib/densityMap.ts`: computeDensityMap(), densityToColor() 구현체
 
 ### 에디터 레이아웃 통합
-- `src/renderer/routes/Editor.tsx` — MinimapBridge 위치, 패널 레이아웃, 커스텀 resize handle 패턴, showLeftPanel/showRightPanel 토글 패턴
-- `src/renderer/stores/editorStore.ts` — bookmarks 상태 구조 ({ measure, name, color? }[])
+- `src/renderer/routes/Editor.tsx`: MinimapBridge 위치, 패널 레이아웃, 커스텀 resize handle 패턴, showLeftPanel/showRightPanel 토글 패턴
+- `src/renderer/stores/editorStore.ts`: bookmarks 상태 구조 ({ measure, name, color? }[])
 
 ### 요구사항
-- `.planning/REQUIREMENTS.md` — MINI-01, MINI-02, MINI-03, MINI-04, BK-01, BK-02
+- `.planning/REQUIREMENTS.md`: MINI-01, MINI-02, MINI-03, MINI-04, BK-01, BK-02
 
 </canonical_refs>
 

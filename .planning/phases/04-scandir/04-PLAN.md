@@ -6,7 +6,7 @@
 
 **File:** `src/main/ipc/file.ts`
 
-- `scanDir` 함수를 `collectBmsPaths`로 rename — stat 없이 경로만 수집
+- `scanDir` 함수를 `collectBmsPaths`로 rename: stat 없이 경로만 수집
 - `file:listBmsFolder` handler에서 두 단계로 분리:
   1. `collectBmsPaths` → `Array<{name, path, ext}>`
   2. `batchSize=20` `Promise.all` 병렬 stat

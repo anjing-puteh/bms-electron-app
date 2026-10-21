@@ -51,7 +51,7 @@ completed: "2026-04-06"
 
 # Phase 1 Plan 1: BMS Parser Worker Summary
 
-**Two-phase BMS parsing Worker (PHASE1_DONE headers in <50ms, PHASE2_DONE stats) with per-request lifecycle and requestId race guard — eliminates main-thread UI freeze on file selection**
+**Two-phase BMS parsing Worker (PHASE1_DONE headers in <50ms, PHASE2_DONE stats) with per-request lifecycle and requestId race guard: eliminates main-thread UI freeze on file selection**
 
 ## Performance
 
@@ -78,8 +78,8 @@ _Note: All three tasks were implemented and committed together in a single atomi
 
 ## Files Created/Modified
 - `src/renderer/workers/bmsParser.worker.ts` — BMS parsing Web Worker (Phase1: headers, Phase2: notes/stats)
-- `src/renderer/hooks/useHomeBmsFile.ts` — Home-specific hook with Worker lifecycle management and requestId guard
-- `src/renderer/routes/Home.tsx` — Updated to use useHomeBmsFile; stats cards show "..." during phase1
+- `src/renderer/hooks/useHomeBmsFile.ts`: Home-specific hook with Worker lifecycle management and requestId guard
+- `src/renderer/routes/Home.tsx`: Updated to use useHomeBmsFile; stats cards show "..." during phase1
 
 ## Decisions Made
 - Home and Editor use separate hooks: useHomeBmsFile returns serializable plain data (suitable for postMessage), while useLocalBmsFile returns full BMSChart objects (required by Editor/Player, not serializable)
@@ -98,7 +98,7 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 - Phase 1 complete: BMS parsing is non-blocking, two-phase loading is live in Home.tsx
-- Phase 2 (AudioPreloader Abort) can now proceed — same architecture applies to audio decoding
+- Phase 2 (AudioPreloader Abort) can now proceed: same architecture applies to audio decoding
 - Concern: bmsParser.worker.ts currently does a full note scan during "Phase1" (to compute keyMode via detectKeyMode), meaning Phase1 is not strictly header-only. This is acceptable per plan design but should be noted for Phase 5 regression tests.
 
 ## Self-Check: PASSED

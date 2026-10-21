@@ -1,7 +1,7 @@
 # Phase 6: 수직 미니맵 사이드바 - Discussion Log
 
 > **Audit trail only.** Do not use as input to planning, research, or execution agents.
-> Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
+> Decisions are captured in CONTEXT.md: this log preserves the alternatives considered.
 
 **Date:** 2026-04-06
 **Phase:** 06-minimap-sidebar

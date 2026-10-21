@@ -10,7 +10,7 @@
 
 ---
 
-## 1. PR diff — 진짜 3 파일만?
+## 1. PR diff: 진짜 3 파일만?
 
 PR API상 `changedFiles: 4` (README.md +175, Editor.tsx, tsconfig.node, tsconfig.web). 그러나
 `README.md`는 직전 커밋 `e54a6e1 docs: add README ...`에 속하며 Stage 2와 무관 (별도 commit, 동일 head 브랜치에 동승).
@@ -48,7 +48,7 @@ tsconfig.web.json              | 2 ++
 
 ---
 
-## 3. Editor.tsx 변경 — 동작 변경 여부
+## 3. Editor.tsx 변경: 동작 변경 여부
 
 **변경 위치**: `src/renderer/routes/Editor.tsx` L1037–1047 (auto-load audio useEffect).
 
@@ -135,7 +135,7 @@ tsconfig.web.json              | 2 ++
 
 ## Verdict
 
-**APPROVED — 안전. ship 머지 권고 (이미 머지됨, 사후 검증 통과)**.
+**APPROVED: 안전. ship 머지 권고 (이미 머지됨, 사후 검증 통과)**.
 
 Stage 2의 주장은 모두 사실로 확인되었으며 (3 파일 +6/-1, 1122/1122 vitest, build OK,
 type-check 0 신규 에러, 두 strict 옵션 양 tsconfig 적용, Editor.tsx 변경은 의미 보존),

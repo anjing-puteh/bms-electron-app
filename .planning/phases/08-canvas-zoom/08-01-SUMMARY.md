@@ -35,7 +35,7 @@ key-files:
 
 key-decisions:
   - "Multiplicative zoom (x1.15) instead of linear (+2) for consistent feel at all scales"
-  - "pendingBeatScaleRef+useFrame pattern for rAF-debounced scale callback — avoids extra setState cycle"
+  - "pendingBeatScaleRef+useFrame pattern for rAF-debounced scale callback: avoids extra setState cycle"
   - "sizeRef+totalBeatsZoomRef as current-frame snapshots for fitToChart stale closure safety"
   - "Zoom group placed between H: slider and Keys: selector in toolbar for spatial proximity to canvas"
 
@@ -97,7 +97,7 @@ None - plan executed exactly as written.
 
 ## Known Stubs
 
-None — all zoom features are fully wired. `currentBeatScale` starts at 20 and updates on first zoom interaction; on chart open it will reflect keymode default after first wheel/button interaction. This is by design since the Canvas initial render fires the defaultBeatScaleForKeyMode logic internally but the callback fires only on explicit zoom actions.
+None: all zoom features are fully wired. `currentBeatScale` starts at 20 and updates on first zoom interaction; on chart open it will reflect keymode default after first wheel/button interaction. This is by design since the Canvas initial render fires the defaultBeatScaleForKeyMode logic internally but the callback fires only on explicit zoom actions.
 
 ## Next Phase Readiness
 - ZoomControl API is stable and documented via interface

@@ -50,7 +50,7 @@ score: 4/4 must-haves verified
 
 ### Data-Flow Trace (Level 4)
 
-Not applicable — this phase adds abort/control-flow API, not a data-rendering component. No dynamic data display.
+Not applicable: this phase adds abort/control-flow API, not a data-rendering component. No dynamic data display.
 
 ---
 

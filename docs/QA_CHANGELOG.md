@@ -129,11 +129,11 @@ QA_TEST_STRATEGY.md 설계 문서를 기반으로 테스트 인프라를 구축�
 
 - **추가된 테스트**: 15개 (총 15 → 30)
 - **새로 커버된 함수**:
-  - `requestMidiAccess()` — 성공, 캐시, 거부 3개 케이스
-  - `getMidiInputDevices()` — 미접속, 정상, 미명명 디바이스
-  - `connectMidiInput()` — 미접속, 미존재 디바이스, 정상 연결
-  - MIDI 메시지 처리 — Note On, Note Off(velocity 0), CC, 짧은 메시지
-  - `disconnectMidiInput()` / `isConnected()` — 연결 해제, 디바이스 교체
+  - `requestMidiAccess()`: 성공, 캐시, 거부 3개 케이스
+  - `getMidiInputDevices()`: 미접속, 정상, 미명명 디바이스
+  - `connectMidiInput()`: 미접속, 미존재 디바이스, 정상 연결
+  - MIDI 메시지 처리: Note On, Note Off(velocity 0), CC, 짧은 메시지
+  - `disconnectMidiInput()` / `isConnected()`: 연결 해제, 디바이스 교체
 - **기법**: `vi.resetModules()` + dynamic import로 모듈 레벨 상태 격리,
   `navigator.requestMIDIAccess` 런타임 모킹
 

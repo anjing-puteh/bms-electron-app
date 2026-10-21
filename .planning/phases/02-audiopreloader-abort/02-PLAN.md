@@ -8,7 +8,7 @@
 AudioPreloader에 `abort()` 메서드를 추가하여 `decodeAll()`/`loadAll()` 중 즉시 중단 가능하게 한다.
 
 **Modified files:**
-1. `bms-player/src/audio/loader/AudioPreloader.ts` — abort() 메서드 + aborted 플래그 추가
+1. `bms-player/src/audio/loader/AudioPreloader.ts`: abort() 메서드 + aborted 플래그 추가
 
 ---
 

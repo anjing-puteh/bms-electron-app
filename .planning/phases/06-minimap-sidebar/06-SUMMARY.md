@@ -1,4 +1,4 @@
-# Phase 6 Summary — 수직 미니맵 사이드바
+# Phase 6 Summary: 수직 미니맵 사이드바
 
 **Status**: COMPLETE
 **Completed**: 2026-04-06
@@ -18,7 +18,7 @@
   - Imported `computeDensityMap`, `densityToColor` from `lib/densityMap`
   - Imported `MinimapDensityEntry`, `MinimapBookmark` types from `@rhythm-archive/bms-editor`
   - Added `bookmarks` to `useShallow` selector
-  - Added `minimapDensityData` useMemo — pre-computes density per measure with color strings
+  - Added `minimapDensityData` useMemo: pre-computes density per measure with color strings
   - Added `minimapBookmarks` useMemo — converts bookmark store entries (measure) to beat space via `store.mfToBeat`
   - Updated `MinimapBridge` to accept and pass `densityData` + `bookmarks` props
   - Removed minimap from inside `showRightPanel` conditional block
@@ -45,6 +45,6 @@
 
 ## Tests
 
-No new tests added (UI components — Canvas 2D rendering is non-testable in jsdom).
+No new tests added (UI components: Canvas 2D rendering is non-testable in jsdom).
 All 1118/1118 existing tests continue to pass.
 TypeScript check clean (npx tsc --noEmit --skipLibCheck).

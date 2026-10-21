@@ -1,4 +1,4 @@
-# Release Readiness Audit — bms-electron-app v1.0
+# Release Readiness Audit: bms-electron-app v1.0
 
 > Audit date: 2026-05-06
 > Current package.json version: **0.1.2** (latest published)
@@ -99,7 +99,7 @@ ESLint `local/no-hardcoded-korean` 0 errors in `src/**`. i18next-parser `i18n:ch
 ## 6. Known Issues / Tech Debt
 
 ### Blockers (must fix before v1.0)
-- None — all CI workflows green, all PRs merged
+- None: all CI workflows green, all PRs merged
 
 ### Should-fix for v1.0
 - **electron-builder publish state**: releases hang as Draft. Either configure auto-publish (`releaseType: 'release'` in electron-builder config) or document the manual publish step.
@@ -107,7 +107,7 @@ ESLint `local/no-hardcoded-korean` 0 errors in `src/**`. i18next-parser `i18n:ch
 - **Submodule pinning rationale**: `.gitmodules` doesn't pin to specific tags → CI rebuilds every time. Consider tag-pinning for reproducibility.
 
 ### Defer to v1.1
-- ~~Editor.tsx + NoteChartViewer.tsx i18n migration~~ — completed (fire 12, 2026-05-24)
+- ~~Editor.tsx + NoteChartViewer.tsx i18n migration~~: completed (fire 12, 2026-05-24)
 - de/es/ja/ru/zh native-speaker translation passes (skeletons exist, values empty)
 - CI gating: flip `i18n:check` + `lint:i18n` from `continue-on-error: true` → blocking
 - Mutation test score gating in CI
@@ -129,7 +129,7 @@ ESLint `local/no-hardcoded-korean` 0 errors in `src/**`. i18next-parser `i18n:ch
 ## 8. Recommended v1.0 Release Process
 
 1. Land PR #17 (Tier 1-4 i18n + submodule bumps + test setup fix)
-2. Decide on Tier 5-7 deferral — write `I18N-PHASE2-DEFERRAL.md` if applicable
+2. Decide on Tier 5-7 deferral: write `I18N-PHASE2-DEFERRAL.md` if applicable
 3. Set `package.json` version → `1.0.0`
 4. Push `ship/v1.0-complete` → auto-tag creates `v1.0.0` → release.yml builds
 5. Manually publish the GitHub Release draft after smoke testing the installer

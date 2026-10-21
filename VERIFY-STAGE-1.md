@@ -1,4 +1,4 @@
-# VERIFY-STAGE-1.md — bms-electron-app Stage 1 (IPC SSOT) 독립 검증
+# VERIFY-STAGE-1.md: bms-electron-app Stage 1 (IPC SSOT) 독립 검증
 
 > 검증자: 병렬 검증 에이전트 (bms-electron-app 담당)
 > 일자: 2026-05-05
@@ -10,7 +10,7 @@
 
 ## 1. 요약 (Verdict)
 
-**APPROVE — ship 머지 권고 (조건부)**
+**APPROVE: ship 머지 권고 (조건부)**
 
 - Stage 1의 IPC 채널 SSOT는 REFACTOR-PLAN 9장 Phase 1 명세와 정확히 일치하게 구현되어 있다.
 - 베이스라인 대비 vitest 1118/1118 동일, type-check 에러 수 95개 동일(전부 cross-package `bms-player` 잔존 에러로 본 PR과 무관).
@@ -154,7 +154,7 @@ git diff ship/v1.0-complete...refactor/stage-1-ipc-contract-ssot -- 'src/rendere
 
 ---
 
-## 부록 A — 명령 로그 요약
+## 부록 A: 명령 로그 요약
 
 ```bash
 # Branch verification
@@ -180,7 +180,7 @@ git checkout refactor/stage-1-ipc-contract-ssot
 git diff ship/v1.0-complete...refactor/stage-1-ipc-contract-ssot -- 'src/renderer/**'  # empty
 ```
 
-## 부록 B — 변경 파일 목록 (PR 기준)
+## 부록 B: 변경 파일 목록 (PR 기준)
 
 ```
  src/main/ipc/audio.ts      |   6 +-

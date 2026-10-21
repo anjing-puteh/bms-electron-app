@@ -15,7 +15,7 @@ Editor 언마운트 시 in-progress 오디오 로딩을 즉시 중단하고 리�
 ## Implementation Decisions
 
 ### Claude's Discretion
-All implementation choices are at Claude's discretion — pure infrastructure phase. Uses abort() from Phase 2. App.tsx key prop forces remount on file change.
+All implementation choices are at Claude's discretion: pure infrastructure phase. Uses abort() from Phase 2. App.tsx key prop forces remount on file change.
 
 </decisions>
 
@@ -39,7 +39,7 @@ All implementation choices are at Claude's discretion — pure infrastructure ph
 <specifics>
 ## Specific Ideas
 
-No specific requirements — infrastructure phase.
+No specific requirements: infrastructure phase.
 
 </specifics>
 
