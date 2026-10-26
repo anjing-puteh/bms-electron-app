@@ -19,6 +19,8 @@ interface AutoChartDialogProps {
   existingNotes: Array<{ beat: number; column: string; columnIndex: number }>;
   /** Available lane IDs */
   laneIds: string[];
+  /** Current key mode (8K's 'SC' lane is a key, not a scratch) */
+  keyMode?: string;
   /** Current BPM */
   bpm: number;
   /** Current beat position */
@@ -36,6 +38,7 @@ export function AutoChartDialog({
   onClose,
   existingNotes,
   laneIds,
+  keyMode,
   bpm,
   currentBeat,
   gridSnap,
@@ -59,8 +62,11 @@ export function AutoChartDialog({
 
   const columnCount = laneIds.length;
   // Key columns exclude the turntable / foot pedal lanes; scratch is opt-in.
-  const keyColumnIndices = useMemo(() => laneIds.map((id, i) => (isKeyLane(id) ? i : -1)).filter((i) => i >= 0), [laneIds]);
-  const scratchColumnIndex = useMemo(() => { const i = laneIds.indexOf('SC'); return i >= 0 ? i : null; }, [laneIds]);
+  const keyColumnIndices = useMemo(() => laneIds.map((id, i) => (isKeyLane(id, keyMode) ? i : -1)).filter((i) => i >= 0), [laneIds, keyMode]);
+  const scratchColumnIndex = useMemo(() => {
+    const i = laneIds.indexOf('SC');
+    return i >= 0 && !isKeyLane('SC', keyMode) ? i : null;
+  }, [laneIds, keyMode]);
 
   // Cleanup AudioContext on unmount
   useEffect(() => {

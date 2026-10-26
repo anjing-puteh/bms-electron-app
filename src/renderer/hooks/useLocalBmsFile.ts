@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import i18next from 'i18next';
-import { BMSParser, Timing, Positioning, Spacing, SongInfo, KeySounds, Notes, DEFAULT_BPM, extendedBpmHeader, encodeText } from '@rhythm-archive/bms-core';
+import { BMSParser, Timing, Positioning, Spacing, SongInfo, KeySounds, Notes, DEFAULT_BPM, extendedBpmHeader, encodeText, styleForKeyMode } from '@rhythm-archive/bms-core';
 import type { BMSChart, BMSNote, EditableChartStyle, ISongInfoData } from '@rhythm-archive/bms-core';
 import { detectKeyMode } from '@rhythm-archive/bms-editor';
 import type { KeyMode, BpmChange, StopEvent, ScrollSpeedChange } from '@rhythm-archive/bms-editor';
-import { readMetaKeyMode, readWithSavedKeyMode } from '../lib/keyModePersistence';
+import { readMetaKeyMode, readWithLayout, readWithSavedKeyMode } from '../lib/keyModePersistence';
+import { isScratchColumn, playedLanes } from '../lib/keyModeLanes';
 
 export interface LocalBmsChartInfo {
   songInfo: ISongInfoData | null;
@@ -117,8 +118,12 @@ export function useLocalBmsFile() {
       // Detect key mode (static import, no dynamic import)
       let keyMode = detectKeyMode(notes, chart.headers);
       // A key mode recorded at save time wins, read with the layout it was written in
-      const saved = readWithSavedKeyMode(chart, notes, await readMetaKeyMode(filePath), bmsString);
+      let saved = readWithSavedKeyMode(chart, notes, await readMetaKeyMode(filePath), bmsString);
       if (!isCurrent()) return;
+      if (!saved && playedLanes(keyMode)) {
+        // #4K / #6K / #8K lanes sit on fixed IIDX channels whatever the channel usage suggests
+        saved = readWithLayout(chart, keyMode, styleForKeyMode(keyMode));
+      }
       if (saved) {
         notes = saved.notes;
         keyMode = saved.keyMode;
@@ -207,14 +212,15 @@ export function useLocalBmsFile() {
 
       // Calculate stats
       let total = 0, scratch = 0, longNotes = 0, landmines = 0, invisible = 0;
+      const lanes = playedLanes(keyMode);
       for (const note of notes) {
-        if (!note.column) continue;
+        if (!note.column || (lanes && !lanes.has(note.column))) continue;
         const noteType = note.noteType || 'playable';
         if (noteType === 'landmine') landmines++;
         else if (noteType === 'invisible') invisible++;
         else if (noteType === 'playable') {
           total++;
-          if (note.column === 'SC' || note.column === 'SC2') scratch++;
+          if (isScratchColumn(note.column, keyMode)) scratch++;
           if (note.endBeat !== undefined) longNotes++;
         }
       }

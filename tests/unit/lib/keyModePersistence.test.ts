@@ -9,6 +9,8 @@ import {
   tagAutoSave,
   untagAutoSave,
 } from '../../../src/renderer/lib/keyModePersistence';
+import { withKeyModeCommand } from '../../../src/renderer/stores/editorStore';
+import { detectKeyMode } from '@rhythm-archive/bms-editor';
 
 type Lane = string | { column: string; noteType?: EditableBMSNote['noteType']; ln?: boolean };
 
@@ -29,7 +31,8 @@ function chartOf(lanes: Lane[], keyMode: KeyMode, custom = new Map<string, strin
     };
   }) as EditableBMSNote[];
   return {
-    headers: {
+    // Same header handling as the editor's savableChart (#4K / #6K / #8K)
+    headers: withKeyModeCommand({
       player: 1,
       bpm: 120,
       wav: new Map([['01', 'a.wav']]),
@@ -37,7 +40,7 @@ function chartOf(lanes: Lane[], keyMode: KeyMode, custom = new Map<string, strin
       bpmDef: new Map(),
       stopDef: new Map(),
       custom,
-    },
+    }, keyMode),
     notes,
     timeSignatures: new Map(),
     bpmChanges: [],
@@ -58,14 +61,48 @@ const columnsOf = (lanes: Lane[]) => lanes.map((l) => (typeof l === 'string' ? l
 const laneColumns = (notes: Array<{ column?: string | null }>) =>
   notes.filter((n) => n.column).map((n) => n.column).sort();
 
-describe('key mode survives save and reload', () => {
+describe('Qwilight #4K / #6K / #8K survive save and reload by their extension command', () => {
   const cases: Array<[string, KeyMode, Lane[]]> = [
     ['6K using only two lanes', '6K', ['1', '2', '1', '2']],
-    ['4K using only scratch and lane 1', '4K', ['SC', '1']],
-    ['4K with a busy FZ lane (reads as keyboard)', '4K', ['SC', '1', '2', '4', '5', 'FZ', 'FZ', 'FZ', 'FZ']],
-    ['7K with a busy FZ lane', '7K', ['SC', '1', '2', '3', '4', '5', '6', '7', 'FZ', 'FZ', 'FZ', 'FZ', 'FZ']],
-    ['8K with lanes 6 and 7 empty', '8K', ['1', '2', '3', '4', '5', '8']],
-    ['8K with a sparse lane 7', '8K', ['1', '2', '3', '4', '5', '6', '8', '1', '2', '3', '4', '5', '6', '8', '7']],
+    ['6K on every lane', '6K', ['1', '2', '3', '5', '6', '7']],
+    ['4K using one lane', '4K', ['1']],
+    ['4K on every lane', '4K', ['1', '2', '4', '5']],
+    ['8K with lanes 6 and 7 empty', '8K', ['SC', '1', '2', '3', '4', '5']],
+    ['8K on every lane', '8K', ['SC', '1', '2', '3', '4', '5', '6', '7']],
+    ['6K with no playable notes', '6K', []],
+  ];
+
+  it.each(cases)('%s', (_name, keyMode, lanes) => {
+    const { content, chart, detected } = saveAndReload(lanes, keyMode);
+    expect(content.split(/\r?\n/)).toContain(`#${keyMode}`);
+    expect(keyModeNeedsMeta(content, keyMode)).toBe(false);
+    expect(detectKeyMode(detected, chart.headers)).toBe(keyMode);
+    expect(laneColumns(detected)).toEqual(columnsOf(lanes));
+  });
+
+  it('writes channel 16 for the 8K leftmost key and nothing on 17', () => {
+    const { content } = saveAndReload(['SC', '1', '7'], '8K');
+    expect(content).toMatch(/#00016:/);
+    expect(content).toMatch(/#00019:/);
+    expect(content).not.toMatch(/#00017:/);
+  });
+
+  it('drops the command when the chart is saved in another mode', () => {
+    const { content, chart, detected } = saveAndReload(['SC', '1', '2', '3', '4', '5', '6', '7'], '7K', new Map([['6K', '']]));
+    expect(content).not.toMatch(/^#6K/m);
+    expect(detectKeyMode(detected, chart.headers)).toBe('7K');
+  });
+
+  it('keeps one command when switching between U_E modes', () => {
+    const { content } = saveAndReload(['1', '2'], '4K', new Map([['6K', ''], ['8K', '']]));
+    expect(content.split(/\r?\n/).filter((l) => /^#[468]K$/.test(l))).toEqual(['#4K']);
+  });
+});
+
+describe('other key modes keep their layout through the sidecar', () => {
+  const cases: Array<[string, KeyMode, Lane[]]> = [
+    ['7K with a busy FZ lane (reads as keyboard)', '7K', ['SC', '1', '2', '3', '4', '5', '6', '7', 'FZ', 'FZ', 'FZ', 'FZ', 'FZ']],
+    ['5K with a busy FZ lane', '5K', ['SC', '1', '2', '3', '4', '5', 'FZ', 'FZ', 'FZ', 'FZ']],
     ['12K with lane 7 empty', '12K', ['1', '2', '3', '4', '5', '6', '8', '9', '10', '11', '12']],
     // DP charts that read as PMS: the LN / landmine lanes have no PMS channel
     ['12K with a lane-6 long note', '12K', ['1', '2', '3', '11', '12', { column: '6', ln: true }]],
@@ -85,32 +122,30 @@ describe('key mode survives save and reload', () => {
     expect(editable.extraObjects ?? []).toEqual([]);
   });
 
-  it.each<[KeyMode, string[]]>([
-    ['7K', ['SC', '1', '2', '3', '4', '5', '6', '7']],
-    ['6K', ['SC', '1', '2', '3', '5', '6', '7']],
-    ['8K', ['1', '2', '3', '4', '5', '6', '7', '8']],
-  ])('%s that reloads as itself needs no sidecar entry', (keyMode, columns) => {
-    expect(keyModeNeedsMeta(saveAndReload(columns, keyMode).content, keyMode)).toBe(false);
+  it('7K that reloads as itself needs no sidecar entry', () => {
+    const columns = ['SC', '1', '2', '3', '4', '5', '6', '7'];
+    expect(keyModeNeedsMeta(saveAndReload(columns, '7K').content, '7K')).toBe(false);
   });
 
-  it('records the mode when a #KEYMODE header would override it', () => {
+  it('rewrites a stale #KEYMODE header to the saved mode', () => {
     const { content } = saveAndReload(['SC', '1', '2', '3', '4', '5', '6', '7'], '7K', new Map([['keymode', '6K']]));
-    expect(content).toMatch(/#KEYMODE 6K/i);
-    expect(keyModeNeedsMeta(content, '7K')).toBe(true);
+    expect(content).toMatch(/#KEYMODE 7K/i);
+    expect(content).not.toMatch(/#KEYMODE 6K/i);
+    expect(keyModeNeedsMeta(content, '7K')).toBe(false);
   });
 
-  it('ignores a stale 8K entry once the file holds an IIDX 7K chart', () => {
-    const { content, chart, detected } = saveAndReload(['SC', '1', '2', '3', '4', '5', '6', '7'], '7K');
+  it('ignores a stale 6K entry once the file holds a 7K chart', () => {
+    const { content, chart, detected } = saveAndReload(['SC', '1', '2', '3', '4', '5', '6', '7', 'FZ'], '7K');
     // Saved with other text (outside edit / failed sidecar write)
-    expect(readWithSavedKeyMode(chart, detected, { keyMode: '8K', contentHash: 'deadbeef' }, content)).toBeNull();
-    expect(readWithSavedKeyMode(chart, detected, { keyMode: '8K' }, content)).toBeNull();
+    expect(readWithSavedKeyMode(chart, detected, { keyMode: '6K', contentHash: 'deadbeef' }, content)).toBeNull();
+    expect(readWithSavedKeyMode(chart, detected, { keyMode: '6K' }, content)).toBeNull();
   });
 
   it('trusts the mode for its own save even with lanes the mode hides', () => {
     // 7K → 5K keeps the lane-6 notes (hidden, preserved) and writes them on channel 18
     const { content, chart, detected } = saveAndReload(['SC', '1', '2', '3', '4', '5', '6', '6'], '5K');
     const fields = keyModeMetaFields(content, '5K');
-    expect(fields).toEqual({ keyMode: '5K', keyModeContentHash: contentHash(content) });
+    expect(fields).toEqual({ keyMode: '5K', keyModeContentHash: contentHash(content), keyModeStyle: { id: 'iidx', isDP: false } });
     expect(readWithSavedKeyMode(chart, detected, { keyMode: '5K' }, content)).toBeNull();
     const saved = readWithSavedKeyMode(chart, detected, { keyMode: '5K', contentHash: fields.keyModeContentHash }, content);
     expect(saved?.keyMode).toBe('5K');
@@ -122,7 +157,7 @@ describe('key mode survives save and reload', () => {
   });
 
   it('hashes the same text after a Shift_JIS save and reload', async () => {
-    const chart = chartOf(['1', '2'], '6K');
+    const chart = chartOf(['1', '2'], '5K');
     chart.headers.title = 'さよなら';
     const content = new BMSWriter().write(chart);
     const parser = new BMSParser();
@@ -132,7 +167,7 @@ describe('key mode survives save and reload', () => {
   });
 
   it('does nothing without a recorded key mode', () => {
-    const { content, chart, detected } = saveAndReload(['1', '2'], '6K');
+    const { content, chart, detected } = saveAndReload(['1', '2'], '5K');
     expect(readWithSavedKeyMode(chart, detected, undefined, content)).toBeNull();
   });
 });

@@ -29,8 +29,9 @@ const MODES: ModeSpec[] = [
   {
     filename: 'test-4k.bms',
     title: 'Test 4K',
-    // 4K: SC + columns 1,2,4,5 (skip 3,6,7)
-    channels: ['16', '11', '12', '14', '15'],
+    // Qwilight #4K: channels 11, 12, 14, 15
+    channels: ['11', '12', '14', '15'],
+    extraHeaders: ['#PLAYER 1', '#4K'],
   },
   {
     filename: 'test-5k.bms',
@@ -41,14 +42,16 @@ const MODES: ModeSpec[] = [
   {
     filename: 'test-6k.bms',
     title: 'Test 6K',
-    // 6K: SC + columns 1,2,3,5,6,7 (skip 4)
-    channels: ['16', '11', '12', '13', '15', '18', '19'],
+    // Qwilight #6K: channels 11, 12, 13, 15, 18, 19
+    channels: ['11', '12', '13', '15', '18', '19'],
+    extraHeaders: ['#PLAYER 1', '#6K'],
   },
   {
     filename: 'test-8k.bms',
     title: 'Test 8K',
-    // 8K: keyboard style, columns 1-8 (channels 11-18, no SC)
-    channels: ['11', '12', '13', '14', '15', '16', '17', '18'],
+    // Qwilight #8K: channel 16 is the leftmost key, then 11-15, 18, 19
+    channels: ['16', '11', '12', '13', '14', '15', '18', '19'],
+    extraHeaders: ['#PLAYER 1', '#8K'],
   },
   {
     filename: 'test-9k.bms',

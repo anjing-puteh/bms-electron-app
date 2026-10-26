@@ -17,7 +17,7 @@ import {
   getLaneIds,
 } from '@rhythm-archive/bms-editor';
 import type { BmsChartDiffInfo, NoteChartEditorProps, NoteConvertTarget, ZoomControl } from '@rhythm-archive/bms-editor';
-import type { EditableBMSNote, EditableBMSChart, TimingAction } from '@rhythm-archive/bms-core';
+import type { EditableBMSNote, EditableBMSChart, EditableChartStyle, TimingAction } from '@rhythm-archive/bms-core';
 import { BMSWriter, Timing, allocateObjectIds, canonicalObjectId, isBase62Headers, keysoundKey } from '@rhythm-archive/bms-core';
 import { beatToTick } from '../lib/tickUtils';
 import { AudioPreloader, WorkerAudioScheduler } from '@rhythm-archive/bms-player';
@@ -55,6 +55,7 @@ import { ChartStatsView, estimateDifficulty } from '../components/ChartStatsView
 import { BpmTapDialog } from '../components/BpmTapDialog';
 import { AccessibleDialog } from '../components/AccessibleDialog';
 import { ToastStack, useToastStack } from '../components/ToastStack';
+import { isKeyLane } from '../lib/autoChart';
 import type { GeneratedNote } from '../lib/autoChart';
 import { createBeatConverter } from '../lib/beatConverter';
 import { computeDensityMap, densityToColor } from '../lib/densityMap';
@@ -273,17 +274,23 @@ type WriterWarningKey = typeof WRITER_WARNING_KEYS[keyof typeof WRITER_WARNING_K
  * Brings the sidecar key mode in line with BMS text written outside handleSave
  * (autosave recovery), so a stale mode from an earlier save is not applied to it.
  */
-async function syncMetaKeyMode(bmsPath: string, bmsContent: string, keyMode: string | undefined): Promise<void> {
+async function syncMetaKeyMode(
+  bmsPath: string,
+  bmsContent: string,
+  keyMode: string | undefined,
+  style: EditableChartStyle | undefined,
+): Promise<void> {
   const metaJson = await window.api.file.readMeta(bmsPath).catch(() => null);
   let meta = createDefaultMeta();
   try {
     if (metaJson) meta = deserializeMeta(metaJson);
   } catch { /* unreadable sidecar: start over */ }
   const known = keyMode ? applyMetaToState({ version: meta.version, keyMode }).keyMode : undefined;
-  const fields = known ? keyModeMetaFields(bmsContent, known) : {};
+  const fields = known ? keyModeMetaFields(bmsContent, known, style) : {};
   if (!metaJson && !fields.keyMode) return;
   delete meta.keyMode;
   delete meta.keyModeContentHash;
+  delete meta.keyModeStyle;
   await window.api.file.saveMeta(bmsPath, serializeMeta({ ...meta, ...fields })).catch(() => {});
 }
 
@@ -553,6 +560,12 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       // Phase C: commit to store (triggers re-render with notes)
       store.initFromChart(ec, notesToCommit, notesToCommit.length + 1, chart.keyMode);
       if (metaUpdate) useEditorStore.setState(metaUpdate);
+      // Notes on lanes the mode has no column for stay in the file but are not shown
+      const shownLanes = new Set(getLaneIds(chart.keyMode));
+      const hidden = notesToCommit.filter((n) => n.noteType !== 'bgm' && n.column && !shownLanes.has(n.column)).length;
+      if (hidden > 0) {
+        showToast(t('editor:store.orphanNotes', { keyMode: chart.keyMode, count: hidden }), 'warning');
+      }
       // Save original chart info for diff
       originalChartInfoRef.current = {
         notes: chart.notes,
@@ -997,7 +1010,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         noteGroups: s.noteGroups,
         notes: s.notes,
         customColors: s.customColors,
-        ...keyModeMetaFields(bmsContent, s.keyMode),
+        ...keyModeMetaFields(bmsContent, s.keyMode, chartToSave.style),
       });
       const metaJson = serializeMeta(meta);
       const metaHasContent = Object.entries(meta).some(([k, v]) =>
@@ -1056,7 +1069,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           noteGroups: s.noteGroups,
           notes: s.notes,
           customColors: s.customColors,
-          ...keyModeMetaFields(bmsContent, s.keyMode),
+          ...keyModeMetaFields(bmsContent, s.keyMode, chartToSave.style),
         });
         const metaSaved = await window.api.file.saveMeta(newPath, serializeMeta(meta)).then(() => true, () => false);
         if (!metaSaved) showToast(t('editor:routes.editor.toast.metaSaveFailed'), 'warning');
@@ -1184,7 +1197,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         case 'toggleDiff': activeOverlay === 'diff' ? setActiveOverlay(null) : openOverlay('diff'); break;
         case 'moveToBgm': store.changeNoteType('bgm'); break;
         case 'moveToPlay': {
-          const firstLane = laneIds.find((id: string) => id !== 'SC' && id !== 'FZ' && id !== 'FZ2') ?? laneIds[0] ?? '1';
+          const firstLane = laneIds.find((id: string) => isKeyLane(id, keyMode)) ?? laneIds[0] ?? '1';
           store.changeNoteType('playable', firstLane);
           break;
         }
@@ -1583,7 +1596,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       try {
         const origLnObj = chartToSave.headers.lnobj;
         const writer = new BMSWriter({ lnMode: origLnObj ? 'lnobj' : 'channel', lnObjValue: origLnObj || undefined });
-        const content = tagAutoSave(writer.write(chartToSave), useEditorStore.getState().keyMode);
+        const content = tagAutoSave(writer.write(chartToSave), useEditorStore.getState().keyMode, chartToSave.style);
         await window.api.file.writeAutoSave(file.path, content);
       } catch (err) {
         console.warn('[Editor] Auto-save failed:', err);
@@ -2573,7 +2586,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
               if (autoSaveContentRef.current) {
                 const recovered = untagAutoSave(autoSaveContentRef.current);
                 await window.api.file.saveBms(file.path, encodeForSave(recovered.content, chart).content);
-                await syncMetaKeyMode(file.path, recovered.content, recovered.keyMode);
+                await syncMetaKeyMode(file.path, recovered.content, recovered.keyMode, recovered.style);
                 await window.api.file.deleteAutoSave(file.path).catch(() => {});
                 autoSaveContentRef.current = null;
                 load(file.path);
@@ -2799,6 +2812,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
               columnIndex: laneIds.indexOf(n.column),
             }))}
           laneIds={laneIds}
+          keyMode={keyMode}
           bpm={editedBaseBpm}
           currentBeat={useEditorStore.getState().currentBeat}
           gridSnap={gridSnap}

@@ -13,6 +13,7 @@
 
 import { BMSParser, KeySounds, DEFAULT_BPM, extendedBpmHeader } from '@rhythm-archive/bms-core';
 import { detectKeyMode } from '@rhythm-archive/bms-editor';
+import { isScratchColumn, playedLanes } from '../lib/keyModeLanes';
 
 interface ParsePhase1Message {
   type: 'PARSE_PHASE1';
@@ -133,6 +134,7 @@ self.onmessage = async (event: MessageEvent<WorkerInMessage>) => {
     let total = 0, scratch = 0, longNotes = 0, landmines = 0, invisible = 0;
     let maxMeasure = 0;
     let maxBeat = 0;
+    const lanes = playedLanes(keyMode);
 
     for (const note of notes) {
       const endBeat = note.endBeat ?? note.beat;
@@ -140,13 +142,13 @@ self.onmessage = async (event: MessageEvent<WorkerInMessage>) => {
       const { measure } = chart.timeSignatures.beatToMeasure(note.endBeat ?? note.beat);
       if (measure > maxMeasure) maxMeasure = measure;
 
-      if (!note.column) continue;
+      if (!note.column || (lanes && !lanes.has(note.column))) continue;
       const noteType = note.noteType || 'playable';
       if (noteType === 'landmine') landmines++;
       else if (noteType === 'invisible') invisible++;
       else if (noteType === 'playable') {
         total++;
-        if (note.column === 'SC' || note.column === 'SC2') scratch++;
+        if (isScratchColumn(note.column, keyMode)) scratch++;
         if (note.endBeat !== undefined) longNotes++;
       }
     }

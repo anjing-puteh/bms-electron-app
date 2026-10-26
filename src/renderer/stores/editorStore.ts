@@ -6,9 +6,12 @@ import type {
   BMSStopEvent,
   BMSHeaderData,
   EditableBMSChart,
+  EditableChartStyle,
   NoteType,
 } from '@rhythm-archive/bms-core';
-import { styleForKeyMode, canonicalObjectId, isBase62Headers } from '@rhythm-archive/bms-core';
+import { styleForKeyMode, columnMappingForStyle, canonicalObjectId, isBase62Headers } from '@rhythm-archive/bms-core';
+import { isKeyLane } from '../lib/autoChart';
+import { playedLanes } from '../lib/keyModeLanes';
 import type { EditorTool, SelectedNoteType, GridSnap, KeyMode } from '@rhythm-archive/bms-editor';
 import { getLaneIds } from '@rhythm-archive/bms-editor';
 import type { PatternTemplate, PatternNote } from '../lib/patternTemplates';
@@ -236,6 +239,45 @@ function noteIndexKey(beat: number, column: string | undefined): string {
 function idCanon(headers: BMSHeaderData | null): (id: string) => string {
   const base62 = isBase62Headers(headers);
   return (id: string) => canonicalObjectId(id, base62);
+}
+
+/**
+ * Channel layout to save a chart in. The layout the file was read with is kept
+ * when it has a channel for every lane of the key mode, so saving does not move
+ * notes to other channels (e.g. an 8-key keyboard chart opened as 9K stays on
+ * 11-18 instead of the PMS 22-25). Otherwise the key mode's own layout.
+ */
+export function writeStyleFor(keyMode: KeyMode, readStyle?: EditableChartStyle): EditableChartStyle {
+  const target = styleForKeyMode(keyMode);
+  // Qwilight reads #4K / #6K / #8K lanes from fixed IIDX channels only
+  if (playedLanes(keyMode)) return target;
+  if (!readStyle || (readStyle.id === target.id && readStyle.isDP === target.isDP)) return target;
+  const columns = new Set(Object.values(columnMappingForStyle(readStyle)));
+  return getLaneIds(keyMode).every((id) => columns.has(id)) ? readStyle : target;
+}
+
+/** Qwilight extension commands that select the U_E (Yuipack) key modes. */
+const KEY_MODE_COMMANDS: Partial<Record<KeyMode, string>> = { '4K': '4K', '6K': '6K', '8K': '8K' };
+
+/**
+ * Headers with the value-less `#4K` / `#6K` / `#8K` command matching `keyMode`
+ * (and none of the others): BMS players tell these modes apart only by it.
+ * A `#KEYMODE` header (written for new charts) follows the mode as well.
+ */
+export function withKeyModeCommand(headers: BMSHeaderData, keyMode: KeyMode): BMSHeaderData {
+  const want = KEY_MODE_COMMANDS[keyMode];
+  const commands = Object.values(KEY_MODE_COMMANDS);
+  const custom = new Map(headers.custom);
+  for (const [k, v] of headers.custom) {
+    const key = k.toUpperCase();
+    // A command with a value is not the command (Qwilight ignores it): rewrite it
+    if (commands.includes(key) && (key !== want || v || k !== key)) custom.delete(k);
+    if (key === 'KEYMODE' && v !== keyMode) custom.set(k, keyMode);
+  }
+  if (want && !custom.has(want)) custom.set(want, '');
+  const same = custom.size === headers.custom.size
+    && [...custom].every(([k, v]) => headers.custom.get(k) === v);
+  return same ? headers : { ...headers, custom };
 }
 
 /** References of the chart data at the last load/save. */
@@ -669,8 +711,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     return {
       // Channel layout follows the current key mode (DP / PMS / keyboard) so
       // 2P and PMS lanes are written to their proper channels.
-      style: s.keyMode ? styleForKeyMode(s.keyMode) : s.editableChart.style,
-      headers: s.headers || s.editableChart.headers,
+      style: s.keyMode ? writeStyleFor(s.keyMode, s.editableChart.style) : s.editableChart.style,
+      headers: withKeyModeCommand(s.headers || s.editableChart.headers, s.keyMode),
       notes: s.notes,
       timeSignatures: s.timeSignatures,
       bpmChanges: s.bpmChanges,
@@ -1001,7 +1043,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     } else {
       // Keep the notes' relative lane layout: the lowest channel / leftmost
       // column lands on the drop lane.
-      const playable = laneIds.filter((id) => id !== 'SC' && id !== 'FZ' && id !== 'FZ2');
+      const playable = laneIds.filter((id) => isKeyLane(id, s.keyMode));
       const lanes = playable.length > 0 ? playable : laneIds;
       if (lanes.length === 0) return;
       const startIdx = Math.max(0, lanes.indexOf(target.column));

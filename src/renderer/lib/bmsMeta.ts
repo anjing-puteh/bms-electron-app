@@ -71,6 +71,8 @@ export interface BmsMetaData {
   keyMode?: string;
   /** Hash of the BMS text `keyMode` was saved with; tells the editor's own save from an outside edit. */
   keyModeContentHash?: string;
+  /** Channel layout the chart was saved in (absent in sidecars written by 0.5.5). */
+  keyModeStyle?: { id: string; isDP: boolean };
 }
 
 const KEY_MODES = ['4K', '5K', '6K', '7K', '8K', '9K', '10K', '12K', '14K', '18K', '24K', '48K'] as const;
@@ -195,6 +197,7 @@ export function buildMetaFromState(state: {
   /** Pass only when reloading the file would not give it back. */
   keyMode?: string;
   keyModeContentHash?: string;
+  keyModeStyle?: { id: string; isDP: boolean };
 }): BmsMetaData {
   const meta: BmsMetaData = { version: META_VERSION };
 
@@ -235,6 +238,7 @@ export function buildMetaFromState(state: {
   if (isKeyMode(state.keyMode)) {
     meta.keyMode = state.keyMode;
     if (state.keyModeContentHash) meta.keyModeContentHash = state.keyModeContentHash;
+    if (state.keyModeStyle) meta.keyModeStyle = state.keyModeStyle;
   }
 
   return meta;

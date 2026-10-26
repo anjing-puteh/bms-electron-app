@@ -39,7 +39,9 @@ export function createRng(seed: number): () => number {
 
 /** Lane ids that are not key columns (scratch / foot pedal) in the editor's lane naming. */
 const NON_KEY_LANE = /^(SC2?|FZ2?)$/;
-export function isKeyLane(laneId: string): boolean {
+/** In 8K (Qwilight #8K) the 'SC' lane (channel 16) is an ordinary key, not a scratch. */
+export function isKeyLane(laneId: string, keyMode?: string): boolean {
+  if (laneId === 'SC' && keyMode === '8K') return true;
   return !NON_KEY_LANE.test(laneId);
 }
 

@@ -7,6 +7,7 @@ import type { CurrentFile, NavigationGuard } from '../App';
 import { useLocalBmsFile } from '../hooks/useLocalBmsFile';
 import type { LocalBmsChartInfo } from '../hooks/useLocalBmsFile';
 import { createLocalAudioWorker } from '../lib/LocalAudioWorker';
+import { filterPlayedNotes } from '../lib/keyModeLanes';
 import { createKeysoundPlayerAdapter } from '../lib/keysoundPlayerAdapter';
 import type { KeysoundPlayer } from '../lib/keysoundPlayerAdapter';
 import GameLoopWorkerConstructor from '../workers/gameLoop.worker?worker';
@@ -157,7 +158,8 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
         }
 
         // Invisible notes are dropped here; their WAVs still preload via chart.keysounds.
-        const { playable: playableNotes, landmines: landmineNotes } = splitPlayerNotes(chart.notes);
+        // 4K/6K/8K drop notes on lanes the mode does not play, as Qwilight does.
+        const { playable: playableNotes, landmines: landmineNotes } = splitPlayerNotes(filterPlayedNotes(chart.notes, chart.keyMode));
 
         const notechartInput: NotechartInput = {
           notes: playableNotes,
@@ -371,6 +373,7 @@ export function Player({ file, onBack, onRequestBack, onClearFile, onRegisterGua
         <GamePlayer
           notechart={notechart}
           keysoundPlayer={keysoundPlayer}
+          keyMode={chart?.keyMode}
           width={playfieldWidth}
           height={containerSize.height}
           onComplete={handleComplete}

@@ -483,26 +483,13 @@ describe('Transform Operations - Multi-Mode', () => {
   });
 
   // --- Policy: 4K/5K/6K full-positional mirror (same policy as 7K) ---
-  // 4K: SC(0),1(1),2(2),4(3),5(4),FZ(5)           : col 3 absent by spec
+  // 4K: 1(0),2(1),4(2),5(3)                      : Qwilight #4K, col 3 absent
   // 5K: SC(0),1(1),2(2),3(3),4(4),5(5),FZ(6)
-  // 6K: SC(0),1(1),2(2),3(3),5(4),6(5),7(6),FZ(7): col 4 absent by spec
+  // 6K: 1(0),2(1),3(2),5(3),6(4),7(5)             : Qwilight #6K, col 4 absent
+  // 8K: SC(0),1(1),...,7(7)                       : Qwilight #8K, channel 16 is a key
 
-  describe('4K-specific mirror (SC+1,2,4,5+FZ — skips col 3)', () => {
-    const laneIds4K = getLaneIds('4K'); // ['SC','1','2','4','5','FZ']
-
-    it('SC mirrors to FZ', () => {
-      seedNotes([mockNote({ column: 'SC' })]);
-      selectAll();
-      act().mirrorNotes(laneIds4K);
-      expect(store().notes[0].column).toBe('FZ');
-    });
-
-    it('FZ mirrors to SC', () => {
-      seedNotes([mockNote({ column: 'FZ' })]);
-      selectAll();
-      act().mirrorNotes(laneIds4K);
-      expect(store().notes[0].column).toBe('SC');
-    });
+  describe('4K-specific mirror (Qwilight #4K: 1,2,4,5 — skips col 3)', () => {
+    const laneIds4K = getLaneIds('4K'); // ['1','2','4','5']
 
     it('column 1 mirrors to column 5', () => {
       seedNotes([mockNote({ column: '1' })]);
@@ -518,7 +505,7 @@ describe('Transform Operations - Multi-Mode', () => {
       expect(store().notes[0].column).toBe('4');
     });
 
-    it('full mirror: SC,1,2,4,5,FZ → FZ,5,4,2,1,SC', () => {
+    it('full mirror: 1,2,4,5 → 5,4,2,1', () => {
       const notes = laneIds4K.map((col, i) => mockNote({ id: `f4_${i}`, column: col, beat: i }));
       seedNotes(notes);
       selectAll();
@@ -526,7 +513,7 @@ describe('Transform Operations - Multi-Mode', () => {
       const sorted = [...store().notes].sort(
         (a, b) => notes.findIndex((n) => n.id === a.id) - notes.findIndex((n) => n.id === b.id)
       );
-      expect(sorted.map((n) => n.column)).toEqual(['FZ', '5', '4', '2', '1', 'SC']);
+      expect(sorted.map((n) => n.column)).toEqual(['5', '4', '2', '1']);
     });
   });
 
@@ -566,15 +553,8 @@ describe('Transform Operations - Multi-Mode', () => {
     });
   });
 
-  describe('6K-specific mirror (SC+1,2,3,5,6,7+FZ — skips col 4)', () => {
-    const laneIds6K = getLaneIds('6K'); // ['SC','1','2','3','5','6','7','FZ']
-
-    it('SC mirrors to FZ', () => {
-      seedNotes([mockNote({ column: 'SC' })]);
-      selectAll();
-      act().mirrorNotes(laneIds6K);
-      expect(store().notes[0].column).toBe('FZ');
-    });
+  describe('6K-specific mirror (Qwilight #6K: 1,2,3,5,6,7 — skips col 4)', () => {
+    const laneIds6K = getLaneIds('6K'); // ['1','2','3','5','6','7']
 
     it('column 1 mirrors to column 7', () => {
       seedNotes([mockNote({ column: '1' })]);
@@ -587,7 +567,7 @@ describe('Transform Operations - Multi-Mode', () => {
       seedNotes([mockNote({ column: '3' })]);
       selectAll();
       act().mirrorNotes(laneIds6K);
-      // index 3 → mirrored index 4 → '5'
+      // index 2 → mirrored index 3 → '5'
       expect(store().notes[0].column).toBe('5');
     });
 
@@ -598,7 +578,7 @@ describe('Transform Operations - Multi-Mode', () => {
       expect(store().notes[0].column).toBe('3');
     });
 
-    it('full mirror: SC,1,2,3,5,6,7,FZ → FZ,7,6,5,3,2,1,SC', () => {
+    it('full mirror: 1,2,3,5,6,7 → 7,6,5,3,2,1', () => {
       const notes = laneIds6K.map((col, i) => mockNote({ id: `f6_${i}`, column: col, beat: i }));
       seedNotes(notes);
       selectAll();
@@ -606,7 +586,18 @@ describe('Transform Operations - Multi-Mode', () => {
       const sorted = [...store().notes].sort(
         (a, b) => notes.findIndex((n) => n.id === a.id) - notes.findIndex((n) => n.id === b.id)
       );
-      expect(sorted.map((n) => n.column)).toEqual(['FZ', '7', '6', '5', '3', '2', '1', 'SC']);
+      expect(sorted.map((n) => n.column)).toEqual(['7', '6', '5', '3', '2', '1']);
+    });
+  });
+
+  describe('8K-specific mirror (Qwilight #8K: channel 16 is the leftmost key)', () => {
+    const laneIds8K = getLaneIds('8K'); // ['SC','1','2','3','4','5','6','7']
+
+    it('the channel-16 key mirrors to lane 7 like any other key', () => {
+      seedNotes([mockNote({ column: 'SC' })]);
+      selectAll();
+      act().mirrorNotes(laneIds8K);
+      expect(store().notes[0].column).toBe('7');
     });
   });
 });

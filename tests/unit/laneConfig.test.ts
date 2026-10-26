@@ -18,12 +18,13 @@ describe('generateLaneConfig', () => {
       scratchWidth: number;
     }
   > = {
+    // Qwilight #4K: channels 11, 12, 14, 15
     '4K': {
-      laneCount: 6,
-      laneIds: ['SC', '1', '2', '4', '5', 'FZ'],
-      scratchLanes: ['SC'],
-      laneWidth: 35,
-      scratchWidth: 35,
+      laneCount: 4,
+      laneIds: ['1', '2', '4', '5'],
+      scratchLanes: [],
+      laneWidth: 40,
+      scratchWidth: 0,
     },
     '5K': {
       laneCount: 7,
@@ -32,12 +33,13 @@ describe('generateLaneConfig', () => {
       laneWidth: 31,
       scratchWidth: 35,
     },
+    // Qwilight #6K: channels 11, 12, 13, 15, 18, 19
     '6K': {
-      laneCount: 8,
-      laneIds: ['SC', '1', '2', '3', '5', '6', '7', 'FZ'],
-      scratchLanes: ['SC'],
-      laneWidth: 28,
-      scratchWidth: 31,
+      laneCount: 6,
+      laneIds: ['1', '2', '3', '5', '6', '7'],
+      scratchLanes: [],
+      laneWidth: 32,
+      scratchWidth: 0,
     },
     '7K': {
       laneCount: 9,
@@ -46,12 +48,13 @@ describe('generateLaneConfig', () => {
       laneWidth: 25,
       scratchWidth: 31,
     },
+    // Qwilight #8K: channel 16 is the leftmost key (not a scratch), then 11-15, 18, 19
     '8K': {
       laneCount: 8,
-      laneIds: ['1', '2', '3', '4', '5', '6', '7', '8'],
+      laneIds: ['SC', '1', '2', '3', '4', '5', '6', '7'],
       scratchLanes: [],
       laneWidth: 25,
-      scratchWidth: 0,
+      scratchWidth: 25,
     },
     '9K': {
       laneCount: 9,
@@ -209,16 +212,14 @@ describe('getLaneBackground', () => {
 });
 
 describe('key mode specific properties', () => {
-  it('4K skips columns 3, 6, 7', () => {
+  it('4K skips columns 3, 6, 7 and has no scratch / free zone (Qwilight #4K)', () => {
     const ids = getLaneIds('4K');
-    expect(ids).not.toContain('3');
-    expect(ids).not.toContain('6');
-    expect(ids).not.toContain('7');
+    for (const c of ['3', '6', '7', 'SC', 'FZ']) expect(ids).not.toContain(c);
   });
 
-  it('6K skips column 4', () => {
+  it('6K skips column 4 and has no scratch / free zone (Qwilight #6K)', () => {
     const ids = getLaneIds('6K');
-    expect(ids).not.toContain('4');
+    for (const c of ['4', 'SC', 'FZ']) expect(ids).not.toContain(c);
     expect(ids).toContain('1');
     expect(ids).toContain('5');
   });
