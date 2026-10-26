@@ -64,6 +64,20 @@ export interface BmsMetaData {
   minLnLength?: number;
   /** BGM channel assignments (v2: note position key → bgmChannel; v1: session note id, ignored) */
   bgmChannels?: Record<string, number>;
+  /**
+   * Editor key mode, stored only when reloading the file would not give it
+   * back (see keyModePersistence.ts).
+   */
+  keyMode?: string;
+  /** Hash of the BMS text `keyMode` was saved with; tells the editor's own save from an outside edit. */
+  keyModeContentHash?: string;
+}
+
+const KEY_MODES = ['4K', '5K', '6K', '7K', '8K', '9K', '10K', '12K', '14K', '18K', '24K', '48K'] as const;
+export type MetaKeyMode = typeof KEY_MODES[number];
+
+function isKeyMode(v: unknown): v is MetaKeyMode {
+  return typeof v === 'string' && (KEY_MODES as readonly string[]).includes(v);
 }
 
 /** Minimal note shape needed to derive a position key. */
@@ -178,6 +192,9 @@ export function buildMetaFromState(state: {
     selection?: string;
     background?: string;
   };
+  /** Pass only when reloading the file would not give it back. */
+  keyMode?: string;
+  keyModeContentHash?: string;
 }): BmsMetaData {
   const meta: BmsMetaData = { version: META_VERSION };
 
@@ -215,6 +232,11 @@ export function buildMetaFromState(state: {
     if (hasBgmChannels) meta.bgmChannels = bgmChannels;
   }
 
+  if (isKeyMode(state.keyMode)) {
+    meta.keyMode = state.keyMode;
+    if (state.keyModeContentHash) meta.keyModeContentHash = state.keyModeContentHash;
+  }
+
   return meta;
 }
 
@@ -227,6 +249,7 @@ export function applyMetaToState(meta: BmsMetaData): {
   customColors?: BmsMetaData['customColors'];
   bookmarks?: BmsMetaBookmark[];
   noteGroups?: BmsMetaNoteGroup[];
+  keyMode?: MetaKeyMode;
 } {
   return {
     gridSnapOverrides: recordToGridSnapOverrides(meta.gridSnapOverrides),
@@ -234,6 +257,7 @@ export function applyMetaToState(meta: BmsMetaData): {
     ...(meta.customColors ? { customColors: meta.customColors } : {}),
     ...(meta.bookmarks ? { bookmarks: meta.bookmarks } : {}),
     ...(meta.noteGroups ? { noteGroups: meta.noteGroups } : {}),
+    ...(isKeyMode(meta.keyMode) ? { keyMode: meta.keyMode } : {}),
   };
 }
 

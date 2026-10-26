@@ -245,12 +245,14 @@ interface SavedPoint {
   stopEvents: BMSStopEvent[];
   timeSignatures: Map<number, number>;
   headers: BMSHeaderData | null;
+  /** Key mode decides the saved channel layout, so changing it is an unsaved change too. */
+  keyMode?: KeyMode;
 }
 
 function savedPointOf(s: SavedPoint): SavedPoint {
   return {
     notes: s.notes, bpmChanges: s.bpmChanges, stopEvents: s.stopEvents,
-    timeSignatures: s.timeSignatures, headers: s.headers,
+    timeSignatures: s.timeSignatures, headers: s.headers, keyMode: s.keyMode,
   };
 }
 
@@ -714,7 +716,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       _noteIndex: buildNoteIndex(rawNotes),
       _savedPoint: savedPointOf({
         notes: rawNotes, bpmChanges: chart.bpmChanges, stopEvents: chart.stopEvents,
-        timeSignatures: chart.timeSignatures, headers: chart.headers,
+        timeSignatures: chart.timeSignatures, headers: chart.headers, keyMode: keyMode ?? get().keyMode,
       }),
       ...(keyMode ? { keyMode } : {}),
     });
@@ -755,7 +757,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         _noteIndex: buildNoteIndex(entry.notes),
         ...(entry.measureData ?? {}),
         undoStack: s.undoStack.slice(0, -1),
-        hasUnsavedChanges: differsFromSaved(entry, s._savedPoint),
+        // Undo/redo do not touch the key mode; a changed mode keeps the chart dirty
+        hasUnsavedChanges: differsFromSaved(entry, s._savedPoint) || s.keyMode !== s._savedPoint?.keyMode,
       });
     } catch (err) {
       console.error('[EditorStore] undo failed:', err);
@@ -781,7 +784,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         _noteIndex: buildNoteIndex(entry.notes),
         ...(entry.measureData ?? {}),
         redoStack: s.redoStack.slice(0, -1),
-        hasUnsavedChanges: differsFromSaved(entry, s._savedPoint),
+        // Undo/redo do not touch the key mode; a changed mode keeps the chart dirty
+        hasUnsavedChanges: differsFromSaved(entry, s._savedPoint) || s.keyMode !== s._savedPoint?.keyMode,
       });
     } catch (err) {
       console.error('[EditorStore] redo failed:', err);
@@ -1820,7 +1824,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       if (n.noteType === 'bgm') continue;
       if (n.column && !newLaneIds.has(n.column)) orphanCount++;
     }
-    set({ keyMode });
+    set({ keyMode, hasUnsavedChanges: differsFromSaved(s, s._savedPoint) || keyMode !== s._savedPoint?.keyMode });
     if (orphanCount > 0) {
       set({
         toast: {

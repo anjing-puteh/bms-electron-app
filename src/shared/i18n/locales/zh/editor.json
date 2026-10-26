@@ -213,6 +213,8 @@
         "undoAction": "撤销：{{description}}",
         "writerDefsExhausted_other": "{{count}} 个 BPM/STOP 值无法分配定义 ID（已全部占用）",
         "writerInvalidValue_other": "已跳过 {{count}} 个无效的 BPM/STOP 值",
+        "writerUnmappedLane_other": "已跳过 {{count}} 个位于此键位模式无法写入的轨道上的音符",
+        "metaSaveFailed": "无法保存编辑器配置文件(.bms.meta)，下次打开时键位模式和编辑器设置可能无法恢复",
         "writerLnShortened_other": "{{count}} 个长音符结尾与下一个音符相接，已缩短 1/192 小节后保存",
         "writerOutOfRange_other": "超过第 999 小节的 {{count}} 个对象未保存",
         "writerSlotDropped_other": "{{count}} 个重叠的地雷音符无法保存",

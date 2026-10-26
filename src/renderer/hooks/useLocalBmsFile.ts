@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import i18next from 'i18next';
 import { BMSParser, Timing, Positioning, Spacing, SongInfo, KeySounds, Notes, DEFAULT_BPM, extendedBpmHeader, encodeText } from '@rhythm-archive/bms-core';
-import type { BMSChart, BMSNote, ISongInfoData } from '@rhythm-archive/bms-core';
+import type { BMSChart, BMSNote, EditableChartStyle, ISongInfoData } from '@rhythm-archive/bms-core';
 import { detectKeyMode } from '@rhythm-archive/bms-editor';
 import type { KeyMode, BpmChange, StopEvent, ScrollSpeedChange } from '@rhythm-archive/bms-editor';
+import { readMetaKeyMode, readWithSavedKeyMode } from '../lib/keyModePersistence';
 
 export interface LocalBmsChartInfo {
   songInfo: ISongInfoData | null;
@@ -31,6 +32,11 @@ export interface LocalBmsChartInfo {
   barLines: number[];
   /** Raw BMSChart object for Editor (BMSWriter.fromBMSChart) */
   bmsChart: BMSChart | null;
+  /**
+   * Channel layout the lanes were read with when the .bms.meta key mode
+   * overrides auto-detection; pass it to `BMSWriter.fromBMSChart`.
+   */
+  layoutStyle?: EditableChartStyle;
   /** Encoding the file was read with (WHATWG label, e.g. 'shift_jis'); the editor saves in it. */
   sourceEncoding: string;
   /** Whether the file started with a byte order mark. */
@@ -107,7 +113,16 @@ export function useLocalBmsFile() {
         throw new Error('Failed to parse notes');
       }
 
-      const notes = notesObj.all();
+      let notes = notesObj.all();
+      // Detect key mode (static import, no dynamic import)
+      let keyMode = detectKeyMode(notes, chart.headers);
+      // A key mode recorded at save time wins, read with the layout it was written in
+      const saved = readWithSavedKeyMode(chart, notes, await readMetaKeyMode(filePath), bmsString);
+      if (!isCurrent()) return;
+      if (saved) {
+        notes = saved.notes;
+        keyMode = saved.keyMode;
+      }
 
       // Extract BPM info
       const bpmHeader = chart.headers.get('bpm');
@@ -190,9 +205,6 @@ export function useLocalBmsFile() {
         barLines.push(chart.timeSignatures.measureToBeat(m, 0));
       }
 
-      // Detect key mode (static import, no dynamic import)
-      const keyMode = detectKeyMode(notes, chart.headers);
-
       // Calculate stats
       let total = 0, scratch = 0, longNotes = 0, landmines = 0, invisible = 0;
       for (const note of notes) {
@@ -230,6 +242,7 @@ export function useLocalBmsFile() {
             : null,
           notes,
           keyMode,
+          ...(saved ? { layoutStyle: saved.style } : {}),
           totalBeats: Math.ceil(maxBeat) + 4,
           bpm: { initial: initialBpm, min: minBpm, max: maxBpm },
           bpmChanges,

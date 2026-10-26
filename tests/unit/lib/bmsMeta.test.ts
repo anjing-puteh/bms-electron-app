@@ -179,3 +179,19 @@ describe('note references survive a reload (position keys)', () => {
     expect(noteGroups![0].noteIds).toEqual(['note-1']);
   });
 });
+
+describe('keyMode in the sidecar', () => {
+  it('round-trips the key mode', () => {
+    const meta = buildMetaFromState({ gridSnapOverrides: new Map(), minLnLength: 0.25, keyMode: '6K' });
+    expect(meta.keyMode).toBe('6K');
+    expect(applyMetaToState(deserializeMeta(serializeMeta(meta))).keyMode).toBe('6K');
+  });
+
+  it('omits the key mode when none is passed', () => {
+    expect(buildMetaFromState({ gridSnapOverrides: new Map(), minLnLength: 0.25 }).keyMode).toBeUndefined();
+  });
+
+  it('ignores an unknown key mode', () => {
+    expect(applyMetaToState({ version: 2, keyMode: '3K' }).keyMode).toBeUndefined();
+  });
+});

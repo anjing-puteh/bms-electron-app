@@ -445,3 +445,35 @@ describe('setKeyMode orphan detection', () => {
     expect(store().toast?.type).toBe('error');
   });
 });
+
+// ============================================================
+// setKeyMode: the key mode is saved state
+// ============================================================
+describe('setKeyMode marks the chart dirty', () => {
+  function openClean(keyMode = '7K') {
+    const notes = [mockNote({ id: 'a', column: '1' })];
+    useEditorStore.setState({ notes, keyMode: keyMode as never });
+    act().setHasUnsavedChanges(false);
+  }
+
+  it('a changed key mode is an unsaved change', () => {
+    openClean('7K');
+    act().setKeyMode('6K');
+    expect(store().hasUnsavedChanges).toBe(true);
+  });
+
+  it('switching back to the saved key mode is clean again', () => {
+    openClean('7K');
+    act().setKeyMode('6K');
+    act().setKeyMode('7K');
+    expect(store().hasUnsavedChanges).toBe(false);
+  });
+
+  it('saving records the new key mode as the clean state', () => {
+    openClean('7K');
+    act().setKeyMode('8K');
+    act().setHasUnsavedChanges(false);
+    act().setKeyMode('8K');
+    expect(store().hasUnsavedChanges).toBe(false);
+  });
+});

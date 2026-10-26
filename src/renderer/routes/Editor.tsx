@@ -29,7 +29,8 @@ import { createLocalAudioWorker } from '../lib/LocalAudioWorker';
 import { Player } from './Player';
 import { useEditorStore } from '../stores/editorStore';
 import type { AudioPhase, PasteAnalysis, LayerConfig } from '../stores/editorStore';
-import { deserializeMeta, serializeMeta, buildMetaFromState, applyMetaToState, restoreMetaNoteRefs } from '../lib/bmsMeta';
+import { deserializeMeta, serializeMeta, buildMetaFromState, applyMetaToState, restoreMetaNoteRefs, createDefaultMeta } from '../lib/bmsMeta';
+import { keyModeMetaFields, tagAutoSave, untagAutoSave } from '../lib/keyModePersistence';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { PatternLibraryPanel } from '../components/PatternLibraryPanel';
 import { KeyBindingsDialog } from '../components/KeyBindingsDialog';
@@ -264,8 +265,27 @@ const WRITER_WARNING_KEYS = {
   'out-of-range': 'writerOutOfRange',
   'definition-keys-exhausted': 'writerDefsExhausted',
   'invalid-value': 'writerInvalidValue',
+  'unmapped-lane': 'writerUnmappedLane',
 } as const;
 type WriterWarningKey = typeof WRITER_WARNING_KEYS[keyof typeof WRITER_WARNING_KEYS];
+
+/**
+ * Brings the sidecar key mode in line with BMS text written outside handleSave
+ * (autosave recovery), so a stale mode from an earlier save is not applied to it.
+ */
+async function syncMetaKeyMode(bmsPath: string, bmsContent: string, keyMode: string | undefined): Promise<void> {
+  const metaJson = await window.api.file.readMeta(bmsPath).catch(() => null);
+  let meta = createDefaultMeta();
+  try {
+    if (metaJson) meta = deserializeMeta(metaJson);
+  } catch { /* unreadable sidecar: start over */ }
+  const known = keyMode ? applyMetaToState({ version: meta.version, keyMode }).keyMode : undefined;
+  const fields = known ? keyModeMetaFields(bmsContent, known) : {};
+  if (!metaJson && !fields.keyMode) return;
+  delete meta.keyMode;
+  delete meta.keyModeContentHash;
+  await window.api.file.saveMeta(bmsPath, serializeMeta({ ...meta, ...fields })).catch(() => {});
+}
 
 export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard }: EditorProps) {
   const { t } = useTranslation(['editor', 'app', 'common']);
@@ -453,8 +473,10 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     let cancelled = false;
 
     const run = async () => {
+      // Sidecar read starts now and is applied before the notes are committed.
+      const metaPromise = window.api.file.readMeta(file.path).catch(() => null);
       // Phase A: convert BMSChart → EditableBMSChart (heaviest sync op)
-      const ec = BMSWriter.fromBMSChart(chart.bmsChart!);
+      const ec = BMSWriter.fromBMSChart(chart.bmsChart!, chart.layoutStyle);
 
       // Yield so the chart header info can paint before the note-mapping freeze
       await new Promise<void>((r) => setTimeout(r, 0));
@@ -506,28 +528,31 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         }
       }
 
-      if (cancelled) return;
+      // Load .bms.meta sidecar before committing the notes. The key mode in it
+      // was already applied by the loader (chart.keyMode / chart.layoutStyle).
+      const metaJson = await metaPromise;
+      if (cancelled) return; // a newer file superseded this load
+      if (metaJson) metaSidecarExistsRef.current = true;
+      let metaUpdate: Partial<ReturnType<typeof useEditorStore.getState>> | null = null;
+      let notesToCommit = editableNotes;
+      if (metaJson) {
+        try {
+          const meta = deserializeMeta(metaJson);
+          const metaState = applyMetaToState(meta);
+          delete metaState.keyMode;
+          // Re-attach BGM channels / note groups by note position (ids are per-session)
+          const restored = restoreMetaNoteRefs(meta, editableNotes);
+          notesToCommit = restored.notes;
+          metaUpdate = { ...metaState, ...(restored.noteGroups ? { noteGroups: restored.noteGroups } : {}) };
+        } catch (err) {
+          // A malformed sidecar must not keep the chart from opening
+          console.warn('[Editor] Ignoring unreadable .bms.meta:', err);
+        }
+      }
 
       // Phase C: commit to store (triggers re-render with notes)
-      store.initFromChart(ec, editableNotes, editableNotes.length + 1, chart.keyMode);
-      // Load .bms.meta sidecar (only apply if no user changes yet)
-      window.api.file.readMeta(file.path).then((metaJson) => {
-        if (cancelled) return; // a newer file superseded this load
-        if (metaJson) metaSidecarExistsRef.current = true;
-        if (metaJson && !useEditorStore.getState().hasUnsavedChanges) {
-          const meta = deserializeMeta(metaJson);
-          const stateUpdate = applyMetaToState(meta);
-          // Re-attach BGM channels / note groups by note position (ids are per-session)
-          const restored = restoreMetaNoteRefs(meta, useEditorStore.getState().notes);
-          useEditorStore.setState({
-            ...stateUpdate,
-            notes: restored.notes,
-            ...(restored.noteGroups ? { noteGroups: restored.noteGroups } : {}),
-          });
-          // The restored channels are the file's own state: keep it "clean".
-          store.setHasUnsavedChanges(false);
-        }
-      }).catch(() => {});
+      store.initFromChart(ec, notesToCommit, notesToCommit.length + 1, chart.keyMode);
+      if (metaUpdate) useEditorStore.setState(metaUpdate);
       // Save original chart info for diff
       originalChartInfoRef.current = {
         notes: chart.notes,
@@ -972,6 +997,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         noteGroups: s.noteGroups,
         notes: s.notes,
         customColors: s.customColors,
+        ...keyModeMetaFields(bmsContent, s.keyMode),
       });
       const metaJson = serializeMeta(meta);
       const metaHasContent = Object.entries(meta).some(([k, v]) =>
@@ -979,7 +1005,8 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         && !(Array.isArray(v) && v.length === 0)
         && !(typeof v === 'object' && !Array.isArray(v) && Object.keys(v as object).length === 0));
       if (metaHasContent || metaSidecarExistsRef.current) {
-        await window.api.file.saveMeta(file.path, metaJson).catch(() => {});
+        const metaSaved = await window.api.file.saveMeta(file.path, metaJson).then(() => true, () => false);
+        if (!metaSaved) showToast(t('editor:routes.editor.toast.metaSaveFailed'), 'warning');
         metaSidecarExistsRef.current = true;
       }
       store.setHasUnsavedChanges(false);
@@ -1029,8 +1056,10 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           noteGroups: s.noteGroups,
           notes: s.notes,
           customColors: s.customColors,
+          ...keyModeMetaFields(bmsContent, s.keyMode),
         });
-        await window.api.file.saveMeta(newPath, serializeMeta(meta)).catch(() => {});
+        const metaSaved = await window.api.file.saveMeta(newPath, serializeMeta(meta)).then(() => true, () => false);
+        if (!metaSaved) showToast(t('editor:routes.editor.toast.metaSaveFailed'), 'warning');
         store.setHasUnsavedChanges(false);
         showToast(t('editor:routes.editor.toast.savedAs'), 'success');
         // Continue editing the file just written, not the old path.
@@ -1554,7 +1583,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       try {
         const origLnObj = chartToSave.headers.lnobj;
         const writer = new BMSWriter({ lnMode: origLnObj ? 'lnobj' : 'channel', lnObjValue: origLnObj || undefined });
-        const content = writer.write(chartToSave);
+        const content = tagAutoSave(writer.write(chartToSave), useEditorStore.getState().keyMode);
         await window.api.file.writeAutoSave(file.path, content);
       } catch (err) {
         console.warn('[Editor] Auto-save failed:', err);
@@ -2542,7 +2571,9 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
           <button
             onClick={async () => {
               if (autoSaveContentRef.current) {
-                await window.api.file.saveBms(file.path, encodeForSave(autoSaveContentRef.current, chart).content);
+                const recovered = untagAutoSave(autoSaveContentRef.current);
+                await window.api.file.saveBms(file.path, encodeForSave(recovered.content, chart).content);
+                await syncMetaKeyMode(file.path, recovered.content, recovered.keyMode);
                 await window.api.file.deleteAutoSave(file.path).catch(() => {});
                 autoSaveContentRef.current = null;
                 load(file.path);
