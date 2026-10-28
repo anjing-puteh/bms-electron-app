@@ -638,7 +638,7 @@
         "label": "Move"
       },
       "select": {
-        "description": "Click or drag to select notes. Shift-click to extend selection.",
+        "description": "Click or drag to select notes; drag a note to move it. Drag a note's top edge (a long note's end) to lengthen or shorten it. Shift-click to extend selection.",
         "label": "Select"
       },
       "stop": {

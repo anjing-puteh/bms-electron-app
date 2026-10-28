@@ -350,3 +350,89 @@ test.describe('Canvas - Long Note Conversion', () => {
     await noError(window);
   });
 });
+
+test.describe('Canvas - Drag to Lengthen / Shorten Notes', () => {
+  const canvasCursor = (w: Page) => w.locator('canvas').first().evaluate((el) => (el as HTMLElement).style.cursor);
+
+  async function longNoteCount(w: Page): Promise<number> {
+    const m = ((await w.locator('body').textContent()) || '').match(/롱노트\s*(\d+)/);
+    return m ? Number(m[1]) : -1;
+  }
+
+  /** Hover from y0+from to y0+to; returns the dy rows where the cursor is `want`. */
+  async function cursorRows(w: Page, x: number, y0: number, from: number, to: number, want: string): Promise<number[]> {
+    const rows: number[] = [];
+    for (let dy = from; dy <= to; dy += 1) {
+      await w.mouse.move(x, y0 + dy);
+      await w.waitForTimeout(15);
+      if (await canvasCursor(w) === want) rows.push(dy);
+    }
+    return rows;
+  }
+
+  async function dragY(w: Page, x: number, fromY: number, toY: number) {
+    await w.mouse.move(x, fromY);
+    await w.mouse.down();
+    await w.mouse.move(x, toY, { steps: 10 });
+    await w.mouse.up();
+    await w.waitForTimeout(400);
+  }
+
+  test('top edge stretches a short note, end drag shrinks it back; hit zones follow the thickness', async ({ window }) => {
+    test.setTimeout(180_000);
+    await openEditorWithRealFile(window);
+    await window.waitForTimeout(3000);
+    const box = (await window.locator('canvas').first().boundingBox())!;
+    const x = box.x + box.width * 0.63; // lane 5, empty in the middle of the fixture
+    // Throwaway first placement: the test window's camera settles on the first frame
+    await window.keyboard.press('a');
+    await window.mouse.click(x, box.y + box.height * 0.3);
+    await window.waitForTimeout(300);
+    await window.keyboard.press('Control+z');
+    const yc = box.y + box.height * 0.46;
+    await window.mouse.click(x, yc);
+    await window.waitForTimeout(300);
+    await window.keyboard.press('v');
+
+    // Grab zones grow with the note thickness slider
+    const thickness = window.locator('input[type="range"][min="1"][max="8"]').first();
+    const spans: number[] = [];
+    for (const t of ['1', '4', '8']) {
+      await thickness.fill(t);
+      await window.waitForTimeout(200);
+      const resize = await cursorRows(window, x, yc, -60, 25, 'ns-resize');
+      const grab = await cursorRows(window, x, yc, -60, 25, 'grab');
+      expect(resize.length).toBeGreaterThan(0);
+      expect(grab.length).toBeGreaterThan(0);
+      spans.push(resize.length + grab.length);
+    }
+    expect(spans[1]).toBeGreaterThan(spans[0]);
+    expect(spans[2]).toBeGreaterThan(spans[1]);
+
+    await thickness.fill('4');
+    await window.waitForTimeout(200);
+    const top = await cursorRows(window, x, yc, -60, 25, 'ns-resize');
+    const topY = yc + (top[0] + top[top.length - 1]) / 2;
+
+    // A plain click on a selected note's top edge keeps the multi-selection
+    await window.keyboard.press('Control+a');
+    await window.waitForTimeout(200);
+    await window.mouse.click(x, topY);
+    await window.waitForTimeout(200);
+    const selected = ((await window.locator('body').textContent()) || '').match(/(\d+)개 선택/);
+    expect(Number(selected?.[1] ?? 0)).toBeGreaterThan(1);
+    expect(await longNoteCount(window)).toBe(0);
+    await window.keyboard.press('Escape');
+
+    // Pull the top edge up → long note (no modifier key)
+    await dragY(window, x, topY, topY - 90);
+    expect(await longNoteCount(window)).toBe(1);
+
+    // Drag the end cap back down to the head → short note again
+    const end = (await cursorRows(window, x, topY, -120, -30, 'ns-resize'));
+    const endY = topY + (end[0] + end[end.length - 1]) / 2;
+    await dragY(window, x, endY, yc + 10);
+    expect(await longNoteCount(window)).toBe(0);
+    await noError(window);
+  });
+});
