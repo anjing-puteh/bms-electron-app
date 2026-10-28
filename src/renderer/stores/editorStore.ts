@@ -118,6 +118,11 @@ function noteLayer(n: { noteType?: string }): keyof LayerConfig {
   return (t === 'invisible' || t === 'landmine' || t === 'bgm') ? t : 'playable';
 }
 
+/** Only playable lane notes can be long notes. */
+function canBeLongNote(n: { noteType?: string; column?: string }): boolean {
+  return noteLayer(n) === 'playable' && n.column !== undefined;
+}
+
 /** True when the note's layer is locked (edits must leave it alone). */
 function isNoteLocked(layerConfig: LayerConfig, n: { noteType?: string }): boolean {
   return layerConfig[noteLayer(n)]?.locked === true;
@@ -504,6 +509,16 @@ interface EditorState {
   selectByFilter: (filter: NoteSelectionFilter) => void;
   clearSelection: () => void;
   changeNoteType: (newType: NoteType, defaultColumn?: string) => void;
+  /**
+   * Turns the selected playable short notes into long notes one grid step
+   * (at least minLnLength) long, stopping a grid step before the next note in
+   * the lane. Returns how many notes changed.
+   */
+  convertToLongNotes: () => number;
+  /** Turns the selected long notes back into short notes. Returns how many notes changed. */
+  convertToShortNotes: () => number;
+  /** Short → long when any selected short note can become one, otherwise long → short. */
+  toggleLongNotes: () => number;
 
   // Measure management
   insertMeasure: (atMeasure: number) => void;
@@ -1161,6 +1176,60 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
     set((prev) => ({ _noteIndex: buildNoteIndex(prev.notes) }));
   },
+
+  convertToLongNotes: () => {
+    const s = get();
+    const targets = s.notes.filter((n) => s.selectedNotes.has(n.id) && canBeLongNote(n)
+      && n.endTick === undefined && n.endBeat === undefined && !isNoteLocked(s.layerConfig, n));
+    if (targets.length === 0) return 0;
+    const gridTicks = Math.max(1, Math.round(TICKS_PER_BEAT * 4 / s.gridSnap));
+    const lengthTicks = Math.max(gridTicks, beatToTick(s.minLnLength));
+    // Note heads per lane, ascending, so a new long note never runs into the next note
+    const headsByColumn = new Map<string, number[]>();
+    for (const n of s.notes) {
+      if (n.noteType === 'bgm' || n.column === undefined) continue;
+      const heads = headsByColumn.get(n.column) ?? [];
+      heads.push(n.tick);
+      headsByColumn.set(n.column, heads);
+    }
+    for (const heads of headsByColumn.values()) heads.sort((a, b) => a - b);
+    const endTicks = new Map<string, number>();
+    for (const n of targets) {
+      const next = headsByColumn.get(n.column!)?.find((t) => t > n.tick);
+      const endTick = next === undefined ? n.tick + lengthTicks : Math.min(n.tick + lengthTicks, next - gridTicks);
+      if (endTick > n.tick) endTicks.set(n.id, endTick);
+    }
+    if (endTicks.size === 0) return 0;
+    s.pushUndo('Convert to long notes');
+    set({
+      notes: s.notes.map((n) => {
+        const endTick = endTicks.get(n.id);
+        if (endTick === undefined) return n;
+        return { ...n, endTick, endBeat: tickToBeat(endTick), endMeasure: undefined, endFraction: undefined };
+      }),
+      hasUnsavedChanges: true,
+    });
+    return endTicks.size;
+  },
+
+  convertToShortNotes: () => {
+    const s = get();
+    const ids = new Set(s.notes
+      .filter((n) => s.selectedNotes.has(n.id) && (n.endTick !== undefined || n.endBeat !== undefined)
+        && !isNoteLocked(s.layerConfig, n))
+      .map((n) => n.id));
+    if (ids.size === 0) return 0;
+    s.pushUndo('Convert to short notes');
+    set({
+      notes: s.notes.map((n) => ids.has(n.id)
+        ? { ...n, endTick: undefined, endBeat: undefined, endMeasure: undefined, endFraction: undefined }
+        : n),
+      hasUnsavedChanges: true,
+    });
+    return ids.size;
+  },
+
+  toggleLongNotes: () => get().convertToLongNotes() || get().convertToShortNotes(),
 
   // --- Measure management ---
   insertMeasure: (atMeasure) => {

@@ -31,6 +31,7 @@ export type KeyAction =
   | 'mirror'
   | 'random'
   | 'quantize'
+  | 'toggleLongNote'
   // Measure
   | 'insertMeasure'
   | 'deleteMeasure'
@@ -83,6 +84,7 @@ export const ACTION_LABELS: Record<KeyAction, string> = {
   mirror: 'Mirror',
   random: 'Randomize',
   quantize: 'Quantize',
+  toggleLongNote: 'Long Note ↔ Short Note',
   insertMeasure: 'Insert Measure',
   deleteMeasure: 'Delete Measure',
   moveUp: 'Move Up',
@@ -129,7 +131,7 @@ export const ACTION_CATEGORIES: { id: ActionCategoryId; label: string; actions: 
   { id: 'edit', label: 'Edit', actions: ['undo', 'redo', 'copy', 'cut', 'paste', 'selectAll', 'delete', 'escape'] },
   { id: 'search', label: 'Search', actions: ['noteSearch'] },
   { id: 'playback', label: 'Playback', actions: ['playTest', 'playToggle'] },
-  { id: 'transform', label: 'Transform', actions: ['mirror', 'random', 'quantize'] },
+  { id: 'transform', label: 'Transform', actions: ['mirror', 'random', 'quantize', 'toggleLongNote'] },
   { id: 'measure', label: 'Measure', actions: ['insertMeasure', 'deleteMeasure'] },
   { id: 'move', label: 'Move', actions: ['moveUp', 'moveDown', 'moveLeft', 'moveRight'] },
   { id: 'tools', label: 'Tools', actions: ['toolSelect', 'toolAddNote', 'toolDelete', 'toolMove', 'toolKeysound', 'toolBpm', 'toolStop'] },
@@ -167,6 +169,7 @@ export const DEFAULT_BINDINGS: KeyBinding[] = [
   { label: 'Mirror', action: 'mirror', key: 'ctrl+m' },
   { label: 'Randomize', action: 'random', key: 'ctrl+r' },
   { label: 'Quantize', action: 'quantize', key: 'q' },
+  { label: 'Long Note ↔ Short Note', action: 'toggleLongNote', key: 'l' },
   { label: 'Insert Measure', action: 'insertMeasure', key: 'ctrl+shift+i' },
   { label: 'Delete Measure', action: 'deleteMeasure', key: 'ctrl+shift+d' },
   { label: 'Move Up', action: 'moveUp', key: 'arrowup' },

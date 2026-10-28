@@ -1104,6 +1104,12 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
       window.removeEventListener('bms:menu-save-as', onSaveAs);
     };
   }, []);
+  // Long-note conversion (context menu / L key); says why when nothing could change
+  const convertLongNotes = useCallback((convert: () => number) => {
+    if (useEditorStore.getState().selectedNotes.size === 0) return;
+    if (convert() === 0) showToast(t('editor:routes.editor.toast.longNoteUnchanged'), 'warning');
+  }, [showToast, t]);
+
   const handlePlayTestRef = useRef<(() => void) | null>(null);
   const handlePlaybackToggleRef = useRef<(() => void) | null>(null);
 
@@ -1181,6 +1187,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
         case 'mirror': store.mirrorNotes(laneIds); break;
         case 'random': store.randomNotes(laneIds); break;
         case 'quantize': store.quantizeNotes(); break;
+        case 'toggleLongNote': convertLongNotes(store.toggleLongNotes); break;
         case 'insertMeasure': openModal('measureInsert'); break;
         case 'deleteMeasure': openModal('measureDelete'); break;
         case 'moveUp': if (ids.length > 0) store.moveNotes(ids, { beat: gridStep }, laneIds); break;
@@ -1227,7 +1234,7 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [laneIds, activeModal, activeOverlay, handleSaveAs]);
+  }, [laneIds, activeModal, activeOverlay, handleSaveAs, convertLongNotes]);
 
   /**
    * Paste through `preparePaste` so out-of-key-mode columns are dropped and
@@ -2091,6 +2098,8 @@ export function Editor({ file, onBack, onClearFile, onOpenFile, onRegisterGuard 
             onSelectAll={store.selectAll}
             onClearSelection={store.clearSelection}
             onChangeType={store.changeNoteType}
+            onConvertToLongNote={() => convertLongNotes(store.convertToLongNotes)}
+            onConvertToShortNote={() => convertLongNotes(store.convertToShortNotes)}
           >
             <div className="flex-1 min-h-0 overflow-hidden relative" role="application" aria-label={t('editor:routes.editor.canvas.ariaLabel')}>
               {/* Keysound hover info overlay */}

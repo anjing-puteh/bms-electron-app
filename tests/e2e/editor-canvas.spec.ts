@@ -328,3 +328,25 @@ test.describe('Canvas - Copy/Paste', () => {
     await window.waitForTimeout(200);
   });
 });
+
+test.describe('Canvas - Long Note Conversion', () => {
+  async function longNoteCount(window: Page): Promise<number> {
+    const text = await window.locator('body').textContent() || '';
+    const m = text.match(/롱노트\s*(\d+)/);
+    return m ? Number(m[1]) : -1;
+  }
+
+  test('L turns selected short notes into long notes and back', async ({ window }) => {
+    await openEditorWithRealFile(window);
+    expect(await longNoteCount(window)).toBe(0);
+
+    await window.keyboard.press('Control+a');
+    await window.waitForTimeout(200);
+    await window.keyboard.press('l');
+    await expect.poll(() => longNoteCount(window)).toBeGreaterThan(0);
+
+    await window.keyboard.press('l');
+    await expect.poll(() => longNoteCount(window)).toBe(0);
+    await noError(window);
+  });
+});

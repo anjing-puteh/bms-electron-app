@@ -330,8 +330,8 @@ describe('resetKeyBindings', () => {
 // ---------------------------------------------------------------------------
 
 describe('DEFAULT_BINDINGS', () => {
-  it('has 47 entries', () => {
-    expect(DEFAULT_BINDINGS).toHaveLength(47);
+  it('has 48 entries', () => {
+    expect(DEFAULT_BINDINGS).toHaveLength(48);
   });
 
   it('every binding has required fields', () => {
